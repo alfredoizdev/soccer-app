@@ -16,6 +16,10 @@ export const usersTable = pgTable('users', {
   lastName: text('last_name').notNull(),
   age: integer('age').notNull(),
   email: text('email').notNull().unique(),
+  avatar: text('avatar'), // Nuevo campo avatar
+  organizationId: uuid('organization_id').references(
+    () => organizationsTable.id
+  ), // Nuevo campo organizationId
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   password: text('password').notNull(),
@@ -23,11 +27,20 @@ export const usersTable = pgTable('users', {
   role: ROLE_ENUM('role').notNull().default('user'),
 })
 
+export const organizationsTable = pgTable('organizations', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  avatar: text('avatar'), // Campo avatar para la organización
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
 export const childrenTable = pgTable('children', {
   id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
   name: text('name').notNull(),
   lastName: text('last_name').notNull(),
   age: integer('age').notNull(),
+  avatar: text('avatar'), // Nuevo campo avatar
   userId: uuid('user_id')
     .notNull()
     .references(() => usersTable.id, { onDelete: 'cascade' }),

@@ -7,4 +7,13 @@ export type UserType = {
   role: 'admin' | 'user'
   status: 'active' | 'inactive'
   age: number
+  avatar?: string
+}
+
+export type OrganizationType = {
+  id: string
+  name: string
+  description: string
+  avatar: string
+  createdAt?: Date | string
 }

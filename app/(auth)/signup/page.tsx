@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { SubmitHandler, useForm } from 'react-hook-form'
-import { signupAction } from '@/lib/actions/auth.action'
+import { createUserAction } from '@/lib/actions/auth.action'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -31,7 +31,7 @@ export default function Signup() {
 
   const onSubmit: SubmitHandler<SignupForm> = async (data) => {
     try {
-      const { success, error } = await signupAction(data)
+      const { success, error } = await createUserAction(data)
       if (!success) {
         toast.error(error)
         return

@@ -6,8 +6,9 @@ import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 import jwt from 'jsonwebtoken'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
-export const signupAction = async (
+export const createUserAction = async (
   user: Omit<UserType, 'id' | 'createdAt' | 'updatedAt' | 'role' | 'status'>
 ) => {
   try {
@@ -89,4 +90,26 @@ export const loginAction = async (email: string, password: string) => {
     console.error('Error logging in:', error)
     return { success: false, error: 'Failed to login' }
   }
+}
+
+export const userAuth = async () => {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('token')?.value
+    if (!token) return null
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!)
+    // Solo retornamos los datos relevantes del usuario
+    const { id, name, lastName, email, role, avatar } = decoded as UserType
+
+    return { id, name, lastName, email, role, avatar }
+  } catch (error) {
+    console.error('Error verifying user:', error)
+    return null
+  }
+}
+
+export const logoutAction = async () => {
+  const cookieStore = await cookies()
+  cookieStore.delete('token')
+  redirect('/login')
 }

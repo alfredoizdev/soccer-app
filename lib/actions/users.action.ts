@@ -30,7 +30,13 @@ export const getUsersAction = async () => {
   try {
     const db = await dbPromise
     const users = await db.select().from(usersTable)
-    return { data: users, error: null }
+    // Normalizar avatar a string
+    const normalizedUsers = users.map((user) => ({
+      ...user,
+      avatar: user.avatar ?? '',
+    }))
+
+    return { data: normalizedUsers, error: null }
   } catch (error) {
     console.error('Error fetching users:', error)
     return { data: null, error: 'Failed to fetch users' }
