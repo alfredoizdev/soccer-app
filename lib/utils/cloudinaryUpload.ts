@@ -5,7 +5,7 @@ import cloudinary from '@/lib/config/cloudinary'
  * @param filePathOrBuffer Puede ser un path local o un buffer
  * @param folder Carpeta opcional en Cloudinary
  */
-export async function uploadImageToCloudinary(
+function uploadImageToCloudinary(
   filePathOrBuffer: string | Buffer,
   folder?: string
 ): Promise<string> {
@@ -25,4 +25,33 @@ export async function uploadImageToCloudinary(
       }
     )
   })
+}
+
+/**
+ * Elimina una imagen de Cloudinary usando su public_id
+ * @param publicId El public_id de la imagen en Cloudinary
+ */
+function deleteImageFromCloudinary(publicId: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(publicId, (error) => {
+      if (error) return reject(error)
+      resolve()
+    })
+  })
+}
+
+/**
+ * Extrae el public_id de una URL de Cloudinary
+ * @param url URL completa de la imagen en Cloudinary
+ * @returns public_id o null si no se puede extraer
+ */
+function getPublicIdFromUrl(url: string): string | null {
+  const match = url.match(/upload\/v\d+\/(.+)\.[a-zA-Z]+$/)
+  return match ? match[1] : null
+}
+
+export const cloudinaryHandles = {
+  uploadImageToCloudinary,
+  deleteImageFromCloudinary,
+  getPublicIdFromUrl,
 }

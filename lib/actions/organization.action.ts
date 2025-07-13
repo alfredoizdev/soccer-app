@@ -1,7 +1,8 @@
 'use server'
 import { dbPromise } from '@/database/drizzle'
 import { organizationsTable } from '@/database/schema'
-import { uploadImageToCloudinary } from '@/lib/utils/cloudinaryUpload'
+import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
+import { eq } from 'drizzle-orm'
 
 export const getOrganizationsAction = async () => {
   try {
@@ -40,7 +41,7 @@ export const createOrganizationAction = async (data: {
       } else {
         throw new Error('Formato de imagen no soportado')
       }
-      avatarUrl = await uploadImageToCloudinary(
+      avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
         buffer,
         `social-app/${data.name.toLowerCase().replace(/\s+/g, '-')}`
       )
@@ -57,5 +58,67 @@ export const createOrganizationAction = async (data: {
   } catch (error) {
     console.error('Error creating organization:', error)
     return { success: false, error: 'Failed to create organization' }
+  }
+}
+
+export const updateOrganizationAction = async (
+  id: string,
+  data: {
+    name: string
+    description?: string
+    avatar?: string | File | Buffer
+  }
+) => {
+  try {
+    if (!id) {
+      return { success: false, error: 'Organization ID is required' }
+    }
+
+    const db = await dbPromise
+
+    // 1. Obtener la organización actual para saber la URL vieja
+    const [org] = await db
+      .select()
+      .from(organizationsTable)
+      .where(eq(organizationsTable.id, id))
+
+    let avatarUrl = ''
+    if (data.avatar && typeof data.avatar !== 'string') {
+      // 2. Eliminar la imagen anterior si existe
+      if (org?.avatar) {
+        const publicId = cloudinaryHandles.getPublicIdFromUrl(org.avatar)
+        if (publicId)
+          await cloudinaryHandles.deleteImageFromCloudinary(publicId)
+      }
+      // 3. Subir la nueva imagen
+      let buffer: Buffer
+      if (data.avatar instanceof Buffer) {
+        buffer = data.avatar
+      } else if (typeof (data.avatar as File).arrayBuffer === 'function') {
+        const arrayBuffer = await (data.avatar as File).arrayBuffer()
+        buffer = Buffer.from(arrayBuffer)
+      } else {
+        throw new Error('Format not supported')
+      }
+      avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
+        buffer,
+        `social-app/${data.name.toLowerCase().replace(/\s+/g, '-')}`
+      )
+    } else if (typeof data.avatar === 'string') {
+      avatarUrl = data.avatar
+    }
+
+    await db
+      .update(organizationsTable)
+      .set({
+        name: data.name,
+        description: data.description ?? '',
+        avatar: avatarUrl,
+      })
+      .where(eq(organizationsTable.id, id))
+    return { success: true, error: null }
+  } catch (error) {
+    console.error('Error updating organization:', error)
+    return { success: false, error: 'Failed to update organization' }
   }
 }

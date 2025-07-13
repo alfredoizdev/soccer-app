@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm'
 import jwt from 'jsonwebtoken'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { cloudinaryHandles } from '../utils/cloudinaryUpload'
 
 export const createUserAction = async (
   user: Omit<UserType, 'id' | 'createdAt' | 'updatedAt' | 'role' | 'status'>
@@ -24,13 +25,35 @@ export const createUserAction = async (
       return { success: false, error: 'User already exists' }
     }
 
+    let avatarUrl = ''
+    if (user.avatar && typeof user.avatar !== 'string') {
+      // Si es un archivo o buffer, subir a Cloudinary
+      // Si es File (del frontend), convertir a buffer
+      let buffer: Buffer
+      if (Buffer.isBuffer(user.avatar)) {
+        buffer = user.avatar as Buffer
+      } else if (typeof (user.avatar as File).arrayBuffer === 'function') {
+        // File del frontend
+        const arrayBuffer = await (user.avatar as File).arrayBuffer()
+        buffer = Buffer.from(arrayBuffer)
+      } else {
+        throw new Error('Formato de imagen no soportado')
+      }
+      avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
+        buffer,
+        `social-app/users/${user.name.toLowerCase().replace(/\s+/g, '-')}`
+      )
+    } else if (typeof user.avatar === 'string') {
+      avatarUrl = user.avatar
+    }
+
     const hashedPassword = await bcrypt.hash(user.password, 10)
     await db
       .insert(usersTable)
       .values({
         ...user,
         password: hashedPassword,
-        age: user.age || 0,
+        avatar: avatarUrl,
       })
       .returning()
     return { success: true, error: '' }
