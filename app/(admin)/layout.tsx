@@ -13,8 +13,6 @@ export default async function AdminLayout({
     redirect('/members/home')
   }
 
-  console.log(user)
-
   return (
     <div className='min-h-screen flex flex-col'>
       <Navbar user={{ ...user, avatar: user.avatar ?? '' }} />

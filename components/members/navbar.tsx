@@ -24,7 +24,7 @@ export default async function Navbar() {
               <Avatar className='w-10 h-10'>
                 <AvatarImage
                   className='object-cover'
-                  src={user.avatar}
+                  src={user.avatar ?? ''}
                   alt={user.name}
                 />
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>

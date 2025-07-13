@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, Users, User, House } from 'lucide-react'
+import { LayoutDashboard, Users, User, House, ShieldUser } from 'lucide-react'
 import { MENUS_DASHBOARD } from '@/lib/constants'
 
 const icons = {
@@ -8,6 +8,7 @@ const icons = {
   Users,
   User,
   House,
+  ShieldUser,
 }
 
 const Sidebar = () => {

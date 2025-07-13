@@ -6,7 +6,7 @@ export type UserType = {
   password: string
   role: 'admin' | 'user'
   status: 'active' | 'inactive'
-  avatar?: string
+  avatar?: string | null
 }
 
 export type OrganizationType = {

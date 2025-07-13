@@ -65,3 +65,6 @@ export type SelectUser = typeof usersTable.$inferSelect
 
 // export type InsertPost = typeof postsTable.$inferInsert;
 // export type SelectPost = typeof postsTable.$inferSelect;
+
+export type InsertChild = typeof childrenTable.$inferInsert
+export type SelectChild = typeof childrenTable.$inferSelect
