@@ -1,0 +1,5 @@
+ALTER TABLE "children" DROP CONSTRAINT "children_team_id_organizations_id_fk";
+--> statement-breakpoint
+ALTER TABLE "children" ADD COLUMN "organization_id" uuid;--> statement-breakpoint
+ALTER TABLE "children" ADD CONSTRAINT "children_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "children" DROP COLUMN "team_id";
