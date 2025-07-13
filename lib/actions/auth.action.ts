@@ -94,6 +94,7 @@ export const loginAction = async (email: string, password: string) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        avatar: user.avatar,
       },
       process.env.JWT_SECRET!,
       {

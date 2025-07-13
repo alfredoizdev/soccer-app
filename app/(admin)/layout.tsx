@@ -12,9 +12,12 @@ export default async function AdminLayout({
   if (!user || user.role != 'admin') {
     redirect('/members/home')
   }
+
+  console.log(user)
+
   return (
     <div className='min-h-screen flex flex-col'>
-      <Navbar user={user} />
+      <Navbar user={{ ...user, avatar: user.avatar ?? '' }} />
       <div className='flex flex-1'>
         <Sidebar />
         <main className='flex-1 bg-gray-100 p-2'>{children}</main>

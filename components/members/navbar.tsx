@@ -21,8 +21,12 @@ export default async function Navbar() {
               </Link>
             )}
             <span className='text-gray-700 truncate max-w-[120px] sm:max-w-none'>
-              <Avatar>
-                <AvatarImage src={user.avatar} />
+              <Avatar className='w-10 h-10'>
+                <AvatarImage
+                  className='object-cover'
+                  src={user.avatar}
+                  alt={user.name}
+                />
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
             </span>
