@@ -14,7 +14,6 @@ export const usersTable = pgTable('users', {
   id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
   name: text('name').notNull(),
   lastName: text('last_name').notNull(),
-  age: integer('age').notNull(),
   email: text('email').notNull().unique(),
   avatar: text('avatar'), // Nuevo campo avatar
   organizationId: uuid('organization_id').references(

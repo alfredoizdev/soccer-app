@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import useSubmitForm from '@/hooks/useSubmitForm'
 import { createUserAction } from '@/lib/actions/users.action'
+import { updateUserAction } from '@/lib/actions/users.action'
 import ImageInput from '@/components/ui/ImageInput'
 import { USER_ROLES } from '@/lib/constants'
+import React from 'react'
 
 // Tipos de entrada para el formulario de usuario
 export type UserFormInputs = {
@@ -15,20 +17,28 @@ export type UserFormInputs = {
   password: string
   role: 'admin' | 'user'
   status: 'active' | 'inactive'
-  age: number
   avatar?: string
 }
 
-export default function UserForm() {
+type Props = {
+  user?: UserFormInputs & { id?: string }
+  action?: 'create' | 'update'
+  onSuccess?: () => void
+}
+
+export default function UserForm({
+  user,
+  action = 'create',
+  onSuccess,
+}: Props) {
   const defaultValues = {
-    name: '',
-    lastName: '',
-    email: '',
+    name: user?.name ?? '',
+    lastName: user?.lastName ?? '',
+    email: user?.email ?? '',
     password: '',
-    role: 'user',
-    status: 'active',
-    age: 0,
-    avatar: '',
+    role: user?.role ?? 'user',
+    status: user?.status ?? 'active',
+    avatar: user?.avatar ?? '',
   } as const
 
   const {
@@ -40,9 +50,17 @@ export default function UserForm() {
     handleClearImage,
     isSubmitting,
     imagePreview,
+    actionResult,
   } = useSubmitForm<UserFormInputs>({
     actionFn: async (data) => {
-      const result = await createUserAction(data)
+      // Si no hay nueva imagen y hay una imagen anterior, usa la anterior
+      if ((!data.avatar || data.avatar === '') && user?.avatar) {
+        data.avatar = user.avatar
+      }
+      const result =
+        action === 'create'
+          ? await createUserAction(data)
+          : await updateUserAction(user?.id ?? '', data)
       return {
         ...result,
         error: result.error ?? undefined,
@@ -53,10 +71,17 @@ export default function UserForm() {
     redirectPath: '/admin/users',
   })
 
+  // Llama onSuccess si el submit fue exitoso
+  React.useEffect(() => {
+    if (actionResult?.success && onSuccess) {
+      onSuccess()
+    }
+  }, [actionResult, onSuccess])
+
   return (
     <form
       onSubmit={handleSubmit(handleFormSubmit)}
-      className='space-y-4 w-full max-w-md bg-white p-6 rounded-md shadow-md'
+      className='space-y-4 w-full max-w-md px-4'
     >
       <div>
         <ImageInput
@@ -64,7 +89,7 @@ export default function UserForm() {
           register={register}
           onChange={handleImageChange}
           className='border-2 border-gray-300 rounded-md p-2 w-full'
-          previewUrl={imagePreview ?? undefined}
+          previewUrl={imagePreview ?? user?.avatar ?? undefined}
           onClearImage={handleClearImage}
         />
       </div>
@@ -100,16 +125,20 @@ export default function UserForm() {
         )}
       </div>
       <div>
-        <input
-          type='password'
-          placeholder='Password'
-          className='border-2 border-gray-300 rounded-md p-2 w-full'
-          {...register('password', {
-            required: 'The password is required',
-          })}
-        />
-        {errors?.password && (
-          <p className='text-red-500'>{errors.password.message}</p>
+        {action === 'create' && (
+          <>
+            <input
+              type='password'
+              placeholder='Password'
+              className='border-2 border-gray-300 rounded-md p-2 w-full'
+              {...register('password', {
+                required: 'The password is required',
+              })}
+            />
+            {errors?.password && (
+              <p className='text-red-500'>{errors.password.message}</p>
+            )}
+          </>
         )}
       </div>
       <div>
@@ -137,24 +166,14 @@ export default function UserForm() {
           <p className='text-red-500'>{errors.status.message}</p>
         )}
       </div>
-      <div>
-        <input
-          type='number'
-          placeholder='Age'
-          className='border-2 border-gray-300 rounded-md p-2 w-full'
-          {...register('age', {
-            required: 'The age is required',
-            valueAsNumber: true,
-            min: {
-              value: 0,
-              message: 'The age must be greater than or equal to 0',
-            },
-          })}
-        />
-        {errors?.age && <p className='text-red-500'>{errors.age.message}</p>}
-      </div>
       <Button type='submit' className='w-full' disabled={isSubmitting}>
-        {isSubmitting ? 'Adding User...' : 'Add User'}
+        {isSubmitting
+          ? action === 'create'
+            ? 'Adding User...'
+            : 'Updating User...'
+          : action === 'create'
+          ? 'Add User'
+          : 'Update User'}
         {isSubmitting && <Loader2 className='w-4 h-4 ml-2 animate-spin' />}
       </Button>
     </form>

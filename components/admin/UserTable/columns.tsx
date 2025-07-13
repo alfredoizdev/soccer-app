@@ -20,7 +20,13 @@ export const columns: ColumnDef<UserType>[] = [
     cell: ({ row }) => {
       return (
         <Avatar>
-          <AvatarImage src={row.original.avatar} />
+          <AvatarImage
+            src={row.original.avatar}
+            width={100}
+            height={100}
+            alt={row.original.name}
+            className='w-full h-full object-cover'
+          />
           <AvatarFallback className='bg-gray-500 text-md font-bold text-white'>
             {row.original.name.charAt(0)}
           </AvatarFallback>

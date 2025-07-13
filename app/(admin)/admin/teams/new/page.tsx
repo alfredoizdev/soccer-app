@@ -16,7 +16,7 @@ export default function AddOrganizationPage() {
       </div>
       <div className='container mx-auto py-10 w-full max-w-md'>
         <h1 className='text-2xl font-bold mb-4'>Add Team</h1>
-        <OrganizationForm />
+        <OrganizationForm action='create' />
       </div>
     </div>
   )

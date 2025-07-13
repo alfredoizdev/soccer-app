@@ -5,8 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 
 import useSubmitForm from '@/hooks/useSubmitForm'
-import { createOrganizationAction } from '@/lib/actions/organization.action'
+import {
+  createOrganizationAction,
+  updateOrganizationAction,
+} from '@/lib/actions/organization.action'
 import ImageInput from '@/components/ui/ImageInput'
+import { TeamType } from '@/types/TeamType'
+import * as React from 'react'
 
 type OrganizationFormInputs = {
   name: string
@@ -14,11 +19,17 @@ type OrganizationFormInputs = {
   avatar?: string
 }
 
-export default function OrganizationForm() {
+type Props = {
+  team?: TeamType
+  onSuccess?: () => void
+  action?: 'create' | 'update'
+}
+
+export default function OrganizationForm({ team, onSuccess, action }: Props) {
   const defaultValues = {
-    name: '',
-    description: '',
-    avatar: '',
+    name: team?.name ?? '',
+    description: team?.description ?? '',
+    avatar: team?.avatar ?? '',
   }
 
   const {
@@ -30,9 +41,17 @@ export default function OrganizationForm() {
     handleClearImage,
     isSubmitting,
     imagePreview,
+    actionResult,
   } = useSubmitForm<OrganizationFormInputs>({
     actionFn: async (data) => {
-      const result = await createOrganizationAction(data)
+      // Si no hay nueva imagen y hay una imagen anterior, usa la anterior
+      if ((!data.avatar || data.avatar === '') && team?.avatar) {
+        data.avatar = team.avatar
+      }
+      const result =
+        action === 'create'
+          ? await createOrganizationAction(data)
+          : await updateOrganizationAction(team?.id ?? '', data)
       return {
         ...result,
         error: result.error ?? undefined,
@@ -42,10 +61,17 @@ export default function OrganizationForm() {
     redirectPath: '/admin/teams',
   })
 
+  // Efecto para llamar onSuccess si el submit fue exitoso
+  React.useEffect(() => {
+    if (actionResult?.success && onSuccess) {
+      onSuccess()
+    }
+  }, [actionResult, onSuccess])
+
   return (
     <form
       onSubmit={handleSubmit(handleFormSubmit)}
-      className='space-y-4 w-full max-w-md bg-white p-6 rounded-md shadow-md'
+      className='space-y-4 w-full max-w-md px-4'
     >
       <div>
         <ImageInput
@@ -53,7 +79,7 @@ export default function OrganizationForm() {
           register={register}
           onChange={handleImageChange}
           className='border-2 border-gray-300 rounded-md p-2 w-full'
-          previewUrl={imagePreview ?? undefined}
+          previewUrl={imagePreview ?? team?.avatar ?? undefined}
           onClearImage={handleClearImage}
         />
       </div>
@@ -79,7 +105,11 @@ export default function OrganizationForm() {
         )}
       </div>
       <Button type='submit' className='w-full' disabled={isSubmitting}>
-        {isSubmitting ? 'Adding Team...' : 'Add Team'}
+        {isSubmitting
+          ? `Updating Team...`
+          : action === 'create'
+          ? 'Add Team'
+          : 'Update Team'}
         {isSubmitting && <Loader2 className='w-4 h-4 ml-2 animate-spin' />}
       </Button>
     </form>

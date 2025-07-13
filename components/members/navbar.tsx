@@ -15,9 +15,11 @@ export default async function Navbar() {
       <div className='sm:w-auto flex justify-center items-center mt-2 sm:mt-0'>
         {user ? (
           <div className='flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end'>
-            <Link href='/admin/dashboard' className='text-gray-700'>
-              <LayoutDashboard className='w-6 h-6' />
-            </Link>
+            {user.role === 'admin' && (
+              <Link href='/admin/dashboard' className='text-gray-700'>
+                <LayoutDashboard className='w-6 h-6' />
+              </Link>
+            )}
             <span className='text-gray-700 truncate max-w-[120px] sm:max-w-none'>
               <Avatar>
                 <AvatarImage src={user.avatar} />

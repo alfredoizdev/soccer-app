@@ -6,7 +6,6 @@ export type UserType = {
   password: string
   role: 'admin' | 'user'
   status: 'active' | 'inactive'
-  age: number
   avatar?: string
 }
 
