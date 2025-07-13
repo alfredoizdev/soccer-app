@@ -101,7 +101,14 @@ export default function DataTable<TData extends UserType, TValue>({
           <UpdateUserDrawer
             open={open}
             setOpen={setOpen}
-            user={selectedUser}
+            user={
+              selectedUser
+                ? {
+                    ...selectedUser,
+                    avatar: selectedUser.avatar ?? undefined,
+                  }
+                : undefined
+            }
             onSuccess={() => setOpen(false)}
           />
         )}

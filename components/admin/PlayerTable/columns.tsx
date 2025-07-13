@@ -31,7 +31,7 @@ export const columns: ColumnDef<
   },
   {
     accessorKey: 'user',
-    header: 'User',
+    header: 'Parent',
     cell: ({ row }) =>
       row.original.user
         ? `${row.original.user.name} ${row.original.user.lastName}`

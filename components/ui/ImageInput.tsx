@@ -22,10 +22,24 @@ function ImageInput<T extends FieldValues = FieldValues>({
   const [preview, setPreview] = useState<string | null>(previewUrl || null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragActive, setDragActive] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Sincroniza el preview con previewUrl si cambia (por ejemplo, al abrir el drawer)
+  React.useEffect(() => {
+    setPreview(previewUrl || null)
+  }, [previewUrl])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
+      if (file.size > 1024 * 1024) {
+        // 1MB
+        setError('Image size must be less than 1MB.')
+        if (inputRef.current) inputRef.current.value = ''
+        return
+      } else {
+        setError(null)
+      }
       setPreview(URL.createObjectURL(file))
     }
     onChange?.(e)
@@ -36,6 +50,14 @@ function ImageInput<T extends FieldValues = FieldValues>({
     setDragActive(false)
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0]
+      if (file.size > 1024 * 1024) {
+        setError('Image size must be less than 1MB.')
+        if (inputRef.current) inputRef.current.value = ''
+        setPreview(null)
+        return
+      } else {
+        setError(null)
+      }
       setPreview(URL.createObjectURL(file))
       if (inputRef.current) {
         const dt = new DataTransfer()
@@ -141,6 +163,7 @@ function ImageInput<T extends FieldValues = FieldValues>({
       >
         Select image
       </button>
+      {error && <p className='text-red-500 mt-2'>{error}</p>}
     </label>
   )
 }

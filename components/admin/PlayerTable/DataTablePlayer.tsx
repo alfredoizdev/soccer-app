@@ -16,6 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useState } from 'react'
+import { UpdatePlayerDrawer } from '@/app/(admin)/admin/players/UpdatePlayerDrawer'
+import { UserType } from '@/types/UserType'
 
 type PlayerWithUser = PlayerType & { user?: { name: string; lastName: string } }
 
@@ -24,11 +27,21 @@ export default function DataTablePlayer({
 }: {
   players: PlayerWithUser[]
 }) {
+  const [open, setOpen] = useState(false)
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerWithUser | null>(
+    null
+  )
+
   const table = useReactTable<PlayerWithUser>({
     data: players,
     columns: columns as ColumnDef<PlayerWithUser, unknown>[],
     getCoreRowModel: getCoreRowModel(),
   })
+
+  const handleRowClick = (player: PlayerWithUser) => {
+    setSelectedPlayer(player)
+    setOpen(true)
+  }
 
   return (
     <div className='overflow-x-auto max-w-[410px] sm:max-w-full'>
@@ -53,7 +66,12 @@ export default function DataTablePlayer({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  className='cursor-pointer hover:bg-gray-100'
+                  onClick={() => handleRowClick(row.original)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -77,6 +95,19 @@ export default function DataTablePlayer({
           </TableBody>
         </Table>
       </div>
+      <UpdatePlayerDrawer
+        open={open}
+        setOpen={setOpen}
+        player={
+          selectedPlayer
+            ? {
+                ...selectedPlayer,
+                avatar: selectedPlayer.avatar ?? undefined,
+                user: selectedPlayer.user as UserType,
+              }
+            : undefined
+        }
+      />
     </div>
   )
 }

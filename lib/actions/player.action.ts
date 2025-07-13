@@ -4,19 +4,46 @@ import { dbPromise } from '@/database/drizzle'
 import { childrenTable, usersTable } from '@/database/schema'
 import { eq } from 'drizzle-orm'
 import { PlayerType } from '@/types/PlayerType'
+import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 
 export const createPlayerAction = async (
-  player: Omit<PlayerType, 'id' | 'createdAt' | 'updatedAt'>
+  player: Omit<PlayerType, 'id' | 'createdAt' | 'updatedAt'> & {
+    avatar?: string | File | Buffer
+  }
 ) => {
   try {
+    let avatarUrl = ''
+    if (player.avatar && typeof player.avatar !== 'string') {
+      let buffer: Buffer
+      if (Buffer.isBuffer(player.avatar)) {
+        buffer = player.avatar
+      } else if (typeof (player.avatar as File).arrayBuffer === 'function') {
+        const arrayBuffer = await (player.avatar as File).arrayBuffer()
+        buffer = Buffer.from(arrayBuffer)
+      } else {
+        throw new Error('Unsupported image format')
+      }
+      avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
+        buffer,
+        `players/${player.name?.toLowerCase().replace(/\s+/g, '-') || 'player'}`
+      )
+    } else if (typeof player.avatar === 'string') {
+      avatarUrl = player.avatar
+    }
     const db = await dbPromise
     const [newPlayer] = await db
       .insert(childrenTable)
-      .values(player)
+      .values({
+        ...player,
+        avatar: avatarUrl,
+      })
       .returning()
     return { data: newPlayer, error: null }
   } catch (error) {
     console.error('Error creating player:', error)
+    if (error instanceof Error) {
+      console.error('Stack:', error.stack)
+    }
     return { data: null, error: 'Failed to create player' }
   }
 }

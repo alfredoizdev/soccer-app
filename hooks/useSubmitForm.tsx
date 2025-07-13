@@ -96,6 +96,7 @@ function useSubmitForm<T extends Record<string, unknown>>({
     register,
     imagePreview,
     actionResult,
+    setValue,
   }
 }
 
