@@ -22,7 +22,9 @@ export const createUserAction = async (
       }
       avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
         buffer,
-        `users/${user.name?.toLowerCase().replace(/\s+/g, '-') || 'user'}`
+        `soccer-app/users/${
+          user.name?.toLowerCase().replace(/\s+/g, '-') || 'user'
+        }`
       )
     } else if (typeof user.avatar === 'string') {
       avatarUrl = user.avatar
@@ -142,7 +144,9 @@ export const updateUserAction = async (
       }
       avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
         buffer,
-        `users/${data.name?.toLowerCase().replace(/\s+/g, '-') || 'user'}`
+        `soccer-app/users/${
+          data.name?.toLowerCase().replace(/\s+/g, '-') || 'user'
+        }`
       )
     } else if (typeof data.avatar === 'string') {
       avatarUrl = data.avatar

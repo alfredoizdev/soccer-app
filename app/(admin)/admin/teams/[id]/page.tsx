@@ -1,8 +1,8 @@
+import AddPlayerToTeam from '@/components/admin/AddPlayerToTeam'
 import { DataTablePlayer } from '@/components/admin/PlayerTable'
 import { getOrganizationAction } from '@/lib/actions/organization.action'
 import { getPlayersByOrganizationAction } from '@/lib/actions/player.action'
 import Image from 'next/image'
-import Link from 'next/link'
 
 export default async function TeamPage({
   params,
@@ -49,12 +49,7 @@ export default async function TeamPage({
         <div className='flex flex-col w-full sm:w-3/4 mt-8 sm:mt-0'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2'>
             <h1 className='text-2xl font-bold'>Players</h1>
-            <Link
-              href={`/admin/players/new?organization_id=${organizationData.id}`}
-              className='inline-block px-4 py-2 bg-gray-800 text-white rounded-md shadow hover:bg-gray-700 transition-colors text-sm font-semibold text-center'
-            >
-              Add Player
-            </Link>
+            <AddPlayerToTeam organizationId={organizationData.id} />
           </div>
           <DataTablePlayer players={playersData} />
         </div>

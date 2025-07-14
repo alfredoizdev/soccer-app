@@ -2,9 +2,10 @@
 
 import { dbPromise } from '@/database/drizzle'
 import { childrenTable, usersTable } from '@/database/schema'
-import { eq } from 'drizzle-orm'
+import { eq, isNull } from 'drizzle-orm'
 import { PlayerType } from '@/types/PlayerType'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
+import { revalidatePath } from 'next/cache'
 
 export const createPlayerAction = async (
   player: Omit<PlayerType, 'id' | 'createdAt' | 'updatedAt'> & {
@@ -25,7 +26,9 @@ export const createPlayerAction = async (
       }
       avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
         buffer,
-        `players/${player.name?.toLowerCase().replace(/\s+/g, '-') || 'player'}`
+        `soccer-app/players/${
+          player.name?.toLowerCase().replace(/\s+/g, '-') || 'player'
+        }`
       )
     } else if (typeof player.avatar === 'string') {
       avatarUrl = player.avatar
@@ -143,5 +146,58 @@ export const getPlayersByOrganizationAction = async (
   } catch (error) {
     console.error('Error fetching players by organization:', error)
     return { data: null, error: 'Failed to fetch players by organization' }
+  }
+}
+
+export const addPlayerToOrganizationAction = async (
+  playerId: string,
+  organizationId: string
+) => {
+  try {
+    const db = await dbPromise
+    await db
+      .update(childrenTable)
+      .set({ organizationId })
+      .where(eq(childrenTable.id, playerId))
+    revalidatePath(`/admin/teams/${organizationId}`, 'page')
+    return { success: true, error: null }
+  } catch (error) {
+    console.error('Error adding player to organization:', error)
+    return { success: false, error: 'Failed to add player to organization' }
+  }
+}
+
+export const removePlayerFromOrganizationAction = async (
+  playerId: string,
+  organizationId: string
+) => {
+  try {
+    const db = await dbPromise
+    await db
+      .update(childrenTable)
+      .set({ organizationId: null })
+      .where(eq(childrenTable.id, playerId))
+    revalidatePath(`/admin/teams/${organizationId}`, 'page')
+    return { success: true, error: null, organizationId }
+  } catch (error) {
+    console.error('Error removing player from organization:', error)
+    return {
+      success: false,
+      error: 'Failed to remove player from organization',
+    }
+  }
+}
+
+export const getAvailablePlayersForOrganization = async () => {
+  try {
+    const db = await dbPromise
+    const players = await db
+      .select()
+      .from(childrenTable)
+      .where(isNull(childrenTable.organizationId))
+    return { data: players, error: null }
+  } catch (error) {
+    console.error('Error fetching available players:', error)
+    return { data: null, error: 'Failed to fetch available players' }
   }
 }

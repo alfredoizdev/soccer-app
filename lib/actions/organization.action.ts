@@ -67,7 +67,7 @@ export const createOrganizationAction = async (data: {
       }
       avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
         buffer,
-        `social-app/${data.name.toLowerCase().replace(/\s+/g, '-')}`
+        `soccer-app/teams/${data.name.toLowerCase().replace(/\s+/g, '-')}`
       )
     } else if (typeof data.avatar === 'string') {
       avatarUrl = data.avatar
@@ -126,7 +126,7 @@ export const updateOrganizationAction = async (
       }
       avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
         buffer,
-        `social-app/${data.name.toLowerCase().replace(/\s+/g, '-')}`
+        `soccer-app/teams/${data.name.toLowerCase().replace(/\s+/g, '-')}`
       )
     } else if (typeof data.avatar === 'string') {
       avatarUrl = data.avatar

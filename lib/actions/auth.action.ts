@@ -41,7 +41,7 @@ export const createUserAction = async (
       }
       avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
         buffer,
-        `social-app/users/${user.name.toLowerCase().replace(/\s+/g, '-')}`
+        `soccer-app/users/${user.name.toLowerCase().replace(/\s+/g, '-')}`
       )
     } else if (typeof user.avatar === 'string') {
       avatarUrl = user.avatar
