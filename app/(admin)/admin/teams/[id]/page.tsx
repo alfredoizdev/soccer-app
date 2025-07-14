@@ -51,7 +51,7 @@ export default async function TeamPage({
             <h1 className='text-2xl font-bold'>Players</h1>
             <AddPlayerToTeam organizationId={organizationData.id} />
           </div>
-          <DataTablePlayer players={playersData} />
+          <DataTablePlayer players={playersData} mode='team' />
         </div>
       </div>
     </div>

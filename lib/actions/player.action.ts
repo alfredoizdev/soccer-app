@@ -126,6 +126,7 @@ export const deletePlayerAction = async (id: string) => {
   try {
     const db = await dbPromise
     await db.delete(childrenTable).where(eq(childrenTable.id, id))
+    revalidatePath('/admin/players', 'page')
     return { success: true, error: null }
   } catch (error) {
     console.error('Error deleting player:', error)

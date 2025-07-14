@@ -1,6 +1,6 @@
 'use client'
 
-import { columns } from './columns'
+import { getPlayerColumns } from './columns'
 import { PlayerType } from '@/types/PlayerType'
 import {
   ColumnDef,
@@ -24,8 +24,10 @@ type PlayerWithUser = PlayerType & { user?: { name: string; lastName: string } }
 
 export default function DataTablePlayer({
   players,
+  mode = 'all',
 }: {
   players: PlayerWithUser[]
+  mode?: 'team' | 'all'
 }) {
   const [open, setOpen] = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerWithUser | null>(
@@ -34,7 +36,7 @@ export default function DataTablePlayer({
 
   const table = useReactTable<PlayerWithUser>({
     data: players,
-    columns: columns as ColumnDef<PlayerWithUser, unknown>[],
+    columns: getPlayerColumns(mode) as ColumnDef<PlayerWithUser, unknown>[],
     getCoreRowModel: getCoreRowModel(),
   })
 
@@ -85,7 +87,7 @@ export default function DataTablePlayer({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={table.getAllColumns().length}
                   className='h-24 text-center'
                 >
                   No results.
