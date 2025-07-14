@@ -2,7 +2,7 @@
 
 import { dbPromise } from '@/database/drizzle'
 import { childrenTable, usersTable } from '@/database/schema'
-import { eq, isNull } from 'drizzle-orm'
+import { eq, isNull, desc } from 'drizzle-orm'
 import { PlayerType } from '@/types/PlayerType'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { revalidatePath } from 'next/cache'
@@ -238,5 +238,33 @@ export const getAvailablePlayersForOrganization = async () => {
   } catch (error) {
     console.error('Error fetching available players:', error)
     return { data: null, error: 'Failed to fetch available players' }
+  }
+}
+
+// Devuelve el total de jugadores
+export const getPlayersCountAction = async () => {
+  try {
+    const db = await dbPromise
+    const result = await db.select().from(childrenTable)
+    return { data: result.length, error: null }
+  } catch (error) {
+    console.error('Error counting players:', error)
+    return { data: null, error: 'Failed to count players' }
+  }
+}
+
+// Devuelve los 3 jugadores más recientes
+export const getLatestPlayersAction = async (limit = 3) => {
+  try {
+    const db = await dbPromise
+    const players = await db
+      .select()
+      .from(childrenTable)
+      .orderBy(desc(childrenTable.createdAt))
+      .limit(limit)
+    return { data: players, error: null }
+  } catch (error) {
+    console.error('Error fetching latest players:', error)
+    return { data: null, error: 'Failed to fetch latest players' }
   }
 }

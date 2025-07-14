@@ -2,7 +2,7 @@
 
 import { dbPromise } from '@/database/drizzle'
 import { childrenTable, InsertUser, usersTable } from '@/database/schema'
-import { eq } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 
 export const createUserAction = async (
@@ -168,5 +168,37 @@ export const updateUserAction = async (
   } catch (error) {
     console.error('Error updating user:', error)
     return { success: false, error: 'Failed to update user' }
+  }
+}
+
+// Devuelve el total de usuarios
+export const getUsersCountAction = async () => {
+  try {
+    const db = await dbPromise
+    const result = await db.select().from(usersTable)
+    return { data: result.length, error: null }
+  } catch (error) {
+    console.error('Error counting users:', error)
+    return { data: null, error: 'Failed to count users' }
+  }
+}
+
+// Devuelve los 3 usuarios más recientes
+export const getLatestUsersAction = async (limit = 3) => {
+  try {
+    const db = await dbPromise
+    const users = await db
+      .select()
+      .from(usersTable)
+      .orderBy(desc(usersTable.createdAt))
+      .limit(limit)
+    const normalizedUsers = users.map((user) => ({
+      ...user,
+      avatar: user.avatar ?? '',
+    }))
+    return { data: normalizedUsers, error: null }
+  } catch (error) {
+    console.error('Error fetching latest users:', error)
+    return { data: null, error: 'Failed to fetch latest users' }
   }
 }

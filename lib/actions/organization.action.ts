@@ -3,7 +3,7 @@ import { dbPromise } from '@/database/drizzle'
 import { organizationsTable } from '@/database/schema'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { OrganizationType } from '@/types/UserType'
-import { eq } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 
 export const getOrganizationsAction = async () => {
   try {
@@ -144,5 +144,39 @@ export const updateOrganizationAction = async (
   } catch (error) {
     console.error('Error updating organization:', error)
     return { success: false, error: 'Failed to update organization' }
+  }
+}
+
+// Devuelve el total de equipos (organizations)
+export const getOrganizationsCountAction = async () => {
+  try {
+    const db = await dbPromise
+    const result = await db.select().from(organizationsTable)
+    return { data: result.length, error: null }
+  } catch (error) {
+    console.error('Error counting organizations:', error)
+    return { data: null, error: 'Failed to count organizations' }
+  }
+}
+
+// Devuelve los 3 equipos más recientes
+export const getLatestOrganizationsAction = async (limit = 3) => {
+  try {
+    const db = await dbPromise
+    const orgs = await db
+      .select()
+      .from(organizationsTable)
+      .orderBy(desc(organizationsTable.createdAt))
+      .limit(limit)
+    const normalizedOrgs = orgs.map((org) => ({
+      ...org,
+      avatar: org.avatar ?? '',
+      description: org.description ?? '',
+      createdAt: org.createdAt ?? undefined,
+    }))
+    return { data: normalizedOrgs, error: null }
+  } catch (error) {
+    console.error('Error fetching latest organizations:', error)
+    return { data: null, error: 'Failed to fetch latest organizations' }
   }
 }
