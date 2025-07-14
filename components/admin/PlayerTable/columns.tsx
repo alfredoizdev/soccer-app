@@ -21,6 +21,9 @@ export function getPlayerColumns(
           <AvatarImage
             src={row.original.avatar ?? ''}
             alt={row.original.name}
+            width={100}
+            height={100}
+            className='w-full h-full object-cover'
           />
           <AvatarFallback className='bg-gray-500 text-white'>
             {row.original.name.charAt(0)}

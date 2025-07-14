@@ -21,7 +21,7 @@ export const columns: ColumnDef<UserType>[] = [
       return (
         <Avatar>
           <AvatarImage
-            src={row.original.avatar}
+            src={row.original.avatar || undefined}
             width={100}
             height={100}
             alt={row.original.name}

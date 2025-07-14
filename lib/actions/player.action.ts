@@ -101,16 +101,54 @@ export const getPlayersWithUserAction = async () => {
 
 export const updatePlayerAction = async (
   id: string,
-  data: Partial<PlayerType>
+  data: Partial<PlayerType> & { avatar?: string | File | Buffer }
 ) => {
   try {
     const db = await dbPromise
+    // Obtener el jugador actual para saber la URL vieja
+    const [player] = await db
+      .select()
+      .from(childrenTable)
+      .where(eq(childrenTable.id, id))
+
+    let avatarUrl = undefined
+    if (data.avatar && typeof data.avatar !== 'string') {
+      // Borrar imagen anterior si existe
+      if (player?.avatar) {
+        const publicId = cloudinaryHandles.getPublicIdFromUrl(player.avatar)
+        if (publicId)
+          await cloudinaryHandles.deleteImageFromCloudinary(publicId)
+      }
+      // Subir la nueva imagen
+      let buffer: Buffer
+      if (Buffer.isBuffer(data.avatar)) {
+        buffer = data.avatar
+      } else if (typeof (data.avatar as File).arrayBuffer === 'function') {
+        const arrayBuffer = await (data.avatar as File).arrayBuffer()
+        buffer = Buffer.from(arrayBuffer)
+      } else {
+        throw new Error('Unsupported image format')
+      }
+      avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
+        buffer,
+        `soccer-app/players/${
+          player.name?.toLowerCase().replace(/\s+/g, '-') || 'player'
+        }`
+      )
+    } else if (typeof data.avatar === 'string') {
+      avatarUrl = data.avatar
+    }
+
     // Excluir createdAt y updatedAt del update
     const updateData = Object.fromEntries(
       Object.entries(data).filter(
-        ([key]) => key !== 'createdAt' && key !== 'updatedAt'
+        ([key]) =>
+          key !== 'createdAt' && key !== 'updatedAt' && key !== 'avatar'
       )
     )
+    if (avatarUrl !== undefined) {
+      updateData.avatar = avatarUrl
+    }
     await db
       .update(childrenTable)
       .set(updateData)

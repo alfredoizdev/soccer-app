@@ -78,7 +78,7 @@ function useSubmitForm<T extends Record<string, unknown>>({
       }
 
       if (success) {
-        toast.success('Operación exitosa')
+        toast.success('Operation successful')
         if (redirectPath) router.push(redirectPath)
       }
     } catch (error) {

@@ -11,6 +11,14 @@ interface ImageInputProps<T extends FieldValues = FieldValues> {
   onClearImage?: () => void // Nuevo: handler para limpiar imagen
 }
 
+function isValidImageUrl(url: unknown): url is string {
+  return (
+    typeof url === 'string' &&
+    url.trim() !== '' &&
+    (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('/'))
+  )
+}
+
 function ImageInput<T extends FieldValues = FieldValues>({
   name,
   onChange,
@@ -26,7 +34,22 @@ function ImageInput<T extends FieldValues = FieldValues>({
 
   // Sincroniza el preview con previewUrl si cambia (por ejemplo, al abrir el drawer)
   React.useEffect(() => {
-    setPreview(previewUrl || null)
+    if (
+      previewUrl &&
+      typeof previewUrl === 'string' &&
+      previewUrl.trim() !== ''
+    ) {
+      setPreview(previewUrl)
+    } else {
+      setPreview(null)
+    }
+    // Clean up object URL when component unmounts or previewUrl changes
+    return () => {
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewUrl])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +63,14 @@ function ImageInput<T extends FieldValues = FieldValues>({
       } else {
         setError(null)
       }
-      setPreview(URL.createObjectURL(file))
+      try {
+        const url = URL.createObjectURL(file)
+        if (url && typeof url === 'string' && url.trim() !== '') {
+          setPreview(url)
+        }
+      } catch {
+        setPreview(null)
+      }
     }
     onChange?.(e)
   }
@@ -87,7 +117,26 @@ function ImageInput<T extends FieldValues = FieldValues>({
       onDragEnter={handleDrag}
       onDragLeave={handleDrag}
     >
-      {preview ? (
+      {!isValidImageUrl(preview) && (
+        <div className='flex flex-col items-center text-gray-400 mb-2'>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            className='h-12 w-12 mb-1'
+            fill='none'
+            viewBox='0 0 24 24'
+            stroke='currentColor'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z'
+            />
+          </svg>
+          <span>Drag and drop an image or click</span>
+        </div>
+      )}
+      {isValidImageUrl(preview) && (
         <div className='relative flex flex-col items-center mb-2'>
           <Image
             width={100}
@@ -115,24 +164,6 @@ function ImageInput<T extends FieldValues = FieldValues>({
           >
             &times;
           </button>
-        </div>
-      ) : (
-        <div className='flex flex-col items-center text-gray-400 mb-2'>
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            className='h-12 w-12 mb-1'
-            fill='none'
-            viewBox='0 0 24 24'
-            stroke='currentColor'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z'
-            />
-          </svg>
-          <span>Drag and drop an image or click</span>
         </div>
       )}
       {register ? (
