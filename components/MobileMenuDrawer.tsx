@@ -57,17 +57,18 @@ export default function MobileMenuDrawer({
           </DrawerTitle>
         </DrawerHeader>
         <div className='flex flex-col gap-2 items-start h-full p-4'>
-          {menus.map((menu) => {
+          {menus.map((menu, index) => {
             const Icon =
               icons[menu.icon as keyof typeof icons] || LayoutDashboard
             return (
               <Link
-                key={menu.label}
+                onClick={() => setOpen(false)}
+                key={index}
                 href={menu.href}
-                className='flex items-center gap-2'
+                className='hover:bg-gray-700 rounded px-3 py-2 flex items-center gap-2'
               >
                 <Icon size={20} />
-                {menu.label}
+                <span>{menu.label}</span>
               </Link>
             )
           })}

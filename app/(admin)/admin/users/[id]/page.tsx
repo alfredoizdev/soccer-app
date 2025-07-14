@@ -40,7 +40,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-blue-50 to-white py-12 px-4'>
-      <div className='max-w-xl mx-auto bg-white rounded-2xl shadow-2xl p-8 relative'>
+      <div className='max-w-xl mx-3 sm:mx-auto bg-white rounded-2xl shadow-2xl p-8 relative mt-10'>
         <div className='flex flex-col items-center mb-6'>
           <div className='relative w-24 h-24 mb-3 rounded-full'>
             <Image
