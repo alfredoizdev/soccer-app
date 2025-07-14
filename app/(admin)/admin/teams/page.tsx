@@ -1,9 +1,23 @@
-import TeamTable from '@/components/admin/TeamTable'
-import { PlusIcon } from 'lucide-react'
+//import TeamTable from '@/components/admin/TeamTable'
+import { getOrganizationsAction } from '@/lib/actions/organization.action'
+import Image from 'next/image'
+import { PlusIcon, TrashIcon, UsersIcon } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
+import { Button } from '@/components/ui/button'
+import { UpdateTeamDrawer } from './UpdateTeamDrawer'
 
-export default function TeamsPage() {
+export default async function TeamsPage() {
+  const { data, error } = await getOrganizationsAction()
+
+  if (error) {
+    return <div>Error: {error}</div>
+  }
+
+  if (!data) {
+    return <div>No data</div>
+  }
+
   return (
     <div className='container mx-auto py-10'>
       <div className='flex justify-between items-center'>
@@ -17,7 +31,37 @@ export default function TeamsPage() {
           Add Team
         </Link>
       </div>
-      <TeamTable />
+      {/* <TeamTable /> */}
+      <div className='w-full flex flex-col sm:flex-row gap-2 justify-center items-center mt-10'>
+        {data?.map((team) => (
+          <div key={team.id} className='w-1/1 flex flex-col items-center mb-4'>
+            <div className='bg-white rounded-md shadow-md p-2 flex flex-col items-center'>
+              <Link className='' href={`/admin/teams/${team.id}`}>
+                <Image
+                  src={team.avatar}
+                  alt={team.name}
+                  width={60}
+                  height={60}
+                  className='w-50 h-50 object-contain rounded-full'
+                />
+              </Link>
+              <h2 className='text-lg font-bold my-2'>{team.name}</h2>
+              <hr className='w-full' />
+              <div className='flex gap-2 justify-center items-center w-full mt-2'>
+                <UpdateTeamDrawer team={team} />
+                <Button variant='outline' size='icon' asChild>
+                  <Link href={`/admin/teams/${team.id}`}>
+                    <UsersIcon className='w-4 h-4' />
+                  </Link>
+                </Button>
+                <Button variant='outline' size='icon'>
+                  <TrashIcon className='w-4 h-4' />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

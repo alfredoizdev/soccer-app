@@ -129,3 +129,19 @@ export const deletePlayerAction = async (id: string) => {
     return { success: false, error: 'Failed to delete player' }
   }
 }
+
+export const getPlayersByOrganizationAction = async (
+  organizationId: string
+) => {
+  try {
+    const db = await dbPromise
+    const players = await db
+      .select()
+      .from(childrenTable)
+      .where(eq(childrenTable.organizationId, organizationId))
+    return { data: players, error: null }
+  } catch (error) {
+    console.error('Error fetching players by organization:', error)
+    return { data: null, error: 'Failed to fetch players by organization' }
+  }
+}

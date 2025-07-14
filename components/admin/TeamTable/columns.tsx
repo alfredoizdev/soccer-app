@@ -1,6 +1,8 @@
 'use client'
 
+import { UpdateTeamDrawer } from '@/app/(admin)/admin/teams/UpdateTeamDrawer'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+
 import { OrganizationType } from '@/types/UserType'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -49,5 +51,15 @@ export const columns: ColumnDef<OrganizationType>[] = [
       row.original.createdAt
         ? new Date(row.original.createdAt).toLocaleDateString()
         : '',
+  },
+  {
+    header: 'Action',
+    id: 'action',
+    cell: ({ row }) => (
+      <div className='flex gap-2'>
+        {/* Drawer para actualizar el equipo */}
+        <UpdateTeamDrawer team={row.original} />
+      </div>
+    ),
   },
 ]

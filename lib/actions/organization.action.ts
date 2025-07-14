@@ -2,6 +2,7 @@
 import { dbPromise } from '@/database/drizzle'
 import { organizationsTable } from '@/database/schema'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
+import { OrganizationType } from '@/types/UserType'
 import { eq } from 'drizzle-orm'
 
 export const getOrganizationsAction = async () => {
@@ -18,6 +19,29 @@ export const getOrganizationsAction = async () => {
   } catch (error) {
     console.error('Error fetching organizations:', error)
     return { data: null, error: 'Failed to fetch organizations' }
+  }
+}
+
+export const getOrganizationAction = async (id: string) => {
+  try {
+    const db = await dbPromise
+    const org = await db
+      .select()
+      .from(organizationsTable)
+      .where(eq(organizationsTable.id, id))
+      .limit(1)
+
+    const team: OrganizationType = {
+      ...org[0],
+      avatar: org[0].avatar ?? '',
+      description: org[0].description ?? '',
+      createdAt: org[0].createdAt ?? undefined,
+    }
+
+    return { data: team, error: null }
+  } catch (error) {
+    console.error('Error fetching organization:', error)
+    return { data: null, error: 'Failed to fetch organization' }
   }
 }
 

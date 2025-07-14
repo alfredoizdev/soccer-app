@@ -7,4 +7,10 @@ export type PlayerType = {
   userId: string
   createdAt?: Date | string | null
   updatedAt?: Date | string | null
+  // Stats acumulativos
+  totalGoals?: number
+  totalAssists?: number
+  totalPassesCompleted?: number
+  totalDuelsWon?: number
+  totalDuelsLost?: number
 }

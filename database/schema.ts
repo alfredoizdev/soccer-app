@@ -49,6 +49,39 @@ export const childrenTable = pgTable('children', {
   ), // Nuevo campo organizationId, opcional
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  // Campos acumulativos de stats
+  totalGoals: integer('total_goals').default(0).notNull(),
+  totalAssists: integer('total_assists').default(0).notNull(),
+  totalPassesCompleted: integer('total_passes_completed').default(0).notNull(),
+  totalDuelsWon: integer('total_duels_won').default(0).notNull(),
+  totalDuelsLost: integer('total_duels_lost').default(0).notNull(),
+})
+
+// Tabla de partidos
+export const matchesTable = pgTable('matches', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  date: timestamp('date', { withTimezone: true }).notNull(),
+  team1Id: uuid('team1_id').notNull(),
+  team2Id: uuid('team2_id').notNull(),
+  // Puedes agregar más campos según necesidad
+})
+
+// Tabla de stats por partido y jugador
+export const playerStatsTable = pgTable('player_stats', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  playerId: uuid('player_id')
+    .notNull()
+    .references(() => childrenTable.id, { onDelete: 'cascade' }),
+  matchId: uuid('match_id')
+    .notNull()
+    .references(() => matchesTable.id, { onDelete: 'cascade' }),
+  minutesPlayed: integer('minutes_played').default(0).notNull(),
+  goals: integer('goals').default(0).notNull(),
+  assists: integer('assists').default(0).notNull(),
+  passesCompleted: integer('passes_completed').default(0).notNull(),
+  duelsWon: integer('duels_won').default(0).notNull(),
+  duelsLost: integer('duels_lost').default(0).notNull(),
+  // Puedes agregar más stats si necesitas
 })
 
 export type InsertUser = typeof usersTable.$inferInsert

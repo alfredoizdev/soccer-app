@@ -37,4 +37,24 @@ export const columns: ColumnDef<
         ? `${row.original.user.name} ${row.original.user.lastName}`
         : '-',
   },
+  {
+    accessorKey: 'totalGoals',
+    header: 'Goals',
+  },
+  {
+    accessorKey: 'totalAssists',
+    header: 'Assists',
+  },
+  {
+    accessorKey: 'totalPassesCompleted',
+    header: 'Passes Completed',
+  },
+  {
+    accessorKey: 'totalDuelsWon',
+    header: 'Duels Won',
+  },
+  {
+    accessorKey: 'totalDuelsLost',
+    header: 'Duels Lost',
+  },
 ]

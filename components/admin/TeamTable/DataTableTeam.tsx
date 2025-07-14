@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import {
   ColumnDef,
   flexRender,
@@ -17,7 +16,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-import { UpdateTeamDrawer } from '@/app/(admin)/admin/teams/UpdateTeamDrawer'
 import { OrganizationType } from '@/types/UserType'
 
 interface DataTableProps<TData, TValue> {
@@ -29,21 +27,11 @@ export default function DataTableTeam<TData extends OrganizationType, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  // Estado para el drawer y el equipo seleccionado
-  const [open, setOpen] = useState(false)
-  const [selectedTeam, setSelectedTeam] = useState<TData | null>(null)
-
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
-
-  // Handler para click en la fila
-  const handleRowClick = (team: TData) => {
-    setSelectedTeam(team)
-    setOpen(true)
-  }
 
   return (
     <div className='overflow-x-auto max-w-[410px] sm:max-w-full'>
@@ -74,7 +62,6 @@ export default function DataTableTeam<TData extends OrganizationType, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                   className='cursor-pointer hover:bg-gray-100'
-                  onClick={() => handleRowClick(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -99,10 +86,6 @@ export default function DataTableTeam<TData extends OrganizationType, TValue>({
           </TableBody>
         </Table>
       </div>
-      {/* Drawer para actualizar el equipo */}
-      {selectedTeam && (
-        <UpdateTeamDrawer open={open} setOpen={setOpen} team={selectedTeam} />
-      )}
     </div>
   )
 }
