@@ -50,6 +50,13 @@
       "when": 1752524374635,
       "tag": "0006_neat_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1752615477063,
+      "tag": "0007_handy_skaar",
+      "breakpoints": true
     }
   ]
 }

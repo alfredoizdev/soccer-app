@@ -6,6 +6,7 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  getFilteredRowModel,
 } from '@tanstack/react-table'
 
 import {
@@ -22,7 +23,8 @@ import { UserType } from '@/types/UserType'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any[]
 }
 
 export default function DataTable<TData extends UserType, TValue>({
@@ -36,6 +38,7 @@ export default function DataTable<TData extends UserType, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   })
 
   const handleRowClick = (user: TData) => {
@@ -45,6 +48,17 @@ export default function DataTable<TData extends UserType, TValue>({
 
   return (
     <div className='overflow-x-auto max-w-[410px] sm:max-w-full'>
+      <div className='flex justify-start mb-4'>
+        <input
+          type='text'
+          placeholder='Search'
+          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+          onChange={(event) =>
+            table.getColumn('name')?.setFilterValue(event.target.value)
+          }
+          className='w-full max-w-[200px] rounded-md border p-2'
+        />
+      </div>
       <div className='rounded-md border'>
         <Table className='min-w-[500px]'>
           <TableHeader>

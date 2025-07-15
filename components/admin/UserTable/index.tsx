@@ -10,7 +10,7 @@ export default async function UserTable() {
   }
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='mx-auto py-1'>
       <DataTable columns={columns} data={data ? data : []} />
     </div>
   )

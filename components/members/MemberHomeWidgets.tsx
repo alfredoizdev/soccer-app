@@ -46,39 +46,43 @@ export default async function MemberHomeWidgets() {
         ) : (
           <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4'>
             {myPlayers.map((player) => (
-              <Card
+              <Link
                 key={player.id}
-                className='p-4 flex flex-col items-center gap-2'
+                href={`/members/players/${player.id}`}
+                className='block'
               >
-                <CardContent className='flex flex-col items-center gap-2'>
-                  <Image
-                    width={100}
-                    height={100}
-                    src={player.avatar || '/no-profile.webp'}
-                    alt={player.name}
-                    className='w-20 h-20 rounded-full object-cover border'
-                  />
-
-                  {player.organizationId && orgMap[player.organizationId] ? (
-                    <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
-                      <BadgeCheck className='w-4 h-4 text-green-500' />
-                      Registered to {orgMap[player.organizationId]}
-                    </span>
-                  ) : (
-                    <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500'>
-                      <Ban className='w-4 h-4 text-gray-400' />
-                      Not registered
-                    </span>
-                  )}
-                  <div className='font-bold flex items-center gap-2'>
-                    {player.name} {player.lastName}
-                  </div>
-                  <div className='text-gray-600 text-sm'>Age: {player.age}</div>
-                  <div className='text-gray-500 text-xs'>
-                    Goals: {player.totalGoals ?? 0}
-                  </div>
-                </CardContent>
-              </Card>
+                <Card className='p-4 flex flex-col items-center gap-2'>
+                  <CardContent className='flex flex-col items-center gap-2'>
+                    <Image
+                      width={100}
+                      height={100}
+                      src={player.avatar || '/no-profile.webp'}
+                      alt={player.name}
+                      className='w-20 h-20 rounded-full object-cover border'
+                    />
+                    {player.organizationId && orgMap[player.organizationId] ? (
+                      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+                        <BadgeCheck className='w-4 h-4 text-green-500' />
+                        Registered to {orgMap[player.organizationId]}
+                      </span>
+                    ) : (
+                      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500'>
+                        <Ban className='w-4 h-4 text-gray-400' />
+                        Not registered
+                      </span>
+                    )}
+                    <div className='font-bold flex items-center gap-2'>
+                      {player.name} {player.lastName}
+                    </div>
+                    <div className='text-gray-600 text-sm'>
+                      Age: {player.age}
+                    </div>
+                    <div className='text-gray-500 text-xs'>
+                      Goals: {player.totalGoals ?? 0}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

@@ -55,6 +55,7 @@ export const playersTable = pgTable('players', {
   totalPassesCompleted: integer('total_passes_completed').default(0).notNull(),
   totalDuelsWon: integer('total_duels_won').default(0).notNull(),
   totalDuelsLost: integer('total_duels_lost').default(0).notNull(),
+  jerseyNumber: integer('jersey_number'), // Nuevo campo para el dorsal
 })
 
 // Tabla de partidos
@@ -63,6 +64,8 @@ export const matchesTable = pgTable('matches', {
   date: timestamp('date', { withTimezone: true }).notNull(),
   team1Id: uuid('team1_id').notNull(),
   team2Id: uuid('team2_id').notNull(),
+  team1Goals: integer('team1_goals').default(0).notNull(), // Goles equipo 1
+  team2Goals: integer('team2_goals').default(0).notNull(), // Goles equipo 2
   // Puedes agregar más campos según necesidad
 })
 

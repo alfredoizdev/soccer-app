@@ -7,6 +7,7 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  getFilteredRowModel,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -38,6 +39,7 @@ export default function DataTablePlayer({
     data: players,
     columns: getPlayerColumns(mode) as ColumnDef<PlayerWithUser, unknown>[],
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   })
 
   const handleRowClick = (player: PlayerWithUser) => {
@@ -47,6 +49,17 @@ export default function DataTablePlayer({
 
   return (
     <div className='overflow-x-auto max-w-[410px] sm:max-w-full'>
+      <div className='flex justify-start mb-4'>
+        <input
+          type='text'
+          placeholder='Search'
+          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+          onChange={(event) =>
+            table.getColumn('name')?.setFilterValue(event.target.value)
+          }
+          className='w-full max-w-[200px] rounded-md border p-2'
+        />
+      </div>
       <div className='rounded-md border'>
         <Table className='min-w-[500px]'>
           <TableHeader>
@@ -106,6 +119,7 @@ export default function DataTablePlayer({
                 ...selectedPlayer,
                 avatar: selectedPlayer.avatar ?? undefined,
                 user: selectedPlayer.user as UserType,
+                organizationId: selectedPlayer.organizationId ?? undefined,
               }
             : undefined
         }

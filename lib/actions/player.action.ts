@@ -1,11 +1,12 @@
 'use server'
 
 import { dbPromise } from '@/database/drizzle'
-import { playersTable, usersTable } from '@/database/schema'
+import { playersTable, usersTable, playerStatsTable } from '@/database/schema'
 import { eq, isNull, desc, and } from 'drizzle-orm'
 import { PlayerType } from '@/types/PlayerType'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { revalidatePath } from 'next/cache'
+import { sql } from 'drizzle-orm'
 
 export const createPlayerAction = async (
   player: Omit<PlayerType, 'id' | 'createdAt' | 'updatedAt'> & {
@@ -346,5 +347,33 @@ export const getLatestPlayersAction = async (limit = 3) => {
   } catch (error) {
     console.error('Error fetching latest players:', error)
     return { data: null, error: 'Failed to fetch latest players' }
+  }
+}
+
+export async function getPlayerStatsByPlayerId(playerId: string) {
+  try {
+    const db = await dbPromise
+    const stats = await db
+      .select({
+        goals: sql`SUM(${playerStatsTable.goals})`.as('goals'),
+        assists: sql`SUM(${playerStatsTable.assists})`.as('assists'),
+        passesCompleted: sql`SUM(${playerStatsTable.passesCompleted})`.as(
+          'passesCompleted'
+        ),
+        duelsWon: sql`SUM(${playerStatsTable.duelsWon})`.as('duelsWon'),
+        duelsLost: sql`SUM(${playerStatsTable.duelsLost})`.as('duelsLost'),
+        minutesPlayed: sql`SUM(${playerStatsTable.minutesPlayed})`.as(
+          'minutesPlayed'
+        ),
+      })
+      .from(playerStatsTable)
+      .where(eq(playerStatsTable.playerId, playerId))
+
+    return { success: true, data: stats[0] }
+  } catch (error) {
+    return {
+      success: false,
+      error: (error as { message?: string }).message || 'Unknown error',
+    }
   }
 }

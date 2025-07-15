@@ -10,15 +10,12 @@ type PlayerWithUser = PlayerType & {
   user?: Pick<UserType, 'name' | 'lastName'>
 }
 
-type RawPlayerWithUser = PlayerType & {
-  user: (UserType & { avatar?: string | null }) | null
-}
-
 const PlayersPage = async () => {
   const players = await getPlayersWithUserAction()
   // Map user to only include name and lastName, and handle null
   const mappedPlayers: PlayerWithUser[] = (players.data ?? []).map(
-    (player: RawPlayerWithUser) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (player: any) => ({
       ...player,
       user: player.user
         ? { name: player.user.name, lastName: player.user.lastName }
@@ -27,7 +24,7 @@ const PlayersPage = async () => {
   )
 
   return (
-    <div className='p-6'>
+    <div className='w-full p-2'>
       <div className='flex items-center justify-between mb-4'>
         <h1 className='text-2xl font-bold'>Players</h1>
         <Link
