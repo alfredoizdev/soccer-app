@@ -7,6 +7,7 @@ export type UserType = {
   role: 'admin' | 'user'
   status: 'active' | 'inactive'
   avatar?: string | null
+  organizationId?: string
 }
 
 export type OrganizationType = {

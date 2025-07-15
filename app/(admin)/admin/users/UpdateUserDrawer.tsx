@@ -33,6 +33,7 @@ export function UpdateUserDrawer({ open, setOpen, user, onSuccess }: Props) {
             user={user}
             action='update'
             onSuccess={onSuccess || (() => setOpen(false))}
+            redirectPath={undefined}
           />
           <DrawerFooter>
             <DrawerClose asChild>

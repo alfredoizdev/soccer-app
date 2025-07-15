@@ -6,7 +6,7 @@ import React from 'react'
 export default function UsersPage() {
   return (
     <div className='container mx-auto py-10'>
-      <div className='flex justify-between items-center'>
+      <div className='flex justify-between items-center p-4'>
         <h1 className='text-2xl font-bold'>Users</h1>
         <Link
           href='/admin/users/new'
@@ -16,7 +16,9 @@ export default function UsersPage() {
           Add User
         </Link>
       </div>
-      <UserTable />
+      <div className='p-2'>
+        <UserTable />
+      </div>
     </div>
   )
 }

@@ -1,9 +1,10 @@
 'use server'
 
 import { dbPromise } from '@/database/drizzle'
-import { childrenTable, InsertUser, usersTable } from '@/database/schema'
+import { playersTable, InsertUser, usersTable } from '@/database/schema'
 import { eq, desc } from 'drizzle-orm'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
+import { revalidatePath } from 'next/cache'
 
 export const createUserAction = async (
   user: InsertUser & { avatar?: string | File | Buffer }
@@ -72,46 +73,47 @@ export const getUsersAction = async () => {
   }
 }
 
-export const getUsersWithChildren = async () => {
+export const getUsersWithPlayers = async () => {
   try {
     const db = await dbPromise
     const result = await db
       .select({
         user: usersTable,
-        child: childrenTable,
+        player: playersTable,
       })
       .from(usersTable)
-      .leftJoin(childrenTable, eq(usersTable.id, childrenTable.userId))
+      .leftJoin(playersTable, eq(usersTable.id, playersTable.userId))
 
     const usersMap = new Map()
     for (const row of result) {
       const userId = row.user.id
       if (!usersMap.has(userId)) {
-        usersMap.set(userId, { ...row.user, children: [] })
+        usersMap.set(userId, { ...row.user, players: [] })
       }
-      if (row.child && row.child.id) {
-        usersMap.get(userId).children.push(row.child)
+      if (row.player && row.player.id) {
+        usersMap.get(userId).players.push(row.player)
       }
     }
     return { data: Array.from(usersMap.values()), error: null }
   } catch (error) {
-    console.error('Error fetching users with children:', error)
-    return { data: null, error: 'Failed to fetch users with children' }
+    console.error('Error fetching users with players:', error)
+    return { data: null, error: 'Failed to fetch users with players' }
   }
 }
 
-export const getChildrenByUserAction = async (userId: string) => {
+export const getPlayersByUserAction = async (userId: string) => {
   const db = await dbPromise
-  const children = await db
+  const players = await db
     .select()
-    .from(childrenTable)
-    .where(eq(childrenTable.userId, userId))
-  return children
+    .from(playersTable)
+    .where(eq(playersTable.userId, userId))
+  return players
 }
 
 export const updateUserAction = async (
   id: string,
-  data: Partial<InsertUser> & { avatar?: string | File | Buffer }
+  data: Partial<InsertUser> & { avatar?: string | File | Buffer },
+  revalidatePathArg?: string
 ) => {
   try {
     if (!id) {
@@ -164,6 +166,9 @@ export const updateUserAction = async (
         avatar: avatarUrl,
       })
       .where(eq(usersTable.id, id))
+    if (revalidatePathArg) {
+      revalidatePath(revalidatePathArg)
+    }
     return { success: true, error: null }
   } catch (error) {
     console.error('Error updating user:', error)

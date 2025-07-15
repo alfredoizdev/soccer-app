@@ -123,9 +123,10 @@ export const userAuth = async () => {
     if (!token) return null
     const decoded = jwt.verify(token, process.env.JWT_SECRET!)
     // Solo retornamos los datos relevantes del usuario
-    const { id, name, lastName, email, role, avatar } = decoded as UserType
+    const { id, name, lastName, email, role, avatar, organizationId } =
+      decoded as UserType & { organizationId?: string }
 
-    return { id, name, lastName, email, role, avatar }
+    return { id, name, lastName, email, role, avatar, organizationId }
   } catch (error) {
     console.error('Error verifying user:', error)
     return null

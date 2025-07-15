@@ -34,7 +34,7 @@ export const organizationsTable = pgTable('organizations', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
-export const childrenTable = pgTable('children', {
+export const playersTable = pgTable('players', {
   id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
   name: text('name').notNull(),
   lastName: text('last_name').notNull(),
@@ -71,7 +71,7 @@ export const playerStatsTable = pgTable('player_stats', {
   id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
   playerId: uuid('player_id')
     .notNull()
-    .references(() => childrenTable.id, { onDelete: 'cascade' }),
+    .references(() => playersTable.id, { onDelete: 'cascade' }),
   matchId: uuid('match_id')
     .notNull()
     .references(() => matchesTable.id, { onDelete: 'cascade' }),
@@ -90,5 +90,5 @@ export type SelectUser = typeof usersTable.$inferSelect
 // export type InsertPost = typeof postsTable.$inferInsert;
 // export type SelectPost = typeof postsTable.$inferSelect;
 
-export type InsertChild = typeof childrenTable.$inferInsert
-export type SelectChild = typeof childrenTable.$inferSelect
+export type InsertPlayer = typeof playersTable.$inferInsert
+export type SelectPlayer = typeof playersTable.$inferSelect

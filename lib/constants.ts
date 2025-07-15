@@ -20,3 +20,5 @@ export const MENUS_DASHBOARD = [
   { value: 'users', label: 'Users', href: '/admin/users', icon: 'User' },
   { value: 'players', label: 'Players', href: '/admin/players', icon: 'Users' },
 ]
+
+export const RANGE_AGE = Array.from({ length: 41 }, (_, i) => i + 5)

@@ -11,6 +11,8 @@ import {
   XCircle,
 } from 'lucide-react'
 import { formatDate } from '@/lib/utils/formatDate'
+import { getOrganizationByUserId } from '@/lib/actions/organization.action'
+import EditUserDrawerButton from '@/app/(admin)/admin/users/EditUserDrawerButton'
 
 interface UserDetailPageProps {
   params: Promise<{ id: string }>
@@ -38,9 +40,24 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
       <UserCircle className='w-5 h-5 inline-block mr-1 text-gray-500' />
     )
 
+  // Fetch team (organization) info
+  const { data: team } = await getOrganizationByUserId(user.id)
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-blue-50 to-white py-12 px-4'>
       <div className='max-w-xl mx-3 sm:mx-auto bg-white rounded-2xl shadow-2xl p-8 relative mt-10'>
+        <EditUserDrawerButton
+          user={{
+            id: user.id,
+            name: user.name,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            avatar: user.avatar || '',
+            password: '',
+          }}
+        />
         <div className='flex flex-col items-center mb-6'>
           <div className='relative w-24 h-24 mb-3 rounded-full'>
             <Image
@@ -82,10 +99,23 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             </span>
           </div>
           <div className='bg-blue-50 rounded-lg p-4 flex flex-col items-center col-span-2'>
-            <span className='font-medium text-gray-600'>Organization</span>
-            <span className='mt-1 font-semibold text-gray-800'>
-              {user.organizationId || 'N/A'}
-            </span>
+            <span className='font-medium text-gray-600'>Team</span>
+            {team ? (
+              <div className='flex flex-col items-center mt-1'>
+                <Image
+                  src={team.avatar || '/default-avatar.png'}
+                  alt={team.name}
+                  width={48}
+                  height={48}
+                  className='rounded-full object-cover border-2 border-blue-200 shadow h-12 w-12 mb-1'
+                />
+                <span className='font-semibold text-gray-800'>{team.name}</span>
+              </div>
+            ) : (
+              <span className='mt-1 font-semibold text-gray-800'>
+                This user does not belong to any team yet.
+              </span>
+            )}
           </div>
         </div>
         <div className='flex justify-between text-sm text-gray-400 border-t pt-4'>

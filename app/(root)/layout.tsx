@@ -15,7 +15,9 @@ export default async function RootLayout({
   return (
     <>
       <Navbar />
-      <main className='flex-1 flex flex-col'>{children}</main>
+      <main className='flex-1 flex flex-col max-w-6xl mx-auto px-2 sm:px-5 py-5'>
+        {children}
+      </main>
       <Footer />
     </>
   )

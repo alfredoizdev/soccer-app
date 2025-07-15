@@ -4,6 +4,7 @@ import { organizationsTable } from '@/database/schema'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { OrganizationType } from '@/types/UserType'
 import { eq, desc } from 'drizzle-orm'
+import { usersTable } from '@/database/schema'
 
 export const getOrganizationsAction = async () => {
   try {
@@ -178,5 +179,100 @@ export const getLatestOrganizationsAction = async (limit = 3) => {
   } catch (error) {
     console.error('Error fetching latest organizations:', error)
     return { data: null, error: 'Failed to fetch latest organizations' }
+  }
+}
+
+export const joinOrganizationAction = async (
+  userId: string,
+  organizationId: string
+) => {
+  try {
+    if (!userId || !organizationId) {
+      return {
+        success: false,
+        error: 'User ID and Organization ID are required',
+      }
+    }
+    const db = await dbPromise
+    // 1. Asignar el club al usuario
+    await db
+      .update(usersTable)
+      .set({ organizationId })
+      .where(eq(usersTable.id, userId))
+    // 2. Asignar el club a todos los jugadores de ese usuario
+    const { playersTable } = await import('@/database/schema')
+    await db
+      .update(playersTable)
+      .set({ organizationId })
+      .where(eq(playersTable.userId, userId))
+    return { success: true, error: null }
+  } catch (error) {
+    console.error('Error joining organization:', error)
+    return { success: false, error: 'Failed to join organization' }
+  }
+}
+
+export const unregisterOrganizationAction = async (userId: string) => {
+  try {
+    if (!userId) {
+      return { success: false, error: 'User ID is required' }
+    }
+    const db = await dbPromise
+    // 1. Quitar el club al usuario
+    await db
+      .update(usersTable)
+      .set({ organizationId: null })
+      .where(eq(usersTable.id, userId))
+    // 2. Quitar el club a todos los jugadores de ese usuario
+    const { playersTable } = await import('@/database/schema')
+    await db
+      .update(playersTable)
+      .set({ organizationId: null })
+      .where(eq(playersTable.userId, userId))
+    return { success: true, error: null }
+  } catch (error) {
+    console.error('Error unregistering organization:', error)
+    return { success: false, error: 'Failed to unregister organization' }
+  }
+}
+
+export type GetOrganizationByUserIdResult = {
+  data: OrganizationType | null
+  error: string | null
+}
+
+export const getOrganizationByUserId = async (
+  userId: string
+): Promise<GetOrganizationByUserIdResult> => {
+  try {
+    const db = await dbPromise
+    // 1. Buscar el usuario
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+    if (!user || !user.organizationId) {
+      return { data: null, error: 'User not in any organization' }
+    }
+    // 2. Buscar la organización
+    const [org] = await db
+      .select()
+      .from(organizationsTable)
+      .where(eq(organizationsTable.id, user.organizationId))
+    if (!org) {
+      return { data: null, error: 'Organization not found' }
+    }
+    // Mapear a OrganizationType, asegurando que los campos sean string o undefined
+    const organization: OrganizationType = {
+      id: org.id,
+      name: org.name,
+      description: org.description ?? '',
+      avatar: org.avatar ?? '',
+      createdAt: org.createdAt ?? undefined,
+    }
+    return { data: organization, error: null }
+  } catch (error) {
+    console.error('Error fetching organization by user:', error)
+    return { data: null, error: 'Failed to fetch organization by user' }
   }
 }

@@ -24,12 +24,14 @@ type Props = {
   user?: UserFormInputs & { id?: string }
   action?: 'create' | 'update'
   onSuccess?: () => void
+  redirectPath?: string
 }
 
 export default function UserForm({
   user,
   action = 'create',
   onSuccess,
+  redirectPath,
 }: Props) {
   const defaultValues = {
     name: user?.name ?? '',
@@ -60,7 +62,13 @@ export default function UserForm({
       const result =
         action === 'create'
           ? await createUserAction(data)
-          : await updateUserAction(user?.id ?? '', data)
+          : await updateUserAction(
+              user?.id ?? '',
+              data,
+              typeof window !== 'undefined'
+                ? window.location.pathname
+                : undefined
+            )
       return {
         ...result,
         error: result.error ?? undefined,
@@ -68,7 +76,7 @@ export default function UserForm({
       }
     },
     defaultValues,
-    redirectPath: '/admin/users',
+    redirectPath,
   })
 
   // Llama onSuccess si el submit fue exitoso

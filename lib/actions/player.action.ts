@@ -1,8 +1,8 @@
 'use server'
 
 import { dbPromise } from '@/database/drizzle'
-import { childrenTable, usersTable } from '@/database/schema'
-import { eq, isNull, desc } from 'drizzle-orm'
+import { playersTable, usersTable } from '@/database/schema'
+import { eq, isNull, desc, and } from 'drizzle-orm'
 import { PlayerType } from '@/types/PlayerType'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { revalidatePath } from 'next/cache'
@@ -13,6 +13,31 @@ export const createPlayerAction = async (
   }
 ) => {
   try {
+    const db = await dbPromise
+    // Validación: no permitir crear player sin club
+    if (!player.organizationId) {
+      return {
+        data: null,
+        error: 'You must join a club before adding a player.',
+      }
+    }
+    // Validación de duplicados: mismo nombre, apellido y club
+    const existing = await db
+      .select()
+      .from(playersTable)
+      .where(
+        and(
+          eq(playersTable.name, player.name),
+          eq(playersTable.lastName, player.lastName),
+          eq(playersTable.organizationId, player.organizationId)
+        )
+      )
+    if (existing.length > 0) {
+      return {
+        data: null,
+        error: 'A player with this name already exists in your club.',
+      }
+    }
     let avatarUrl = ''
     if (player.avatar && typeof player.avatar !== 'string') {
       let buffer: Buffer
@@ -33,9 +58,8 @@ export const createPlayerAction = async (
     } else if (typeof player.avatar === 'string') {
       avatarUrl = player.avatar
     }
-    const db = await dbPromise
     const [newPlayer] = await db
-      .insert(childrenTable)
+      .insert(playersTable)
       .values({
         ...player,
         avatar: avatarUrl,
@@ -44,10 +68,69 @@ export const createPlayerAction = async (
     return { data: newPlayer, error: null }
   } catch (error) {
     console.error('Error creating player:', error)
-    if (error instanceof Error) {
-      console.error('Stack:', error.stack)
-    }
     return { data: null, error: 'Failed to create player' }
+  }
+}
+
+export const adminCreatePlayerAction = async (
+  player: Omit<PlayerType, 'id' | 'createdAt' | 'updatedAt'> & {
+    avatar?: string | File | Buffer
+  }
+) => {
+  try {
+    const db = await dbPromise
+    // No validar organizationId, permitir nulo
+    // Validación de duplicados: mismo nombre, apellido y club (si club existe)
+    let existing = []
+    if (player.organizationId) {
+      existing = await db
+        .select()
+        .from(playersTable)
+        .where(
+          and(
+            eq(playersTable.name, player.name),
+            eq(playersTable.lastName, player.lastName),
+            eq(playersTable.organizationId, player.organizationId)
+          )
+        )
+    }
+    if (existing.length > 0) {
+      return {
+        data: null,
+        error: 'A player with this name already exists in this club.',
+      }
+    }
+    let avatarUrl = ''
+    if (player.avatar && typeof player.avatar !== 'string') {
+      let buffer: Buffer
+      if (Buffer.isBuffer(player.avatar)) {
+        buffer = player.avatar
+      } else if (typeof (player.avatar as File).arrayBuffer === 'function') {
+        const arrayBuffer = await (player.avatar as File).arrayBuffer()
+        buffer = Buffer.from(arrayBuffer)
+      } else {
+        throw new Error('Unsupported image format')
+      }
+      avatarUrl = await cloudinaryHandles.uploadImageToCloudinary(
+        buffer,
+        `soccer-app/players/${
+          player.name?.toLowerCase().replace(/\s+/g, '-') || 'player'
+        }`
+      )
+    } else if (typeof player.avatar === 'string') {
+      avatarUrl = player.avatar
+    }
+    const [newPlayer] = await db
+      .insert(playersTable)
+      .values({
+        ...player,
+        avatar: avatarUrl,
+      })
+      .returning()
+    return { data: newPlayer, error: null }
+  } catch (error) {
+    console.error('Error creating player (admin):', error)
+    return { data: null, error: 'Failed to create player (admin)' }
   }
 }
 
@@ -56,8 +139,8 @@ export const getPlayerAction = async (id: string) => {
     const db = await dbPromise
     const player = await db
       .select()
-      .from(childrenTable)
-      .where(eq(childrenTable.id, id))
+      .from(playersTable)
+      .where(eq(playersTable.id, id))
     return { data: player, error: null }
   } catch (error) {
     console.error('Error fetching player:', error)
@@ -68,7 +151,7 @@ export const getPlayerAction = async (id: string) => {
 export const getPlayersAction = async () => {
   try {
     const db = await dbPromise
-    const players = await db.select().from(childrenTable)
+    const players = await db.select().from(playersTable)
     return { data: players, error: null }
   } catch (error) {
     console.error('Error fetching players:', error)
@@ -81,11 +164,11 @@ export const getPlayersWithUserAction = async () => {
     const db = await dbPromise
     const result = await db
       .select({
-        player: childrenTable,
+        player: playersTable,
         user: usersTable,
       })
-      .from(childrenTable)
-      .leftJoin(usersTable, eq(childrenTable.userId, usersTable.id))
+      .from(playersTable)
+      .leftJoin(usersTable, eq(playersTable.userId, usersTable.id))
 
     // Agrupar por player
     const players = result.map((row) => ({
@@ -108,8 +191,8 @@ export const updatePlayerAction = async (
     // Obtener el jugador actual para saber la URL vieja
     const [player] = await db
       .select()
-      .from(childrenTable)
-      .where(eq(childrenTable.id, id))
+      .from(playersTable)
+      .where(eq(playersTable.id, id))
 
     let avatarUrl = undefined
     if (data.avatar && typeof data.avatar !== 'string') {
@@ -149,10 +232,7 @@ export const updatePlayerAction = async (
     if (avatarUrl !== undefined) {
       updateData.avatar = avatarUrl
     }
-    await db
-      .update(childrenTable)
-      .set(updateData)
-      .where(eq(childrenTable.id, id))
+    await db.update(playersTable).set(updateData).where(eq(playersTable.id, id))
     return { success: true, error: null }
   } catch (error) {
     console.error('Error updating player:', error)
@@ -163,7 +243,7 @@ export const updatePlayerAction = async (
 export const deletePlayerAction = async (id: string) => {
   try {
     const db = await dbPromise
-    await db.delete(childrenTable).where(eq(childrenTable.id, id))
+    await db.delete(playersTable).where(eq(playersTable.id, id))
     revalidatePath('/admin/players', 'page')
     return { success: true, error: null }
   } catch (error) {
@@ -179,8 +259,8 @@ export const getPlayersByOrganizationAction = async (
     const db = await dbPromise
     const players = await db
       .select()
-      .from(childrenTable)
-      .where(eq(childrenTable.organizationId, organizationId))
+      .from(playersTable)
+      .where(eq(playersTable.organizationId, organizationId))
     return { data: players, error: null }
   } catch (error) {
     console.error('Error fetching players by organization:', error)
@@ -195,9 +275,9 @@ export const addPlayerToOrganizationAction = async (
   try {
     const db = await dbPromise
     await db
-      .update(childrenTable)
+      .update(playersTable)
       .set({ organizationId })
-      .where(eq(childrenTable.id, playerId))
+      .where(eq(playersTable.id, playerId))
     revalidatePath(`/admin/teams/${organizationId}`, 'page')
     return { success: true, error: null }
   } catch (error) {
@@ -213,9 +293,9 @@ export const removePlayerFromOrganizationAction = async (
   try {
     const db = await dbPromise
     await db
-      .update(childrenTable)
+      .update(playersTable)
       .set({ organizationId: null })
-      .where(eq(childrenTable.id, playerId))
+      .where(eq(playersTable.id, playerId))
     revalidatePath(`/admin/teams/${organizationId}`, 'page')
     return { success: true, error: null, organizationId }
   } catch (error) {
@@ -232,8 +312,8 @@ export const getAvailablePlayersForOrganization = async () => {
     const db = await dbPromise
     const players = await db
       .select()
-      .from(childrenTable)
-      .where(isNull(childrenTable.organizationId))
+      .from(playersTable)
+      .where(isNull(playersTable.organizationId))
     return { data: players, error: null }
   } catch (error) {
     console.error('Error fetching available players:', error)
@@ -245,7 +325,7 @@ export const getAvailablePlayersForOrganization = async () => {
 export const getPlayersCountAction = async () => {
   try {
     const db = await dbPromise
-    const result = await db.select().from(childrenTable)
+    const result = await db.select().from(playersTable)
     return { data: result.length, error: null }
   } catch (error) {
     console.error('Error counting players:', error)
@@ -259,8 +339,8 @@ export const getLatestPlayersAction = async (limit = 3) => {
     const db = await dbPromise
     const players = await db
       .select()
-      .from(childrenTable)
-      .orderBy(desc(childrenTable.createdAt))
+      .from(playersTable)
+      .orderBy(desc(playersTable.createdAt))
       .limit(limit)
     return { data: players, error: null }
   } catch (error) {

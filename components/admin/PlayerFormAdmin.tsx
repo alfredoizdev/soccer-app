@@ -6,45 +6,46 @@ import useSubmitForm from '@/hooks/useSubmitForm'
 import ImageInput from '@/components/ui/ImageInput'
 import React from 'react'
 import {
-  createPlayerAction,
   updatePlayerAction,
+  adminCreatePlayerAction,
 } from '@/lib/actions/player.action'
 import UserSearch from './UserSearch'
-import { UserType } from '@/types/UserType'
+import { UserType, OrganizationType } from '@/types/UserType'
 import { toast } from 'sonner'
+import ClubSearch from './ClubSearch'
 import { RANGE_AGE } from '@/lib/constants'
 
 // Tipos de entrada para el formulario de usuario
-export type PlayerFormInputs = {
+export type PlayerFormAdminInputs = {
   name: string
   lastName: string
   age: string | number
   avatar?: string
   userId: string
-  user: UserType
-  organizationId?: string // <-- Agregado
+  user?: UserType
+  organizationId?: string
 }
 
 type Props = {
-  player?: PlayerFormInputs & { id?: string }
+  player?: PlayerFormAdminInputs & { id?: string }
   action?: 'create' | 'update'
   onSuccess?: () => void
   fixedUserId?: string
   fixedUserName?: string
   fixedUserLastName?: string
-  fixedOrganizationId?: string // <-- Agregado
-  redirectPath?: string // <-- Agregado
+  redirectPath?: string
+  clubs: OrganizationType[] // <-- Nueva prop
 }
 
-export default function PlayerForm({
+export default function PlayerFormAdmin({
   player,
   action = 'create',
   onSuccess,
   fixedUserId,
   fixedUserName,
   fixedUserLastName,
-  fixedOrganizationId, // <-- Agregado
-  redirectPath, // <-- Agregado
+  redirectPath,
+  clubs,
 }: Props) {
   const defaultValues = {
     name: player?.name ?? '',
@@ -52,7 +53,7 @@ export default function PlayerForm({
     avatar: player?.avatar ?? '',
     age: player?.age?.toString() ?? '',
     userId: fixedUserId ?? player?.userId ?? '',
-    ...(fixedOrganizationId ? { organizationId: fixedOrganizationId } : {}), // <-- Solo si existe
+    organizationId: player?.organizationId ?? '',
   } as const
 
   const {
@@ -66,17 +67,20 @@ export default function PlayerForm({
     imagePreview,
     actionResult,
     setValue,
-  } = useSubmitForm<PlayerFormInputs>({
+  } = useSubmitForm<PlayerFormAdminInputs>({
     actionFn: async (data) => {
-      // Si no hay nueva imagen y hay una imagen anterior, usa la anterior
       if ((!data.avatar || data.avatar === '') && player?.avatar) {
         data.avatar = player.avatar
+      }
+      // Si organizationId es string vacío, quitarlo
+      if (data.organizationId === '') {
+        delete data.organizationId
       }
       // Convertir age a number antes de enviar al backend
       const dataToSend = { ...data, age: Number(data.age) }
       const result =
         action === 'create'
-          ? await createPlayerAction(dataToSend)
+          ? await adminCreatePlayerAction(dataToSend)
           : await updatePlayerAction(player?.id ?? '', dataToSend)
       return {
         ...result,
@@ -85,10 +89,14 @@ export default function PlayerForm({
       }
     },
     defaultValues,
-    redirectPath: redirectPath ?? '/admin/players', // <-- Dinámico
+    redirectPath: redirectPath ?? '/admin/players',
   })
 
-  // Llama onSuccess si el submit fue exitoso
+  const [selectedClub, setSelectedClub] =
+    React.useState<OrganizationType | null>(
+      clubs.find((c) => c.id === (player?.organizationId ?? '')) || null
+    )
+
   React.useEffect(() => {
     if (actionResult?.success && onSuccess) {
       onSuccess()
@@ -157,7 +165,7 @@ export default function PlayerForm({
         </label>
         {fixedUserId ? (
           <p className='border-2 border-gray-300 rounded-md p-2 w-full bg-gray-50'>
-            You {fixedUserName} {fixedUserLastName}
+            {fixedUserName} {fixedUserLastName}
           </p>
         ) : action === 'create' ? (
           <UserSearch
@@ -167,7 +175,7 @@ export default function PlayerForm({
           />
         ) : (
           <p className='border-2 border-gray-300 rounded-md p-2 w-full'>
-            {player?.user.name} {player?.user.lastName}
+            {player?.user?.name} {player?.user?.lastName}
           </p>
         )}
       </div>
@@ -175,15 +183,40 @@ export default function PlayerForm({
         type='hidden'
         {...register('userId', { required: 'The user is required' })}
       />
-      {/* Campo oculto para organizationId solo si existe */}
-      {fixedOrganizationId && (
-        <input
-          type='hidden'
-          {...register('organizationId', {
-            required: 'The organization is required',
-          })}
+      {/* Permitir al admin asignar cualquier club visualmente */}
+      <div>
+        <label
+          htmlFor='organizationId'
+          className='text-sm font-medium mb-2 block'
+        >
+          Club (opcional)
+        </label>
+        <ClubSearch
+          clubs={clubs}
+          onSelect={(club) => {
+            setSelectedClub(club)
+            setValue('organizationId', club.id)
+          }}
+          selectedClubId={selectedClub?.id}
         />
-      )}
+        {selectedClub && (
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            className='mt-2 text-xs bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-gray-200'
+            onClick={() => {
+              setSelectedClub(null)
+              setValue('organizationId', '')
+            }}
+          >
+            Remove club selection
+          </Button>
+        )}
+        {errors?.organizationId && (
+          <p className='text-red-500'>{errors.organizationId.message}</p>
+        )}
+      </div>
       <Button type='submit' className='w-full' disabled={isSubmitting}>
         {isSubmitting
           ? action === 'create'
