@@ -180,8 +180,8 @@ export default async function PlayerDetailPage({
         </div>
         {lastMatch ? (
           <PlayerMatchCard
-            team1={team1}
-            team2={team2}
+            team1={{ ...team1, goals: lastMatch.match.team1Goals }}
+            team2={{ ...team2, goals: lastMatch.match.team2Goals }}
             stats={lastMatch.stats}
             date={lastMatch.match.date}
           />

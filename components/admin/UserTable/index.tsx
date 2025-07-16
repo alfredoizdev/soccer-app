@@ -1,14 +1,12 @@
-import { getUsersAction } from '@/lib/actions/users.action'
 import { columns } from './columns'
 import DataTable from './DataTable'
+import { UserType } from '@/types/UserType'
 
-export default async function UserTable() {
-  const { data, error } = await getUsersAction()
+interface UserTableProps {
+  data: UserType[]
+}
 
-  if (error) {
-    return <div>Error: {error}</div>
-  }
-
+export default function UserTable({ data }: UserTableProps) {
   return (
     <div className='mx-auto py-1'>
       <DataTable columns={columns} data={data ? data : []} />

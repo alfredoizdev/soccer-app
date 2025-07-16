@@ -2,7 +2,7 @@
 
 import { dbPromise } from '@/database/drizzle'
 import { playersTable, InsertUser, usersTable } from '@/database/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, sql } from 'drizzle-orm'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { revalidatePath } from 'next/cache'
 
@@ -205,5 +205,29 @@ export const getLatestUsersAction = async (limit = 3) => {
   } catch (error) {
     console.error('Error fetching latest users:', error)
     return { data: null, error: 'Failed to fetch latest users' }
+  }
+}
+
+export const getUsersPaginatedAction = async (
+  page: number = 1,
+  pageSize: number = 10
+) => {
+  try {
+    const db = await dbPromise
+    const offset = (page - 1) * pageSize
+    const [users, totalResult] = await Promise.all([
+      db.select().from(usersTable).limit(pageSize).offset(offset),
+      db.select({ count: sql<number>`count(*)` }).from(usersTable),
+    ])
+    // Normalizar avatar a string
+    const normalizedUsers = users.map((user) => ({
+      ...user,
+      avatar: user.avatar ?? '',
+    }))
+    const total = totalResult[0]?.count || 0
+    return { data: normalizedUsers, total, error: null }
+  } catch (error) {
+    console.error('Error fetching paginated users:', error)
+    return { data: null, total: 0, error: 'Failed to fetch paginated users' }
   }
 }

@@ -350,6 +350,25 @@ export const getLatestPlayersAction = async (limit = 3) => {
   }
 }
 
+export const getPlayersPaginatedAction = async (
+  page: number = 1,
+  pageSize: number = 10
+) => {
+  try {
+    const db = await dbPromise
+    const offset = (page - 1) * pageSize
+    const [players, totalResult] = await Promise.all([
+      db.select().from(playersTable).limit(pageSize).offset(offset),
+      db.select({ count: sql<number>`count(*)` }).from(playersTable),
+    ])
+    const total = totalResult[0]?.count || 0
+    return { data: players, total, error: null }
+  } catch (error) {
+    console.error('Error fetching paginated players:', error)
+    return { data: null, total: 0, error: 'Failed to fetch paginated players' }
+  }
+}
+
 export async function getPlayerStatsByPlayerId(playerId: string) {
   try {
     const db = await dbPromise
