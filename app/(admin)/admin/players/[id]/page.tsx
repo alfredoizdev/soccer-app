@@ -6,7 +6,6 @@ import { getOrganizationAction } from '@/lib/actions/organization.action'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import PlayerStatsChart from '@/components/admin/PlayerStatsChart'
 import { Button } from '@/components/ui/button'
 import {
   getPlayerMatchesWithStats,
@@ -14,6 +13,7 @@ import {
 } from '@/lib/actions/matches.action'
 import PlayerMatchCard from '@/components/members/PlayerMatchCard'
 import PlayerMatchesDrawer from '@/components/members/PlayerMatchesDrawer'
+import PlayerStatsAdmin from '@/components/admin/PlayerStatsAdmin'
 
 interface PlayerDetailPageProps {
   params: Promise<{ id: string }>
@@ -26,6 +26,8 @@ type PlayerStats = {
   duelsWon: number
   duelsLost: number
   minutesPlayed: number
+  goalsAllowed?: number
+  goalsSaved?: number
 }
 
 export default async function PlayerDetailAdminPage({
@@ -57,6 +59,8 @@ export default async function PlayerDetailAdminPage({
     duelsWon: Number(statsRes?.data?.duelsWon ?? 0),
     duelsLost: Number(statsRes?.data?.duelsLost ?? 0),
     minutesPlayed: Number(statsRes?.data?.minutesPlayed ?? 0),
+    goalsAllowed: Number(statsRes?.data?.goalsAllowed ?? 0),
+    goalsSaved: Number(statsRes?.data?.goalsSaved ?? 0),
   }
 
   // Obtener los matches y stats del jugador
@@ -88,109 +92,84 @@ export default async function PlayerDetailAdminPage({
   }
 
   return (
-    <div className='max-w-xl mx-auto p-6'>
-      <div className='flex items-center gap-4 mb-6'>
+    <div className='flex flex-col md:flex-row gap-8 min-h-screen'>
+      {/* ASIDE: Info principal del jugador */}
+      <aside className='md:w-1/3 w-full flex flex-col items-center md:items-center justify-center bg-white rounded-lg p-6 md:min-h-screen'>
         <Image
           src={player.avatar || '/no-profile.webp'}
           alt={player.name}
           width={96}
           height={96}
-          className='rounded-full border object-cover w-24 h-24'
+          className='rounded-full border object-cover w-24 h-24 mb-4'
         />
-        <div>
-          <h1 className='text-3xl font-bold'>
-            {player.name} {player.lastName}
-          </h1>
-          {orgName && (
-            <div className='text-green-700 font-medium text-lg'>{orgName}</div>
-          )}
-          <div className='text-sm text-gray-500'># {player.jerseyNumber}</div>
-        </div>
-      </div>
-      <PlayerStatsChart
-        goals={stats.goals}
-        assists={stats.assists}
-        passesCompleted={stats.passesCompleted}
-        duelsWon={stats.duelsWon}
-        duelsLost={stats.duelsLost}
-      />
-      <div className='grid grid-cols-2 md:grid-cols-3 gap-4 mb-6'>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Age</div>
-          <div className='text-xl font-bold'>{player.age}</div>
-        </div>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Minutes Played</div>
-          <div className='text-xl font-bold'>{stats.minutesPlayed}</div>
-        </div>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Goals</div>
-          <div className='text-xl font-bold'>{stats.goals}</div>
-        </div>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Assists</div>
-          <div className='text-xl font-bold'>{stats.assists}</div>
-        </div>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Passes Completed</div>
-          <div className='text-xl font-bold'>{stats.passesCompleted}</div>
-        </div>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Duels Won</div>
-          <div className='text-xl font-bold'>{stats.duelsWon}</div>
-        </div>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Duels Lost</div>
-          <div className='text-xl font-bold'>{stats.duelsLost}</div>
-        </div>
-      </div>
-      {teammates.length > 0 && (
-        <div className='mb-6'>
-          <div className='text-sm font-semibold mb-2'>
-            Other players in this club:
+        <h1 className='text-3xl font-bold mb-1 text-center'>
+          {player.name} {player.lastName}
+        </h1>
+        {orgName && (
+          <div className='text-green-700 font-medium text-lg mb-1 text-center'>
+            {orgName}
           </div>
-          <div className='flex -space-x-3'>
-            {teammates.map((tm) => (
-              <Link key={tm.id} href={`/admin/players/${tm.id}`}>
-                <Image
-                  src={tm.avatar || '/no-profile.webp'}
-                  alt={tm.name}
-                  width={40}
-                  height={40}
-                  className='rounded-full border-2 border-white object-cover w-10 h-10 hover:scale-110 transition-transform'
-                  title={`${tm.name} ${tm.lastName}`}
-                />
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-      {/* Último partido y Drawer */}
-      <div className='mb-6'>
-        <div className='flex items-center justify-between mb-2'>
-          <div className='text-lg font-semibold'>Last Match</div>
-          {sortedMatches.length > 0 && (
-            <PlayerMatchesDrawer
-              matches={sortedMatches}
-              trigger={
-                <Button variant='default' size='sm'>
-                  See all
-                </Button>
-              }
-            />
-          )}
-        </div>
-        {lastMatch ? (
-          <PlayerMatchCard
-            team1={{ ...team1, goals: lastMatch.match.team1Goals }}
-            team2={{ ...team2, goals: lastMatch.match.team2Goals }}
-            stats={lastMatch.stats}
-            date={lastMatch.match.date}
-          />
-        ) : (
-          <div className='text-gray-500 text-sm'>No matches found.</div>
         )}
-      </div>
+        <div className='text-sm text-gray-500 mb-1 text-center'>
+          # {player.jerseyNumber}
+        </div>
+        <div className='text-sm text-gray-500 mb-2 text-center'>
+          {player.position?.toUpperCase() ?? ''}
+        </div>
+      </aside>
+
+      {/* CONTENIDO PRINCIPAL */}
+      <section className='md:w-2/3 w-full flex flex-col gap-6 max-w-xl p-0 md:p-6 px-2'>
+        <PlayerStatsAdmin position={player.position ?? ''} stats={stats} />
+
+        {teammates.length > 0 && (
+          <div className='mb-6'>
+            <div className='text-sm font-semibold mb-2'>
+              Other players in this club:
+            </div>
+            <div className='flex -space-x-3'>
+              {teammates.map((tm) => (
+                <Link key={tm.id} href={`/admin/players/${tm.id}`}>
+                  <Image
+                    src={tm.avatar || '/no-profile.webp'}
+                    alt={tm.name}
+                    width={40}
+                    height={40}
+                    className='rounded-full border-2 border-white object-cover w-10 h-10 hover:scale-110 transition-transform'
+                    title={`${tm.name} ${tm.lastName}`}
+                  />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* Último partido y Drawer */}
+        <div className='mb-6'>
+          <div className='flex items-center justify-between mb-2'>
+            <div className='text-lg font-semibold'>Last Match</div>
+            {sortedMatches.length > 0 && (
+              <PlayerMatchesDrawer
+                matches={sortedMatches}
+                trigger={
+                  <Button variant='default' size='sm'>
+                    See all
+                  </Button>
+                }
+              />
+            )}
+          </div>
+          {lastMatch ? (
+            <PlayerMatchCard
+              team1={{ ...team1, goals: lastMatch.match.team1Goals }}
+              team2={{ ...team2, goals: lastMatch.match.team2Goals }}
+              stats={lastMatch.stats}
+              date={lastMatch.match.date}
+            />
+          ) : (
+            <div className='text-gray-500 text-sm'>No matches found.</div>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

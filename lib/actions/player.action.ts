@@ -152,7 +152,10 @@ export const getPlayerAction = async (id: string) => {
 export const getPlayersAction = async () => {
   try {
     const db = await dbPromise
-    const players = await db.select().from(playersTable)
+    const players = await db
+      .select()
+      .from(playersTable)
+      .orderBy(desc(playersTable.updatedAt), desc(playersTable.createdAt))
     return { data: players, error: null }
   } catch (error) {
     console.error('Error fetching players:', error)
@@ -358,7 +361,12 @@ export const getPlayersPaginatedAction = async (
     const db = await dbPromise
     const offset = (page - 1) * pageSize
     const [players, totalResult] = await Promise.all([
-      db.select().from(playersTable).limit(pageSize).offset(offset),
+      db
+        .select()
+        .from(playersTable)
+        .orderBy(desc(playersTable.updatedAt), desc(playersTable.createdAt))
+        .limit(pageSize)
+        .offset(offset),
       db.select({ count: sql<number>`count(*)` }).from(playersTable),
     ])
     const total = totalResult[0]?.count || 0
@@ -384,6 +392,7 @@ export const getPlayersPaginatedWithUserAction = async (
       })
       .from(playersTable)
       .leftJoin(usersTable, eq(playersTable.userId, usersTable.id))
+      .orderBy(desc(playersTable.updatedAt), desc(playersTable.createdAt))
       .limit(pageSize)
       .offset(offset)
     // Mapear para devolver player + user
@@ -422,6 +431,10 @@ export async function getPlayerStatsByPlayerId(playerId: string) {
         minutesPlayed: sql`SUM(${playerStatsTable.minutesPlayed})`.as(
           'minutesPlayed'
         ),
+        goalsAllowed: sql`SUM(${playerStatsTable.goalsAllowed})`.as(
+          'goalsAllowed'
+        ),
+        goalsSaved: sql`SUM(${playerStatsTable.goalsSaved})`.as('goalsSaved'),
       })
       .from(playerStatsTable)
       .where(eq(playerStatsTable.playerId, playerId))

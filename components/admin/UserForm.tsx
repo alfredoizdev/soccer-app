@@ -76,7 +76,7 @@ export default function UserForm({
       }
     },
     defaultValues,
-    redirectPath,
+    redirectPath: redirectPath ?? '/admin/users?page=1&perPage=10',
   })
 
   // Llama onSuccess si el submit fue exitoso

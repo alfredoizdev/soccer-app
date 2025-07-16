@@ -5,6 +5,7 @@ import { playersTable, InsertUser, usersTable } from '@/database/schema'
 import { eq, desc, sql } from 'drizzle-orm'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { revalidatePath } from 'next/cache'
+import { UserType } from '@/types/UserType'
 
 export const createUserAction = async (
   user: InsertUser & { avatar?: string | File | Buffer }
@@ -59,7 +60,10 @@ export const getUserAction = async (id: string) => {
 export const getUsersAction = async () => {
   try {
     const db = await dbPromise
-    const users = await db.select().from(usersTable)
+    const users = await db
+      .select()
+      .from(usersTable)
+      .orderBy(desc(usersTable.updatedAt), desc(usersTable.createdAt))
     // Normalizar avatar a string
     const normalizedUsers = users.map((user) => ({
       ...user,
@@ -216,7 +220,12 @@ export const getUsersPaginatedAction = async (
     const db = await dbPromise
     const offset = (page - 1) * pageSize
     const [users, totalResult] = await Promise.all([
-      db.select().from(usersTable).limit(pageSize).offset(offset),
+      db
+        .select()
+        .from(usersTable)
+        .orderBy(desc(usersTable.updatedAt), desc(usersTable.createdAt))
+        .limit(pageSize)
+        .offset(offset),
       db.select({ count: sql<number>`count(*)` }).from(usersTable),
     ])
     // Normalizar avatar a string
@@ -229,5 +238,31 @@ export const getUsersPaginatedAction = async (
   } catch (error) {
     console.error('Error fetching paginated users:', error)
     return { data: null, total: 0, error: 'Failed to fetch paginated users' }
+  }
+}
+
+export const searchUsersAction = async (
+  query: string
+): Promise<{ data: UserType[]; error: string | null }> => {
+  try {
+    const db = await dbPromise
+    // Buscar por nombre o apellido, case-insensitive
+    const users = await db
+      .select()
+      .from(usersTable)
+      .where(
+        sql`LOWER(${usersTable.name}) LIKE LOWER('%' || ${query} || '%') OR LOWER(${usersTable.lastName}) LIKE LOWER('%' || ${query} || '%')`
+      )
+      .orderBy(desc(usersTable.updatedAt), desc(usersTable.createdAt))
+    // Normalizar avatar a string
+    const normalizedUsers = users.map((user) => ({
+      ...user,
+      avatar: user.avatar ?? '',
+      organizationId: user.organizationId ?? undefined,
+    }))
+    return { data: normalizedUsers, error: null }
+  } catch (error) {
+    console.error('Error searching users:', error)
+    return { data: [], error: 'Failed to search users' }
   }
 }

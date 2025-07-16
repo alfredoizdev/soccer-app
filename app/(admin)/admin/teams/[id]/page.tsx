@@ -43,13 +43,24 @@ export default async function TeamPage({
             <h1 className='text-2xl font-bold text-center'>
               {organizationData.name}
             </h1>
+            <p className='text-sm text-gray-500 text-center'>
+              {organizationData.description}
+            </p>
+            <div className='flex flex-col items-center gap-2 p-6 w-full max-w-xs mx-auto'>
+              <h1 className='text-2xl font-bold'>Players</h1>
+              <AddPlayerToTeam organizationId={organizationData.id} />
+              <p className='text-sm text-gray-500'>Add players to the team.</p>
+              <hr className='w-full' />
+              <p className='text-sm text-gray-500'>
+                {playersData.length} players
+              </p>
+            </div>
           </div>
         </div>
         {/* Players Table */}
         <div className='flex flex-col w-full sm:w-3/4 mt-8 sm:mt-0'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2'>
             <h1 className='text-2xl font-bold'>Players</h1>
-            <AddPlayerToTeam organizationId={organizationData.id} />
           </div>
           <DataTablePlayer
             players={playersData.map((player) => ({

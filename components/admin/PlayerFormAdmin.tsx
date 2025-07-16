@@ -23,7 +23,7 @@ export type PlayerFormAdminInputs = {
   avatar?: string
   userId: string
   user?: UserType
-  organizationId?: string
+  organizationId?: string | null
   position: string
 }
 
@@ -35,7 +35,7 @@ type Props = {
   fixedUserName?: string
   fixedUserLastName?: string
   redirectPath?: string
-  clubs: OrganizationType[] // <-- Nueva prop
+  clubs: OrganizationType[]
 }
 
 export default function PlayerFormAdmin({
@@ -74,9 +74,9 @@ export default function PlayerFormAdmin({
       if ((!data.avatar || data.avatar === '') && player?.avatar) {
         data.avatar = player.avatar
       }
-      // Si organizationId es string vacío, quitarlo
+      // Si organizationId es string vacío, ponerlo en null
       if (data.organizationId === '') {
-        delete data.organizationId
+        data.organizationId = null
       }
       // Convertir age a number antes de enviar al backend
       const dataToSend = { ...data, age: Number(data.age) }
@@ -91,7 +91,7 @@ export default function PlayerFormAdmin({
       }
     },
     defaultValues,
-    redirectPath: redirectPath ?? '/admin/players',
+    redirectPath: redirectPath ?? '/admin/players?page=1&perPage=10',
   })
 
   const [selectedClub, setSelectedClub] =

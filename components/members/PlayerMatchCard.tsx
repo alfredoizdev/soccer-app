@@ -23,7 +23,7 @@ export default function PlayerMatchCard({
   date,
 }: PlayerMatchCardProps) {
   return (
-    <div className='mb-6 border-b pb-4 bg-gray-100 p-4 rounded-lg'>
+    <div className='mb-6 border-b pb-4 bg-blue-100/50 p-4 rounded-lg'>
       <div className='font-medium mb-1 text-center'>
         {new Date(date).toLocaleDateString()}
       </div>
@@ -66,12 +66,24 @@ export default function PlayerMatchCard({
         )}
       </div>
       <div className='flex flex-wrap gap-4 text-sm justify-center'>
-        <Badge variant='default'>Minutes: {stats.minutesPlayed}</Badge>
-        <Badge variant='default'>Goals: {stats.goals}</Badge>
-        <Badge variant='default'>Assists: {stats.assists}</Badge>
-        <Badge variant='default'>Passes: {stats.passesCompleted}</Badge>
-        <Badge variant='default'>Duels Won: {stats.duelsWon}</Badge>
-        <Badge variant='default'>Duels Lost: {stats.duelsLost}</Badge>
+        <Badge variant='outline' className='bg-gray-200'>
+          Minutes: {stats.minutesPlayed}
+        </Badge>
+        <Badge variant='outline' className='bg-gray-200'>
+          Goals: {stats.goals}
+        </Badge>
+        <Badge variant='outline' className='bg-gray-200'>
+          Assists: {stats.assists}
+        </Badge>
+        <Badge variant='outline' className='bg-gray-200'>
+          Passes: {stats.passesCompleted}
+        </Badge>
+        <Badge variant='outline' className='bg-gray-200'>
+          Duels Won: {stats.duelsWon}
+        </Badge>
+        <Badge variant='outline' className='bg-gray-200'>
+          Duels Lost: {stats.duelsLost}
+        </Badge>
       </div>
     </div>
   )
