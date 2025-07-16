@@ -38,7 +38,7 @@ export default async function TeamsPage() {
             <div className='bg-white rounded-md shadow-md p-2 flex flex-col items-center'>
               <Link className='' href={`/admin/teams/${team.id}`}>
                 <Image
-                  src={team.avatar}
+                  src={team.avatar || '/no-club.jpg'}
                   alt={team.name}
                   width={60}
                   height={60}

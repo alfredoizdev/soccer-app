@@ -30,7 +30,7 @@ export default function PlayerMatchCard({
       <div className='flex items-center justify-center gap-4 mb-2'>
         <div className='flex flex-col items-center'>
           <Image
-            src={team1.avatar || '/no-profile.webp'}
+            src={team1.avatar || '/no-club.jpg'}
             alt={team1.name || 'Team 1'}
             width={40}
             height={40}
@@ -46,7 +46,7 @@ export default function PlayerMatchCard({
         <span className='font-bold text-lg text-gray-600'>vs</span>
         <div className='flex flex-col items-center'>
           <Image
-            src={team2.avatar || '/no-profile.webp'}
+            src={team2.avatar || '/no-club.jpg'}
             alt={team2.name || 'Team 2'}
             width={40}
             height={40}

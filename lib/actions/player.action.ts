@@ -369,6 +369,44 @@ export const getPlayersPaginatedAction = async (
   }
 }
 
+export const getPlayersPaginatedWithUserAction = async (
+  page: number = 1,
+  pageSize: number = 10
+) => {
+  try {
+    const db = await dbPromise
+    const offset = (page - 1) * pageSize
+    // Obtener jugadores con join a users
+    const result = await db
+      .select({
+        player: playersTable,
+        user: usersTable,
+      })
+      .from(playersTable)
+      .leftJoin(usersTable, eq(playersTable.userId, usersTable.id))
+      .limit(pageSize)
+      .offset(offset)
+    // Mapear para devolver player + user
+    const players = result.map((row) => ({
+      ...row.player,
+      user: row.user,
+    }))
+    // Obtener el total
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(playersTable)
+    const total = totalResult[0]?.count || 0
+    return { data: players, total, error: null }
+  } catch (error) {
+    console.error('Error fetching paginated players with user:', error)
+    return {
+      data: null,
+      total: 0,
+      error: 'Failed to fetch paginated players with user',
+    }
+  }
+}
+
 export async function getPlayerStatsByPlayerId(playerId: string) {
   try {
     const db = await dbPromise

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -20,31 +19,25 @@ import {
 
 import { UpdateUserDrawer } from '@/app/(admin)/admin/users/UpdateUserDrawer'
 import { UserType } from '@/types/UserType'
+import { getUserColumns } from './columns'
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any[]
+interface DataTableProps {
+  data: UserType[]
 }
 
-export default function DataTable<TData extends UserType, TValue>({
-  columns,
-  data,
-}: DataTableProps<TData, TValue>) {
+export default function DataTable({ data }: DataTableProps) {
   const [open, setOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<TData | null>(null)
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null)
 
   const table = useReactTable({
     data,
-    columns,
+    columns: getUserColumns((user) => {
+      setSelectedUser(user)
+      setOpen(true)
+    }),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   })
-
-  const handleRowClick = (user: TData) => {
-    setSelectedUser(user)
-    setOpen(true)
-  }
 
   return (
     <div className='overflow-x-auto max-w-[410px] sm:max-w-full'>
@@ -85,8 +78,7 @@ export default function DataTable<TData extends UserType, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className='cursor-pointer hover:bg-gray-100'
-                  onClick={() => handleRowClick(row.original)}
+                  className='hover:bg-gray-100'
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -101,7 +93,7 @@ export default function DataTable<TData extends UserType, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={table.getAllColumns().length}
                   className='h-24 text-center'
                 >
                   No results.
@@ -111,21 +103,19 @@ export default function DataTable<TData extends UserType, TValue>({
           </TableBody>
         </Table>
         {/* Drawer para actualizar el usuario */}
-        {selectedUser && (
-          <UpdateUserDrawer
-            open={open}
-            setOpen={setOpen}
-            user={
-              selectedUser
-                ? {
-                    ...selectedUser,
-                    avatar: selectedUser.avatar ?? undefined,
-                  }
-                : undefined
-            }
-            onSuccess={() => setOpen(false)}
-          />
-        )}
+        <UpdateUserDrawer
+          open={open}
+          setOpen={setOpen}
+          user={
+            selectedUser
+              ? {
+                  ...selectedUser,
+                  avatar: selectedUser.avatar ?? undefined,
+                }
+              : undefined
+          }
+          onSuccess={() => setOpen(false)}
+        />
       </div>
     </div>
   )

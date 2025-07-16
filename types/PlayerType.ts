@@ -15,4 +15,5 @@ export type PlayerType = {
   totalDuelsWon?: number
   totalDuelsLost?: number
   jerseyNumber?: number | null // Número dorsal del jugador
+  position: string
 }

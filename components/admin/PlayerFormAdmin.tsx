@@ -13,7 +13,7 @@ import UserSearch from './UserSearch'
 import { UserType, OrganizationType } from '@/types/UserType'
 import { toast } from 'sonner'
 import ClubSearch from './ClubSearch'
-import { RANGE_AGE } from '@/lib/constants'
+import { RANGE_AGE, SOCCER_POSITIONS } from '@/lib/constants'
 
 // Tipos de entrada para el formulario de usuario
 export type PlayerFormAdminInputs = {
@@ -24,6 +24,7 @@ export type PlayerFormAdminInputs = {
   userId: string
   user?: UserType
   organizationId?: string
+  position: string
 }
 
 type Props = {
@@ -54,6 +55,7 @@ export default function PlayerFormAdmin({
     age: player?.age?.toString() ?? '',
     userId: fixedUserId ?? player?.userId ?? '',
     organizationId: player?.organizationId ?? '',
+    position: player?.position ?? '',
   } as const
 
   const {
@@ -96,6 +98,13 @@ export default function PlayerFormAdmin({
     React.useState<OrganizationType | null>(
       clubs.find((c) => c.id === (player?.organizationId ?? '')) || null
     )
+
+  // Sincronizar club seleccionado cuando cambian player o clubs
+  React.useEffect(() => {
+    setSelectedClub(
+      clubs.find((c) => c.id === (player?.organizationId ?? '')) || null
+    )
+  }, [player?.organizationId, clubs])
 
   React.useEffect(() => {
     if (actionResult?.success && onSuccess) {
@@ -144,6 +153,22 @@ export default function PlayerFormAdmin({
       <div>
         <select
           className='border-2 border-gray-300 rounded-md p-2 w-full'
+          {...register('position', { required: 'The position is required' })}
+        >
+          <option value=''>Select position</option>
+          {SOCCER_POSITIONS.map((pos) => (
+            <option key={pos.value} value={pos.value}>
+              {pos.label}
+            </option>
+          ))}
+        </select>
+        {errors?.position && (
+          <p className='text-red-500'>{errors.position.message}</p>
+        )}
+      </div>
+      <div>
+        <select
+          className='border-2 border-gray-300 rounded-md p-2 w-full'
           {...register('age', {
             required: 'The age is required',
             min: 5,
@@ -167,16 +192,14 @@ export default function PlayerFormAdmin({
           <p className='border-2 border-gray-300 rounded-md p-2 w-full bg-gray-50'>
             {fixedUserName} {fixedUserLastName}
           </p>
-        ) : action === 'create' ? (
-          <UserSearch
-            onSelect={(user) => {
-              setValue('userId', user.id)
-            }}
-          />
         ) : (
-          <p className='border-2 border-gray-300 rounded-md p-2 w-full'>
-            {player?.user?.name} {player?.user?.lastName}
-          </p>
+          <UserSearch
+            key={player?.user?.id || 'no-user'}
+            onSelect={(user) => {
+              setValue('userId', user.id, { shouldValidate: true })
+            }}
+            defaultUser={player?.user}
+          />
         )}
       </div>
       <input

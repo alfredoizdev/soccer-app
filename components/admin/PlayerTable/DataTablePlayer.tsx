@@ -37,15 +37,13 @@ export default function DataTablePlayer({
 
   const table = useReactTable<PlayerWithUser>({
     data: players,
-    columns: getPlayerColumns(mode) as ColumnDef<PlayerWithUser, unknown>[],
+    columns: getPlayerColumns(mode, (player) => {
+      setSelectedPlayer(player)
+      setOpen(true)
+    }) as ColumnDef<PlayerWithUser, unknown>[],
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   })
-
-  const handleRowClick = (player: PlayerWithUser) => {
-    setSelectedPlayer(player)
-    setOpen(true)
-  }
 
   return (
     <div className='overflow-x-auto max-w-[410px] sm:max-w-full'>
@@ -84,8 +82,7 @@ export default function DataTablePlayer({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className='cursor-pointer hover:bg-gray-100'
-                  onClick={() => handleRowClick(row.original)}
+                  className='hover:bg-gray-100'
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

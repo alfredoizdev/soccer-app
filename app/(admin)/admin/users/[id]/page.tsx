@@ -61,7 +61,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         <div className='flex flex-col items-center mb-6'>
           <div className='relative w-24 h-24 mb-3 rounded-full'>
             <Image
-              src={user.avatar || '/default-avatar.png'}
+              src={user.avatar || '/no-profile.webp'}
               width={96}
               height={96}
               alt={user.name}
@@ -103,7 +103,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
             {team ? (
               <div className='flex flex-col items-center mt-1'>
                 <Image
-                  src={team.avatar || '/default-avatar.png'}
+                  src={team.avatar || '/no-club.jpg'}
                   alt={team.name}
                   width={48}
                   height={48}

@@ -11,12 +11,16 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
-import PlayerForm, { PlayerFormInputs } from '@/components/admin/PlayerForm'
+import PlayerFormAdmin, {
+  PlayerFormAdminInputs,
+} from '@/components/admin/PlayerFormAdmin'
+import { getOrganizationsAction } from '@/lib/actions/organization.action'
+import { OrganizationType } from '@/types/UserType'
 
 interface Props {
   open: boolean
   setOpen: (open: boolean) => void
-  player?: PlayerFormInputs & { id?: string }
+  player?: PlayerFormAdminInputs & { id?: string }
   onSuccess?: () => void
 }
 
@@ -26,6 +30,12 @@ export function UpdatePlayerDrawer({
   player,
   onSuccess,
 }: Props) {
+  const [clubs, setClubs] = React.useState<OrganizationType[]>([])
+  React.useEffect(() => {
+    getOrganizationsAction().then((res) => {
+      setClubs(res.data || [])
+    })
+  }, [])
   return (
     <Drawer open={open} onOpenChange={setOpen} direction='right'>
       <DrawerContent>
@@ -34,10 +44,11 @@ export function UpdatePlayerDrawer({
             <DrawerTitle>Update Player</DrawerTitle>
             <DrawerDescription>Update the player details.</DrawerDescription>
           </DrawerHeader>
-          <PlayerForm
+          <PlayerFormAdmin
             player={player}
             action='update'
             onSuccess={onSuccess || (() => setOpen(false))}
+            clubs={clubs}
           />
           <DrawerFooter>
             <DrawerClose asChild>

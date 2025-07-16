@@ -40,7 +40,7 @@ export default function PlayerMatchesDrawer({
         if (res?.data) {
           teamData[id] = {
             name: res.data.name,
-            avatar: res.data.avatar || '/no-profile.webp',
+            avatar: res.data.avatar || '/no-club.jpg',
           }
         }
       })

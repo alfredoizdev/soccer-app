@@ -16,9 +16,31 @@ export const MENUS_DASHBOARD = [
     href: '/admin/dashboard',
     icon: 'LayoutDashboard',
   },
-  { value: 'teams', label: 'Teams', href: '/admin/teams', icon: 'ShieldUser' },
-  { value: 'users', label: 'Users', href: '/admin/users', icon: 'User' },
-  { value: 'players', label: 'Players', href: '/admin/players', icon: 'Users' },
+  {
+    value: 'teams',
+    label: 'Teams',
+    href: '/admin/teams',
+    icon: 'ShieldUser',
+  },
+  {
+    value: 'users',
+    label: 'Users',
+    href: '/admin/users?page=1&perPage=10',
+    icon: 'User',
+  },
+  {
+    value: 'players',
+    label: 'Players',
+    href: '/admin/players?page=1&perPage=10',
+    icon: 'Users',
+  },
 ]
 
 export const RANGE_AGE = Array.from({ length: 41 }, (_, i) => i + 5)
+
+export const SOCCER_POSITIONS = [
+  { value: 'attack', label: 'Attack' },
+  { value: 'midfield', label: 'Midfield' },
+  { value: 'defence', label: 'Defence' },
+  { value: 'goalkeeper', label: 'Goalkeeper' },
+]

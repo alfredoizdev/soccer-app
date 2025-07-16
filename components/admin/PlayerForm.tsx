@@ -12,7 +12,7 @@ import {
 import UserSearch from './UserSearch'
 import { UserType } from '@/types/UserType'
 import { toast } from 'sonner'
-import { RANGE_AGE } from '@/lib/constants'
+import { RANGE_AGE, SOCCER_POSITIONS } from '@/lib/constants'
 
 // Tipos de entrada para el formulario de usuario
 export type PlayerFormInputs = {
@@ -23,6 +23,7 @@ export type PlayerFormInputs = {
   userId: string
   user: UserType
   organizationId?: string // <-- Agregado
+  position: string
 }
 
 type Props = {
@@ -53,6 +54,7 @@ export default function PlayerForm({
     age: player?.age?.toString() ?? '',
     userId: fixedUserId ?? player?.userId ?? '',
     ...(fixedOrganizationId ? { organizationId: fixedOrganizationId } : {}), // <-- Solo si existe
+    position: player?.position ?? '',
   } as const
 
   const {
@@ -136,6 +138,22 @@ export default function PlayerForm({
       <div>
         <select
           className='border-2 border-gray-300 rounded-md p-2 w-full'
+          {...register('position', { required: 'The position is required' })}
+        >
+          <option value=''>Select position</option>
+          {SOCCER_POSITIONS.map((pos) => (
+            <option key={pos.value} value={pos.value}>
+              {pos.label}
+            </option>
+          ))}
+        </select>
+        {errors?.position && (
+          <p className='text-red-500'>{errors.position.message}</p>
+        )}
+      </div>
+      <div>
+        <select
+          className='border-2 border-gray-300 rounded-md p-2 w-full'
           {...register('age', {
             required: 'The age is required',
             min: 5,
@@ -167,7 +185,9 @@ export default function PlayerForm({
           />
         ) : (
           <p className='border-2 border-gray-300 rounded-md p-2 w-full'>
-            {player?.user.name} {player?.user.lastName}
+            {player?.user
+              ? `${player.user.name} ${player.user.lastName}`
+              : 'No parent assigned'}
           </p>
         )}
       </div>

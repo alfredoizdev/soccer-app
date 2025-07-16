@@ -1,34 +1,26 @@
 import React from 'react'
 import DataTablePlayer from '@/components/admin/PlayerTable/DataTablePlayer'
-import { getPlayersPaginatedAction } from '@/lib/actions/player.action'
+import { getPlayersPaginatedWithUserAction } from '@/lib/actions/player.action'
 import { PlayerType } from '@/types/PlayerType'
 import { UserType } from '@/types/UserType'
 import Link from 'next/link'
 import { PlusIcon } from 'lucide-react'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationPrevious,
-  PaginationNext,
-} from '@/components/ui/pagination'
+import PaginationComponent from '@/components/PaginationComponent'
 
 type PlayerWithUser = PlayerType & {
   user?: Pick<UserType, 'name' | 'lastName'>
 }
 
 interface PlayersPageProps {
-  searchParams: { page?: string; perPage?: string }
+  searchParams: Promise<{ page?: string; perPage?: string }>
 }
 
 const PlayersPage = async ({ searchParams }: PlayersPageProps) => {
-  const page = Number(searchParams?.page) || 1
-  const perPage = Number(searchParams?.perPage) || 10
+  const { page, perPage } = await searchParams
 
-  const { data: players, total } = await getPlayersPaginatedAction(
-    page,
-    perPage
+  const { data: players, total } = await getPlayersPaginatedWithUserAction(
+    Number(page),
+    Number(perPage)
   )
 
   // Map user to only include name and lastName, and handle null
@@ -42,7 +34,7 @@ const PlayersPage = async ({ searchParams }: PlayersPageProps) => {
     })
   )
 
-  const totalPages = Math.ceil((total ?? 0) / perPage)
+  const totalPages = Math.ceil((total ?? 0) / (Number(perPage) ?? 10))
 
   return (
     <div className='w-full p-2'>
@@ -57,44 +49,11 @@ const PlayersPage = async ({ searchParams }: PlayersPageProps) => {
         </Link>
       </div>
       <DataTablePlayer players={mappedPlayers} />
-      <div className='mt-4 flex justify-end'>
-        <Pagination className='justify-end w-auto mx-0'>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href={`?page=${page - 1}&perPage=${perPage}`}
-                aria-disabled={page <= 1}
-                tabIndex={page <= 1 ? -1 : 0}
-                className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-            {[...Array(totalPages)].map((_, i) => (
-              <PaginationItem key={i + 1}>
-                <PaginationLink
-                  href={`?page=${i + 1}&perPage=${perPage}`}
-                  isActive={page === i + 1}
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext
-                href={
-                  page < totalPages
-                    ? `?page=${page + 1}&perPage=${perPage}`
-                    : `?page=${page}&perPage=${perPage}`
-                }
-                aria-disabled={page >= totalPages}
-                tabIndex={page >= totalPages ? -1 : 0}
-                className={
-                  page >= totalPages ? 'pointer-events-none opacity-50' : ''
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      <PaginationComponent
+        page={Number(page)}
+        perPage={Number(perPage)}
+        totalPages={totalPages}
+      />
     </div>
   )
 }
