@@ -1,6 +1,13 @@
 import React from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, Users, User, House, ShieldUser } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Users,
+  User,
+  House,
+  ShieldUser,
+  Volleyball,
+} from 'lucide-react'
 import { MENUS_DASHBOARD } from '@/lib/constants'
 
 const icons = {
@@ -9,11 +16,12 @@ const icons = {
   User,
   House,
   ShieldUser,
+  Volleyball,
 }
 
 const Sidebar = () => {
   return (
-    <aside className='hidden md:flex h-full min-h-screen w-56 bg-gray-800 text-white flex-col py-6 px-4 gap-4'>
+    <aside className='hidden fixed top-0 left-0 2xl:flex h-full min-h-screen w-56 bg-gray-800 text-white flex-col py-6 px-4 gap-4'>
       {MENUS_DASHBOARD.map((menu) => {
         const Icon = icons[menu.icon as keyof typeof icons] || LayoutDashboard
         return (

@@ -1,4 +1,3 @@
-import { columns } from './columns'
 import DataTable from './DataTable'
 import { UserType } from '@/types/UserType'
 
@@ -8,8 +7,8 @@ interface UserTableProps {
 
 export default function UserTable({ data }: UserTableProps) {
   return (
-    <div className='mx-auto py-1'>
-      <DataTable columns={columns} data={data ? data : []} />
+    <div className='sm:w-full overflow-x-auto'>
+      <DataTable data={data ? data : []} />
     </div>
   )
 }

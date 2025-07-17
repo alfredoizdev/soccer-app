@@ -24,7 +24,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   }))
 
   return (
-    <div className='mx-auto py-1'>
+    <div className='w-full'>
       <div className='flex justify-between items-center p-4'>
         <h1 className='text-2xl font-bold'>Users</h1>
         <Link
@@ -35,7 +35,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
           Add User
         </Link>
       </div>
-      <div className='p-2'>
+      <div className='p-2 w-full'>
         <UserTable data={normalizedUsers} />
         <PaginationComponent
           page={Number(page)}

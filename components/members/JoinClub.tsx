@@ -36,15 +36,14 @@ export default function JoinClub({
           </p>
         </div>
         <div className='flex flex-col items-center bg-white rounded-xl shadow p-6 mb-8'>
-          {currentClub.avatar && (
-            <Image
-              src={currentClub.avatar}
-              width={64}
-              height={64}
-              alt={currentClub.name}
-              className='w-16 h-16 rounded-full object-cover mb-3 border'
-            />
-          )}
+          <Image
+            src={currentClub.avatar || '/no-club.jpg'}
+            width={64}
+            height={64}
+            alt={currentClub.name}
+            className='w-16 h-16 rounded-full object-cover mb-3 border'
+          />
+
           <h3 className='text-lg font-semibold mb-1'>{currentClub.name}</h3>
           <p className='text-gray-500 text-sm mb-4 text-center'>
             {currentClub.description}
@@ -95,15 +94,14 @@ export default function JoinClub({
               joinedClubId === club.id ? 'ring-2 ring-green-500' : ''
             }`}
           >
-            {club.avatar && (
-              <Image
-                src={club.avatar}
-                width={64}
-                height={64}
-                alt={club.name}
-                className='w-16 h-16 rounded-full object-cover mb-3 border'
-              />
-            )}
+            <Image
+              src={club?.avatar || '/no-club.jpg'}
+              width={64}
+              height={64}
+              alt={club.name}
+              className='w-16 h-16 rounded-full object-cover mb-3 border'
+            />
+
             <h3 className='text-lg font-semibold mb-1'>{club.name}</h3>
             <p className='text-gray-500 text-sm mb-4 text-center'>
               {club.description}

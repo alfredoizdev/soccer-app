@@ -14,7 +14,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className='min-h-screen flex flex-col'>
+    <div className='min-h-screen flex flex-col md:mt-[65px] md:ml-56'>
       <Navbar user={{ ...user, avatar: user.avatar ?? '' }} />
       <div className='flex flex-1'>
         <Sidebar />

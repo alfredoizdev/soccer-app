@@ -34,6 +34,12 @@ export const MENUS_DASHBOARD = [
     href: '/admin/players?page=1&perPage=10',
     icon: 'Users',
   },
+  {
+    value: 'matches',
+    label: 'Matches',
+    href: '/admin/matches',
+    icon: 'Volleyball',
+  },
 ]
 
 export const RANGE_AGE = Array.from({ length: 41 }, (_, i) => i + 5)

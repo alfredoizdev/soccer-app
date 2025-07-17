@@ -44,7 +44,7 @@ export default function MobileMenuDrawer({
     <Drawer open={open} onOpenChange={setOpen} direction='left'>
       <DrawerTrigger asChild>
         <Button
-          className='md:hidden mr-4 p-2 rounded hover:bg-gray-800 focus:outline-none'
+          className='2xl:hidden mr-4 p-2 rounded hover:bg-gray-800 focus:outline-none'
           variant='ghost'
         >
           <Menu size={24} />

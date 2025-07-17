@@ -22,10 +22,16 @@ type OrganizationFormInputs = {
 type Props = {
   team?: TeamType
   onSuccess?: () => void
+  redirectPath?: string
   action?: 'create' | 'update'
 }
 
-export default function OrganizationForm({ team, onSuccess, action }: Props) {
+export default function OrganizationForm({
+  team,
+  onSuccess,
+  action,
+  redirectPath,
+}: Props) {
   const defaultValues = {
     name: team?.name ?? '',
     description: team?.description ?? '',
@@ -58,7 +64,7 @@ export default function OrganizationForm({ team, onSuccess, action }: Props) {
       }
     },
     defaultValues,
-    redirectPath: '/admin/teams',
+    redirectPath: redirectPath || '/admin/teams',
   })
 
   // Efecto para llamar onSuccess si el submit fue exitoso

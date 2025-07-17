@@ -20,7 +20,7 @@ const Navbar: React.FC<Props> = ({ user }) => {
   if (!user) return null
 
   return (
-    <nav className='w-full h-16 bg-gray-900 text-white flex items-center px-6 shadow'>
+    <nav className='w-full h-16 bg-gray-900 text-white flex items-center px-6 shadow  md:fixed top-0 left-0 z-50'>
       <MobileMenuDrawer title='Dashboard Menu' menus={MENUS_DASHBOARD} />
       <div className='font-bold text-lg'>SoccerApp Admin</div>
       <div className='ml-auto'>

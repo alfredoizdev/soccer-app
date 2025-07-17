@@ -33,7 +33,7 @@ export default function LatestList({ title, items, type }: LatestListProps) {
                   ? `/admin/users/${item.id}`
                   : `/admin/teams/${item.id}`
               }
-              className='hover:underline text-blue-600'
+              className='hover:underline text-gray-600'
             >
               <span className='font-medium'>{item.name}</span>
               {type === 'user' && (

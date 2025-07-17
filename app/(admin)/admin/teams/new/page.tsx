@@ -5,7 +5,7 @@ import Link from 'next/link'
 export default function AddOrganizationPage() {
   return (
     <div className='w-full h-full flex items-center flex-col'>
-      <div className='w-full flex items-center justify-between'>
+      <div className='w-full flex items-center justify-between p-2'>
         <Link
           href='/admin/teams'
           className='flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700'
