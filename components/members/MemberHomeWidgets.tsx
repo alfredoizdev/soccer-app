@@ -14,8 +14,9 @@ export default async function MemberHomeWidgets() {
   if (!user) return <div>Please log in.</div>
 
   const playersRes = await getPlayersAction()
-  const myPlayers: PlayerType[] =
-    playersRes.data?.filter((p: PlayerType) => p.userId === user.id) || []
+  const myPlayers: PlayerType[] = (playersRes.data || []).filter(
+    (p: PlayerType) => p.userId === user.id
+  )
 
   // Obtener los clubs de los jugadores (solo los que tienen organizationId)
   const orgIds = Array.from(

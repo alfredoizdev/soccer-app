@@ -38,7 +38,8 @@ export function useLiveMatch(
   // Debounced update function
   const debouncedUpdate = useCallback(
     (() => {
-      let timeout: NodeJS.Timeout
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let timeout: any
       return async (playerId: string, updates: Partial<PlayerStat>) => {
         clearTimeout(timeout)
         timeout = setTimeout(async () => {

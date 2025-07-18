@@ -7,7 +7,7 @@ import {
   liveMatchDataTable,
   liveMatchScoreTable,
 } from '@/database/schema'
-import { eq, inArray } from 'drizzle-orm'
+import { eq, inArray, and } from 'drizzle-orm'
 import { TeamType } from '@/types/TeamType'
 import { organizationsTable } from '@/database/schema'
 import { sql } from 'drizzle-orm'
@@ -312,8 +312,6 @@ export async function updateMatchScore({
 export async function initializeLiveMatchData(matchId: string) {
   const db = await dbPromise
 
-  console.log('Initializing live match data for match:', matchId)
-
   // Obtener jugadores de ambos equipos
   const match = await db
     .select()
@@ -322,13 +320,10 @@ export async function initializeLiveMatchData(matchId: string) {
     .limit(1)
 
   if (!match.length) {
-    console.error('Match not found with ID:', matchId)
     throw new Error(
       `Match with ID ${matchId} not found. Please check if the match exists.`
     )
   }
-
-  console.log('Found match:', match[0])
 
   const playersTeam1 = await db
     .select()
@@ -341,8 +336,6 @@ export async function initializeLiveMatchData(matchId: string) {
     .where(eq(playersTable.organizationId, match[0].team2Id))
 
   const allPlayers = [...playersTeam1, ...playersTeam2]
-
-  console.log('Found players:', allPlayers.length, 'total players')
 
   // Crear registros en live_match_data para cada jugador
   if (allPlayers.length > 0) {
@@ -370,8 +363,6 @@ export async function initializeLiveMatchData(matchId: string) {
     team2Goals: 0,
     isLive: true,
   })
-
-  console.log('Successfully initialized live match data for match:', matchId)
 
   return { success: true }
 }
@@ -463,12 +454,8 @@ export async function getLiveMatchData(matchId: string) {
 export async function debugLiveMatchData(matchId: string) {
   const db = await dbPromise
 
-  console.log('=== DEBUG LIVE MATCH DATA ===')
-  console.log('Match ID:', matchId)
-
   // Verificar todos los datos en live_match_data
   const allLiveData = await db.select().from(liveMatchDataTable)
-  console.log('Total live data records:', allLiveData.length)
 
   // Verificar datos específicos del partido
   const matchLiveData = await db
@@ -476,21 +463,13 @@ export async function debugLiveMatchData(matchId: string) {
     .from(liveMatchDataTable)
     .where(eq(liveMatchDataTable.matchId, matchId))
 
-  console.log('Match live data records:', matchLiveData.length)
-  console.log('Match live data:', matchLiveData)
-
   // Verificar datos de score
   const allLiveScores = await db.select().from(liveMatchScoreTable)
-  console.log('Total live score records:', allLiveScores.length)
 
   const matchLiveScore = await db
     .select()
     .from(liveMatchScoreTable)
     .where(eq(liveMatchScoreTable.matchId, matchId))
-
-  console.log('Match live score records:', matchLiveScore.length)
-  console.log('Match live score:', matchLiveScore)
-  console.log('=== END DEBUG ===')
 
   return {
     allLiveData: allLiveData.length,
@@ -522,8 +501,6 @@ export async function updateLivePlayerStats({
 }) {
   const db = await dbPromise
 
-  console.log('Updating live player stats:', { matchId, playerId, stats })
-
   // Filtrar solo los campos que se pueden actualizar
   const updateableStats = {
     isPlaying: stats.isPlaying,
@@ -543,8 +520,10 @@ export async function updateLivePlayerStats({
     .select()
     .from(liveMatchDataTable)
     .where(
-      eq(liveMatchDataTable.matchId, matchId) &&
+      and(
+        eq(liveMatchDataTable.matchId, matchId),
         eq(liveMatchDataTable.playerId, playerId)
+      )
     )
     .limit(1)
 
@@ -556,13 +535,14 @@ export async function updateLivePlayerStats({
       .update(liveMatchDataTable)
       .set(updateableStats)
       .where(
-        eq(liveMatchDataTable.matchId, matchId) &&
+        and(
+          eq(liveMatchDataTable.matchId, matchId),
           eq(liveMatchDataTable.playerId, playerId)
+        )
       )
       .returning()
   } else {
     // Crear nuevo registro
-    console.log('Creating new live match data record for player:', playerId)
     result = await db
       .insert(liveMatchDataTable)
       .values({
@@ -571,27 +551,6 @@ export async function updateLivePlayerStats({
         ...updateableStats,
       })
       .returning()
-  }
-
-  console.log('Update result:', result)
-
-  // Debug: Verificar que el registro se guardó correctamente
-  const verifyRecord = await db
-    .select()
-    .from(liveMatchDataTable)
-    .where(
-      eq(liveMatchDataTable.matchId, matchId) &&
-        eq(liveMatchDataTable.playerId, playerId)
-    )
-    .limit(1)
-
-  console.log('Verification - record exists:', verifyRecord.length > 0)
-  if (verifyRecord.length > 0) {
-    console.log('Verification - record data:', {
-      timePlayed: verifyRecord[0].timePlayed,
-      goals: verifyRecord[0].goals,
-      assists: verifyRecord[0].assists,
-    })
   }
 
   return result
@@ -628,7 +587,6 @@ export async function updateLiveMatchScore({
       .where(eq(liveMatchScoreTable.matchId, matchId))
   } else {
     // Crear nuevo registro
-    console.log('Creating new live match score record for match:', matchId)
     await db.insert(liveMatchScoreTable).values({
       matchId,
       team1Goals,
@@ -642,21 +600,11 @@ export async function updateLiveMatchScore({
 export async function endLiveMatch(matchId: string) {
   const db = await dbPromise
 
-  console.log('Ending live match for:', matchId)
-
-  // Debug: Verificar todos los datos en live_match_data
-  const allLiveData = await db.select().from(liveMatchDataTable)
-  console.log('All live data in database:', allLiveData.length, 'records')
-  console.log('All live data sample:', allLiveData.slice(0, 2))
-
   // Obtener datos en vivo para este partido específico
   const liveData = await db
     .select()
     .from(liveMatchDataTable)
     .where(eq(liveMatchDataTable.matchId, matchId))
-
-  console.log('Live data found for match:', liveData.length, 'records')
-  console.log('Live data sample:', liveData.slice(0, 2))
 
   const liveScore = await db
     .select()
@@ -664,11 +612,8 @@ export async function endLiveMatch(matchId: string) {
     .where(eq(liveMatchScoreTable.matchId, matchId))
     .limit(1)
 
-  console.log('Live score found:', liveScore.length, 'records')
-
   // Si no hay datos en vivo, crear datos básicos
   if (!liveData.length && !liveScore.length) {
-    console.log('No live data found, initializing...')
     // Obtener el partido
     const [match] = await db
       .select()
@@ -699,11 +644,8 @@ export async function endLiveMatch(matchId: string) {
     // Usar los nuevos datos
     liveData.push(...newLiveData)
     liveScore.push(newLiveScore[0])
-
-    console.log('Initialized live data:', liveData.length, 'records')
   } else if (liveData.length > 0 && !liveScore.length) {
     // Tenemos datos de jugadores pero no de score, crear score básico
-    console.log('Found live player data but no score, creating basic score...')
 
     // Crear score básico
     await db.insert(liveMatchScoreTable).values({
@@ -720,11 +662,9 @@ export async function endLiveMatch(matchId: string) {
       .limit(1)
 
     liveScore.push(newLiveScore[0])
-    console.log('Created basic score record')
   }
 
   const finalScore = liveScore[0]
-  console.log('Final score:', finalScore)
 
   // Actualizar marcador final en matches
   await db
@@ -735,57 +675,39 @@ export async function endLiveMatch(matchId: string) {
     })
     .where(eq(matchesTable.id, matchId))
 
-  console.log('Updated match score in matches table')
-
   // Transferir estadísticas de jugadores a player_stats
   for (const liveStat of liveData) {
-    console.log('Processing live stat:', {
-      playerId: liveStat.playerId,
-      timePlayed: liveStat.timePlayed,
-      goals: liveStat.goals,
-      assists: liveStat.assists,
-      passesCompleted: liveStat.passesCompleted,
-      duelsWon: liveStat.duelsWon,
-      duelsLost: liveStat.duelsLost,
-      goalsAllowed: liveStat.goalsAllowed,
-      goalsSaved: liveStat.goalsSaved,
-    })
+    try {
+      // Verificar si ya existe un registro en player_stats
+      const existingStat = await db
+        .select()
+        .from(playerStatsTable)
+        .where(
+          and(
+            eq(playerStatsTable.matchId, matchId),
+            eq(playerStatsTable.playerId, liveStat.playerId)
+          )
+        )
+        .limit(1)
 
-    // Verificar si ya existe un registro en player_stats
-    const existingStat = await db
-      .select()
-      .from(playerStatsTable)
-      .where(
-        eq(playerStatsTable.matchId, matchId) &&
-          eq(playerStatsTable.playerId, liveStat.playerId)
-      )
-      .limit(1)
-
-    if (existingStat.length > 0) {
-      // Actualizar registro existente
-      console.log('Updating existing player stat for:', liveStat.playerId)
-      const updateResult = await db
-        .update(playerStatsTable)
-        .set({
-          minutesPlayed: Math.floor(liveStat.timePlayed / 60),
-          goals: liveStat.goals,
-          assists: liveStat.assists,
-          passesCompleted: liveStat.passesCompleted,
-          duelsWon: liveStat.duelsWon,
-          duelsLost: liveStat.duelsLost,
-          goalsAllowed: liveStat.goalsAllowed,
-          goalsSaved: liveStat.goalsSaved,
-        })
-        .where(eq(playerStatsTable.id, existingStat[0].id))
-        .returning()
-
-      console.log('Update result:', updateResult)
-    } else {
-      // Crear nuevo registro
-      console.log('Creating new player stat for:', liveStat.playerId)
-      const insertResult = await db
-        .insert(playerStatsTable)
-        .values({
+      if (existingStat.length > 0) {
+        // Actualizar registro existente
+        await db
+          .update(playerStatsTable)
+          .set({
+            minutesPlayed: Math.floor(liveStat.timePlayed / 60),
+            goals: liveStat.goals,
+            assists: liveStat.assists,
+            passesCompleted: liveStat.passesCompleted,
+            duelsWon: liveStat.duelsWon,
+            duelsLost: liveStat.duelsLost,
+            goalsAllowed: liveStat.goalsAllowed,
+            goalsSaved: liveStat.goalsSaved,
+          })
+          .where(eq(playerStatsTable.id, existingStat[0].id))
+      } else {
+        // Crear nuevo registro
+        await db.insert(playerStatsTable).values({
           matchId,
           playerId: liveStat.playerId,
           minutesPlayed: Math.floor(liveStat.timePlayed / 60),
@@ -797,30 +719,30 @@ export async function endLiveMatch(matchId: string) {
           goalsAllowed: liveStat.goalsAllowed,
           goalsSaved: liveStat.goalsSaved,
         })
-        .returning()
-
-      console.log('Insert result:', insertResult)
+      }
+    } catch {
+      // Continuar con el siguiente jugador en caso de error
+      continue
     }
 
     // Actualizar estadísticas acumulativas en la tabla players
-    console.log('Updating accumulated stats for player:', liveStat.playerId)
-    const playerUpdateResult = await db
-      .update(playersTable)
-      .set({
-        totalGoals: sql`${playersTable.totalGoals} + ${liveStat.goals}`,
-        totalAssists: sql`${playersTable.totalAssists} + ${liveStat.assists}`,
-        totalPassesCompleted: sql`${playersTable.totalPassesCompleted} + ${liveStat.passesCompleted}`,
-        totalDuelsWon: sql`${playersTable.totalDuelsWon} + ${liveStat.duelsWon}`,
-        totalDuelsLost: sql`${playersTable.totalDuelsLost} + ${liveStat.duelsLost}`,
-        updatedAt: new Date(),
-      })
-      .where(eq(playersTable.id, liveStat.playerId))
-      .returning()
-
-    console.log('Player update result:', playerUpdateResult)
+    try {
+      await db
+        .update(playersTable)
+        .set({
+          totalGoals: sql`${playersTable.totalGoals} + ${liveStat.goals}`,
+          totalAssists: sql`${playersTable.totalAssists} + ${liveStat.assists}`,
+          totalPassesCompleted: sql`${playersTable.totalPassesCompleted} + ${liveStat.passesCompleted}`,
+          totalDuelsWon: sql`${playersTable.totalDuelsWon} + ${liveStat.duelsWon}`,
+          totalDuelsLost: sql`${playersTable.totalDuelsLost} + ${liveStat.duelsLost}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(playersTable.id, liveStat.playerId))
+    } catch {
+      // Continuar con el siguiente jugador en caso de error
+      continue
+    }
   }
-
-  console.log('Transferred all player stats to permanent tables')
 
   // Limpiar datos en vivo
   await db
@@ -830,8 +752,6 @@ export async function endLiveMatch(matchId: string) {
   await db
     .delete(liveMatchScoreTable)
     .where(eq(liveMatchScoreTable.matchId, matchId))
-
-  console.log('Cleaned up live data')
 
   return { success: true }
 }

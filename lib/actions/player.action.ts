@@ -149,14 +149,17 @@ export const getPlayerAction = async (id: string) => {
   }
 }
 
-export const getPlayersAction = async () => {
+export const getPlayersAction = async (): Promise<{
+  data: PlayerType[] | null
+  error: string | null
+}> => {
   try {
     const db = await dbPromise
     const players = await db
       .select()
       .from(playersTable)
       .orderBy(desc(playersTable.updatedAt), desc(playersTable.createdAt))
-    return { data: players, error: null }
+    return { data: players as PlayerType[], error: null }
   } catch (error) {
     console.error('Error fetching players:', error)
     return { data: null, error: 'Failed to fetch players' }
@@ -311,14 +314,17 @@ export const removePlayerFromOrganizationAction = async (
   }
 }
 
-export const getAvailablePlayersForOrganization = async () => {
+export const getAvailablePlayersForOrganization = async (): Promise<{
+  data: PlayerType[] | null
+  error: string | null
+}> => {
   try {
     const db = await dbPromise
     const players = await db
       .select()
       .from(playersTable)
       .where(isNull(playersTable.organizationId))
-    return { data: players, error: null }
+    return { data: players as PlayerType[], error: null }
   } catch (error) {
     console.error('Error fetching available players:', error)
     return { data: null, error: 'Failed to fetch available players' }

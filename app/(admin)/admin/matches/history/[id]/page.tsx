@@ -46,10 +46,7 @@ export default async function MatchDetailPage({
 
   // Calcular totales por equipo
   const team1Totals = {
-    goals:
-      team1Stats.length > 0
-        ? team1Stats.reduce((sum, stat) => sum + stat.goals, 0)
-        : match.match.team1Goals || 0,
+    goals: team1Stats.reduce((sum, stat) => sum + stat.goals, 0),
     assists: team1Stats.reduce((sum, stat) => sum + stat.assists, 0),
     passesCompleted: team1Stats.reduce(
       (sum, stat) => sum + stat.passesCompleted,
@@ -60,10 +57,7 @@ export default async function MatchDetailPage({
   }
 
   const team2Totals = {
-    goals:
-      team2Stats.length > 0
-        ? team2Stats.reduce((sum, stat) => sum + stat.goals, 0)
-        : match.match.team2Goals || 0,
+    goals: team2Stats.reduce((sum, stat) => sum + stat.goals, 0),
     assists: team2Stats.reduce((sum, stat) => sum + stat.assists, 0),
     passesCompleted: team2Stats.reduce(
       (sum, stat) => sum + stat.passesCompleted,
