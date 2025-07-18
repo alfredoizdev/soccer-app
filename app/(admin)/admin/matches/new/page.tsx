@@ -14,7 +14,7 @@ export default async function NewMatchPage() {
     avatar: org.avatar || '',
   }))
   return (
-    <div className='w-full px-4 mx-auto py-8'>
+    <div className='w-full px-4 mx-auto py-8 animate-fade-in duration-500'>
       <div className='flex items-center justify-between mb-6'>
         <h1 className='text-2xl font-bold'>New Match</h1>
         <Link href='/admin/matches'>

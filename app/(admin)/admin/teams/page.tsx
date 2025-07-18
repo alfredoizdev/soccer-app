@@ -19,7 +19,7 @@ export default async function TeamsPage() {
   }
 
   return (
-    <div className='p-4'>
+    <div className='p-4 animate-fade-in duration-500'>
       <div className='flex justify-between items-center'>
         <h1 className='text-2xl font-bold'>Teams</h1>
 

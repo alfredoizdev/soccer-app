@@ -447,3 +447,105 @@ export async function getPlayerStatsByPlayerId(playerId: string) {
     }
   }
 }
+
+// Actualizar estadísticas acumulativas de un jugador
+export const updatePlayerCumulativeStats = async (playerId: string) => {
+  try {
+    const db = await dbPromise
+
+    // Obtener estadísticas totales del jugador
+    const stats = await db
+      .select({
+        totalGoals: sql<number>`COALESCE(SUM(${playerStatsTable.goals}), 0)`,
+        totalAssists: sql<number>`COALESCE(SUM(${playerStatsTable.assists}), 0)`,
+        totalPassesCompleted: sql<number>`COALESCE(SUM(${playerStatsTable.passesCompleted}), 0)`,
+        totalDuelsWon: sql<number>`COALESCE(SUM(${playerStatsTable.duelsWon}), 0)`,
+        totalDuelsLost: sql<number>`COALESCE(SUM(${playerStatsTable.duelsLost}), 0)`,
+      })
+      .from(playerStatsTable)
+      .where(eq(playerStatsTable.playerId, playerId))
+      .groupBy(playerStatsTable.playerId)
+
+    if (stats.length > 0) {
+      const totalStats = stats[0]
+
+      // Actualizar el jugador con las estadísticas acumulativas
+      await db
+        .update(playersTable)
+        .set({
+          totalGoals: totalStats.totalGoals,
+          totalAssists: totalStats.totalAssists,
+          totalPassesCompleted: totalStats.totalPassesCompleted,
+          totalDuelsWon: totalStats.totalDuelsWon,
+          totalDuelsLost: totalStats.totalDuelsLost,
+        })
+        .where(eq(playersTable.id, playerId))
+    }
+
+    return { data: stats[0] || null, error: null }
+  } catch (error) {
+    console.error('Error updating cumulative player stats:', error)
+    return { data: null, error: 'Failed to update cumulative player stats' }
+  }
+}
+
+// Get ranking of all players in a club by total stats
+export const getPlayerStatsRankingByOrganizationAction = async (
+  organizationId: string
+) => {
+  try {
+    const db = await dbPromise
+    const ranking = await db
+      .select({
+        id: playersTable.id,
+        name: playersTable.name,
+        lastName: playersTable.lastName,
+        avatar: playersTable.avatar,
+        jerseyNumber: playersTable.jerseyNumber,
+        position: playersTable.position,
+        goals: sql`COALESCE(SUM(${playerStatsTable.goals}), 0)`.as('goals'),
+        assists: sql`COALESCE(SUM(${playerStatsTable.assists}), 0)`.as(
+          'assists'
+        ),
+        passesCompleted:
+          sql`COALESCE(SUM(${playerStatsTable.passesCompleted}), 0)`.as(
+            'passesCompleted'
+          ),
+        duelsWon: sql`COALESCE(SUM(${playerStatsTable.duelsWon}), 0)`.as(
+          'duelsWon'
+        ),
+        duelsLost: sql`COALESCE(SUM(${playerStatsTable.duelsLost}), 0)`.as(
+          'duelsLost'
+        ),
+        minutesPlayed:
+          sql`COALESCE(SUM(${playerStatsTable.minutesPlayed}), 0)`.as(
+            'minutesPlayed'
+          ),
+      })
+      .from(playersTable)
+      .leftJoin(
+        playerStatsTable,
+        eq(playersTable.id, playerStatsTable.playerId)
+      )
+      .where(eq(playersTable.organizationId, organizationId))
+      .groupBy(
+        playersTable.id,
+        playersTable.name,
+        playersTable.lastName,
+        playersTable.avatar,
+        playersTable.jerseyNumber,
+        playersTable.position
+      )
+      .orderBy(
+        desc(sql`COALESCE(SUM(${playerStatsTable.goals}), 0)`),
+        desc(sql`COALESCE(SUM(${playerStatsTable.assists}), 0)`)
+      )
+    return { data: ranking, error: null }
+  } catch (error) {
+    console.error('Error fetching player ranking by organization:', error)
+    return {
+      data: null,
+      error: 'Failed to fetch player ranking by organization',
+    }
+  }
+}

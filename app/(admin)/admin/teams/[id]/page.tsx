@@ -28,7 +28,7 @@ export default async function TeamPage({
   }
 
   return (
-    <div className='container mx-auto py-10 px-2'>
+    <div className='container mx-auto py-10 px-2 animate-fade-in duration-500'>
       <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between gap-8'>
         {/* Club Card */}
         <div className='flex justify-center sm:justify-start w-full sm:w-1/4'>

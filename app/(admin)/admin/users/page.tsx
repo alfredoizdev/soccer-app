@@ -24,7 +24,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   }))
 
   return (
-    <div className='w-full'>
+    <div className='w-full animate-fade-in duration-500'>
       <div className='flex justify-between items-center p-4'>
         <h1 className='text-2xl font-bold'>Users</h1>
         <Link

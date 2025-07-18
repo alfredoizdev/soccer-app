@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   uuid,
+  boolean,
 } from 'drizzle-orm/pg-core'
 
 export const STATUS_ENUM = pgEnum('status', ['active', 'inactive'])
@@ -88,6 +89,42 @@ export const playerStatsTable = pgTable('player_stats', {
   goalsAllowed: integer('goals_allowed').default(0).notNull(), // Nuevo campo
   goalsSaved: integer('goals_saved').default(0).notNull(), // Nuevo campo
   // Puedes agregar más stats si necesitas
+})
+
+// Nueva tabla para datos en vivo del partido
+export const liveMatchDataTable = pgTable('live_match_data', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  matchId: uuid('match_id')
+    .notNull()
+    .references(() => matchesTable.id, { onDelete: 'cascade' }),
+  playerId: uuid('player_id')
+    .notNull()
+    .references(() => playersTable.id, { onDelete: 'cascade' }),
+  isPlaying: boolean('is_playing').default(true).notNull(),
+  timePlayed: integer('time_played').default(0).notNull(), // en segundos
+  goals: integer('goals').default(0).notNull(),
+  assists: integer('assists').default(0).notNull(),
+  passesCompleted: integer('passes_completed').default(0).notNull(),
+  duelsWon: integer('duels_won').default(0).notNull(),
+  duelsLost: integer('duels_lost').default(0).notNull(),
+  goalsAllowed: integer('goals_allowed').default(0).notNull(),
+  goalsSaved: integer('goals_saved').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
+
+// Tabla para datos en vivo del partido (marcador)
+export const liveMatchScoreTable = pgTable('live_match_score', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  matchId: uuid('match_id')
+    .notNull()
+    .references(() => matchesTable.id, { onDelete: 'cascade' })
+    .unique(), // Solo un registro por partido
+  team1Goals: integer('team1_goals').default(0).notNull(),
+  team2Goals: integer('team2_goals').default(0).notNull(),
+  isLive: boolean('is_live').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
 export type InsertUser = typeof usersTable.$inferInsert

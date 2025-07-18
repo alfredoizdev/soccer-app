@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
+import { ReactNode } from 'react'
 
 interface PlayerMatchCardProps {
   team1: { name: string; avatar: string; goals?: number }
@@ -14,6 +15,7 @@ interface PlayerMatchCardProps {
     jerseyNumber?: number // dorsal del jugador
   }
   date: Date | string
+  drawerButton?: ReactNode
 }
 
 export default function PlayerMatchCard({
@@ -21,9 +23,14 @@ export default function PlayerMatchCard({
   team2,
   stats,
   date,
+  drawerButton,
 }: PlayerMatchCardProps) {
   return (
-    <div className='mb-6 border-b pb-4 bg-blue-100/50 p-4 rounded-lg'>
+    <div className='border-b pb-4 bg-blue-100/50 p-4 rounded-lg relative mt-5'>
+      {/* Drawer button en la esquina superior derecha */}
+      {drawerButton && (
+        <div className='absolute top-4 right-4'>{drawerButton}</div>
+      )}
       <div className='font-medium mb-1 text-center'>
         {new Date(date).toLocaleDateString()}
       </div>

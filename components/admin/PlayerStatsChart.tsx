@@ -21,7 +21,7 @@ interface PlayerStatsChartProps {
 const chartConfig = {
   Goals: { label: 'Goals', color: '#3b82f6' },
   Assists: { label: 'Assists', color: '#10b981' },
-  Passes: { label: 'Passes Completed', color: '#f59e42' },
+  Pass: { label: 'Passes Completed', color: '#f59e42' },
   DuelsWon: { label: 'Duels Won', color: '#6366f1' },
   DuelsLost: { label: 'Duels Lost', color: '#ef4444' },
 }
@@ -33,10 +33,11 @@ export default function PlayerStatsChart({
   duelsWon,
   duelsLost,
 }: PlayerStatsChartProps) {
+  // Order: Goals (top), Assists (top right), Pass (bottom right), DuelsWon (bottom left), DuelsLost (top left)
   const data = [
     { stat: 'Goals', value: goals },
     { stat: 'Assists', value: assists },
-    { stat: 'Passes', value: passesCompleted },
+    { stat: 'Pass', value: passesCompleted },
     { stat: 'DuelsWon', value: duelsWon },
     { stat: 'DuelsLost', value: duelsLost },
   ]
@@ -44,7 +45,7 @@ export default function PlayerStatsChart({
   return (
     <div className='w-full max-w-md mx-auto mb-8'>
       <ChartContainer config={chartConfig}>
-        <RadarChart data={data} outerRadius={90}>
+        <RadarChart data={data} outerRadius={90} startAngle={90} endAngle={450}>
           <PolarGrid />
           <PolarAngleAxis dataKey='stat' />
           <PolarRadiusAxis

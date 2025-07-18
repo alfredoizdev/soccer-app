@@ -44,11 +44,11 @@ const PlayerStatsAdmin: React.FC<PlayerStatsAdminProps> = ({
     ]
   } else if (normalizedPosition === 'defender') {
     statItems = [
-      { label: 'Minutes Played', value: stats.minutesPlayed },
+      { label: 'Minutes', value: stats.minutesPlayed },
       { label: 'Goals Allowed', value: stats.goalsAllowed ?? 0 },
       { label: 'Goals', value: stats.goals },
       { label: 'Assists', value: stats.assists },
-      { label: 'Passes Completed', value: stats.passesCompleted },
+      { label: 'Passes', value: stats.passesCompleted },
       { label: 'Duels Won', value: stats.duelsWon },
       { label: 'Duels Lost', value: stats.duelsLost },
     ]
@@ -58,10 +58,10 @@ const PlayerStatsAdmin: React.FC<PlayerStatsAdminProps> = ({
     ]
   } else {
     statItems = [
-      { label: 'Minutes Played', value: stats.minutesPlayed },
+      { label: 'Minutes', value: stats.minutesPlayed },
       { label: 'Goals', value: stats.goals },
       { label: 'Assists', value: stats.assists },
-      { label: 'Passes Completed', value: stats.passesCompleted },
+      { label: 'Passes', value: stats.passesCompleted },
       { label: 'Duels Won', value: stats.duelsWon },
       { label: 'Duels Lost', value: stats.duelsLost },
     ]
@@ -74,7 +74,7 @@ const PlayerStatsAdmin: React.FC<PlayerStatsAdminProps> = ({
   return (
     <div className='mb-6'>
       {chartData.length > 1 && normalizedPosition !== 'goalkeeper' && (
-        <div className='max-w-xs mx-auto'>
+        <div className='max-w-md mx-auto'>
           <PlayerStatsChart
             goals={stats.goals}
             assists={stats.assists}

@@ -37,7 +37,7 @@ const PlayersPage = async ({ searchParams }: PlayersPageProps) => {
   const totalPages = Math.ceil((total ?? 0) / (Number(perPage) ?? 10))
 
   return (
-    <div className='w-full p-2 mt-5'>
+    <div className='w-full p-2 mt-5 animate-fade-in duration-500'>
       <div className='flex items-center justify-between mb-4'>
         <h1 className='text-2xl font-bold'>Players</h1>
         <Link

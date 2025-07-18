@@ -1,11 +1,11 @@
 import {
   getPlayersAction,
   getPlayerStatsByPlayerId,
+  getPlayerStatsRankingByOrganizationAction,
 } from '@/lib/actions/player.action'
 import { getOrganizationAction } from '@/lib/actions/organization.action'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   getPlayerMatchesWithStats,
@@ -14,6 +14,10 @@ import {
 import PlayerMatchCard from '@/components/members/PlayerMatchCard'
 import PlayerMatchesDrawer from '@/components/members/PlayerMatchesDrawer'
 import PlayerStatsAdmin from '@/components/admin/PlayerStatsAdmin'
+import ClubRanking, { ClubRankingPlayer } from '@/components/ClubRanking'
+import ClubTeammates, { ClubTeammate } from '@/components/ClubTeammates'
+import PlayerStatsPerformance from '@/components/admin/PlayerStatsBarChart'
+import PlayerEfficiencyDonut from '@/components/admin/PlayerEfficiencyDonut'
 
 interface PlayerDetailPageProps {
   params: Promise<{ id: string }>
@@ -30,6 +34,8 @@ type PlayerStats = {
   goalsSaved?: number
 }
 
+// Use ClubRankingPlayer type from ClubRanking
+
 export default async function PlayerDetailAdminPage({
   params,
 }: PlayerDetailPageProps) {
@@ -44,6 +50,23 @@ export default async function PlayerDetailAdminPage({
   if (player.organizationId) {
     const orgRes = await getOrganizationAction(player.organizationId)
     orgName = orgRes?.data?.name || ''
+  }
+
+  // Fetch ranking for this club
+  let ranking: ClubRankingPlayer[] = []
+  if (player.organizationId) {
+    const rankingRes = await getPlayerStatsRankingByOrganizationAction(
+      player.organizationId
+    )
+    ranking = (rankingRes?.data || []).map((p: unknown) => ({
+      ...(p as ClubRankingPlayer),
+      goals: Number((p as ClubRankingPlayer).goals ?? 0),
+      assists: Number((p as ClubRankingPlayer).assists ?? 0),
+      passesCompleted: Number((p as ClubRankingPlayer).passesCompleted ?? 0),
+      duelsWon: Number((p as ClubRankingPlayer).duelsWon ?? 0),
+      duelsLost: Number((p as ClubRankingPlayer).duelsLost ?? 0),
+      minutesPlayed: Number((p as ClubRankingPlayer).minutesPlayed ?? 0),
+    }))
   }
 
   // Compañeros de club (excluyendo al jugador actual)
@@ -92,84 +115,112 @@ export default async function PlayerDetailAdminPage({
   }
 
   return (
-    <div className='flex flex-col md:flex-row gap-8 min-h-screen'>
-      {/* ASIDE: Info principal del jugador */}
-      <aside className='md:w-1/3 w-full flex flex-col items-center md:items-center justify-center bg-white rounded-lg p-6 md:min-h-screen'>
-        <Image
-          src={player.avatar || '/no-profile.webp'}
-          alt={player.name}
-          width={96}
-          height={96}
-          className='rounded-full border object-cover w-24 h-24 mb-4'
-        />
-        <h1 className='text-3xl font-bold mb-1 text-center'>
-          {player.name} {player.lastName}
-        </h1>
-        {orgName && (
-          <div className='text-green-700 font-medium text-lg mb-1 text-center'>
-            {orgName}
-          </div>
-        )}
-        <div className='text-sm text-gray-500 mb-1 text-center'>
-          # {player.jerseyNumber}
-        </div>
-        <div className='text-sm text-gray-500 mb-2 text-center'>
-          {player.position?.toUpperCase() ?? ''}
-        </div>
-      </aside>
-
-      {/* CONTENIDO PRINCIPAL */}
-      <section className='md:w-2/3 w-full flex flex-col gap-6 max-w-xl p-0 md:p-6 px-2'>
-        <PlayerStatsAdmin position={player.position ?? ''} stats={stats} />
-
-        {teammates.length > 0 && (
-          <div className='mb-6'>
-            <div className='text-sm font-semibold mb-2'>
-              Other players in this club:
+    <>
+      <div className='w-full mx-auto p-4'>
+        <div className='bg-white w-full p-5 shadow-md rounded-lg'>
+          <div className='flex flex-col items-center mt-20 w-full'>
+            <Image
+              src={player.avatar || '/no-profile.webp'}
+              alt={player.name}
+              width={96}
+              height={96}
+              className='rounded-full border object-cover w-24 h-24 mb-4'
+            />
+            <h1 className='text-3xl font-bold mb-1 text-center'>
+              {player.name} {player.lastName}
+            </h1>
+            {orgName && (
+              <div className='text-green-700 font-medium text-lg mb-1 text-center'>
+                {orgName}
+              </div>
+            )}
+            <div className='text-sm text-gray-500 mb-1 text-center'>
+              # {player.jerseyNumber}
             </div>
-            <div className='flex -space-x-3'>
-              {teammates.map((tm) => (
-                <Link key={tm.id} href={`/admin/players/${tm.id}`}>
-                  <Image
-                    src={tm.avatar || '/no-profile.webp'}
-                    alt={tm.name}
-                    width={40}
-                    height={40}
-                    className='rounded-full border-2 border-white object-cover w-10 h-10 hover:scale-110 transition-transform'
-                    title={`${tm.name} ${tm.lastName}`}
-                  />
-                </Link>
-              ))}
+            <div className='text-sm text-gray-500 mb-2 text-center'>
+              {player.position?.toUpperCase() ?? ''}
             </div>
           </div>
-        )}
-        {/* Último partido y Drawer */}
-        <div className='mb-6'>
-          <div className='flex items-center justify-between mb-2'>
-            <div className='text-lg font-semibold'>Last Match</div>
-            {sortedMatches.length > 0 && (
-              <PlayerMatchesDrawer
-                matches={sortedMatches}
-                trigger={
-                  <Button variant='default' size='sm'>
-                    See all
-                  </Button>
+          {/* Compañeros de club */}
+          <div className='w-full mt-8'>
+            <ClubTeammates
+              teammates={teammates as ClubTeammate[]}
+              pathBase='/admin/players/'
+            />
+          </div>
+        </div>
+        <section className='w-full mt-10'>
+          <PlayerStatsAdmin position={player.position ?? ''} stats={stats} />
+          {/* Gráficos de performance y eficiencia juntos */}
+          <div className='grid md:grid-cols-2 gap-6'>
+            <PlayerStatsPerformance
+              goalsPerMatch={
+                sortedMatches.length > 0
+                  ? stats.goals / sortedMatches.length
+                  : 0
+              }
+              assistsPerMatch={
+                sortedMatches.length > 0
+                  ? stats.assists / sortedMatches.length
+                  : 0
+              }
+              minutesPerMatch={
+                sortedMatches.length > 0
+                  ? stats.minutesPlayed / sortedMatches.length
+                  : 0
+              }
+              duelWinPercentage={
+                stats.duelsWon + stats.duelsLost > 0
+                  ? (stats.duelsWon / (stats.duelsWon + stats.duelsLost)) * 100
+                  : 0
+              }
+              passesPerMatch={
+                sortedMatches.length > 0
+                  ? stats.passesCompleted / sortedMatches.length
+                  : 0
+              }
+            />
+            <PlayerEfficiencyDonut
+              goals={stats.goals}
+              assists={stats.assists}
+              passesCompleted={stats.passesCompleted}
+              minutesPlayed={stats.minutesPlayed}
+            />
+          </div>
+          <div className='mt-10 w-full '>
+            <div className='text-lg font-semibold mb-2'>Last Match</div>
+            {lastMatch ? (
+              <PlayerMatchCard
+                team1={{ ...team1, goals: lastMatch.match.team1Goals }}
+                team2={{ ...team2, goals: lastMatch.match.team2Goals }}
+                stats={lastMatch.stats}
+                date={lastMatch.match.date}
+                drawerButton={
+                  sortedMatches.length > 0 ? (
+                    <PlayerMatchesDrawer
+                      matches={sortedMatches}
+                      trigger={
+                        <Button
+                          variant='outline'
+                          className='bg-blue-200/50 text-blue-700'
+                          size='sm'
+                        >
+                          See all
+                        </Button>
+                      }
+                    />
+                  ) : null
                 }
               />
+            ) : (
+              <div className='text-gray-500 text-sm'>No matches found.</div>
             )}
           </div>
-          {lastMatch ? (
-            <PlayerMatchCard
-              team1={{ ...team1, goals: lastMatch.match.team1Goals }}
-              team2={{ ...team2, goals: lastMatch.match.team2Goals }}
-              stats={lastMatch.stats}
-              date={lastMatch.match.date}
-            />
-          ) : (
-            <div className='text-gray-500 text-sm'>No matches found.</div>
-          )}
-        </div>
-      </section>
-    </div>
+          <div className='mt-10 w-full'>
+            <ClubRanking ranking={ranking} currentPlayerId={player.id} />
+          </div>
+        </section>
+      </div>
+    </>
   )
 }

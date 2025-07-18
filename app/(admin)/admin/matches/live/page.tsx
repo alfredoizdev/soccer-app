@@ -133,7 +133,7 @@ const LiveMatchPage = () => {
   }
 
   return (
-    <div className='w-full mx-auto py-8 px-4'>
+    <div className='w-full mx-auto py-8 px-4 animate-fade-in duration-500'>
       <h1 className='text-2xl font-bold mb-4'>Partido: Club A vs Club B</h1>
       <div className='flex items-center gap-4 mb-8'>
         <span className='text-3xl font-mono'>⏱️ {formatTime(timer)}</span>

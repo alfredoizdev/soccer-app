@@ -41,7 +41,7 @@ export default async function DashboardPage() {
   // Si quieres mostrar los últimos jugadores, puedes agregar otro widget/lista
 
   return (
-    <div className='p-6'>
+    <div className='p-6 animate-fade-in duration-500'>
       <h1 className='text-2xl font-bold mb-6'>Admin Dashboard</h1>
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
         <WidgetCard title='Total Users' value={totalUsers} />

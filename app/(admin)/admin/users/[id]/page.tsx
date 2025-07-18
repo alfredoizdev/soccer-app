@@ -44,7 +44,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
   const { data: team } = await getOrganizationByUserId(user.id)
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50 to-white py-12 px-4'>
+    <div className='min-h-screen bg-gradient-to-br from-blue-50 to-white py-12 px-4 animate-fade-in duration-500'>
       <div className='max-w-xl mx-3 sm:mx-auto bg-white rounded-2xl shadow-2xl p-8 relative mt-10'>
         <EditUserDrawerButton
           user={{

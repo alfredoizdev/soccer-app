@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Badge } from '@/components/ui/badge'
 
 interface MatchListItem {
   id: string
@@ -43,7 +44,13 @@ export default function MatchSearch({ matches }: Props) {
       />
       <div className='space-y-4 max-h-[400px] sm:max-h-[100vh] overflow-y-auto'>
         {filtered.length === 0 ? (
-          <div className='text-gray-500'>No matches found.</div>
+          <div className='text-gray-500 text-center py-8'>
+            <p>No active matches found.</p>
+            <p className='text-sm text-gray-400 mt-2'>
+              Try creating a new match or check the match history for completed
+              matches.
+            </p>
+          </div>
         ) : (
           filtered.map((match) => (
             <Link
@@ -51,31 +58,53 @@ export default function MatchSearch({ matches }: Props) {
               href={`/admin/matches/live/${match.id}`}
               className='block'
             >
-              <div className='p-4 bg-white rounded shadow hover:bg-gray-50 transition flex flex-col items-center'>
-                <div className='flex items-center justify-center gap-4 mb-2'>
-                  <Image
-                    src={match.team1Avatar || '/no-club.jpg'}
-                    alt={match.team1}
-                    width={40}
-                    height={40}
-                    className='rounded-full object-cover border'
-                  />
-                  <span className='text-lg font-semibold'>vs</span>
-                  <Image
-                    src={match.team2Avatar || '/no-club.jpg'}
-                    alt={match.team2}
-                    width={40}
-                    height={40}
-                    className='rounded-full object-cover border'
-                  />
+              <div className='p-4 bg-white rounded-lg shadow hover:shadow-md transition-all border border-gray-200'>
+                <div className='flex items-center justify-between mb-3'>
+                  <Badge variant='secondary' className='text-xs'>
+                    Pending
+                  </Badge>
+                  <span className='text-xs text-gray-500'>
+                    {match.date instanceof Date
+                      ? match.date.toLocaleDateString()
+                      : new Date(match.date).toLocaleDateString()}
+                  </span>
                 </div>
-                <div className='font-semibold text-center'>
-                  {match.team1} vs {match.team2}
+
+                <div className='flex items-center justify-center gap-6 mb-3'>
+                  <div className='text-center'>
+                    <Image
+                      src={match.team1Avatar || '/no-club.jpg'}
+                      alt={match.team1}
+                      width={48}
+                      height={48}
+                      className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                    />
+                    <div className='font-semibold text-sm'>{match.team1}</div>
+                  </div>
+
+                  <div className='text-center'>
+                    <div className='text-2xl font-bold text-gray-400'>VS</div>
+                    <div className='text-xs text-gray-500 mt-1'>
+                      Ready to start
+                    </div>
+                  </div>
+
+                  <div className='text-center'>
+                    <Image
+                      src={match.team2Avatar || '/no-club.jpg'}
+                      alt={match.team2}
+                      width={48}
+                      height={48}
+                      className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                    />
+                    <div className='font-semibold text-sm'>{match.team2}</div>
+                  </div>
                 </div>
-                <div className='text-xs text-gray-500 text-center'>
-                  {match.date instanceof Date
-                    ? match.date.toLocaleDateString()
-                    : new Date(match.date).toLocaleDateString()}
+
+                <div className='text-center'>
+                  <span className='text-xs text-blue-600 font-medium'>
+                    Click to start live match →
+                  </span>
                 </div>
               </div>
             </Link>
