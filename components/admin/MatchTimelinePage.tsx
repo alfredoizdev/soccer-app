@@ -261,16 +261,16 @@ export default function MatchTimelinePage({
       </div>
 
       {/* Timeline Section */}
-      <div className='bg-white p-5'>
+      <div className='bg-white p-1 sm:p-5'>
         {/* Timeline */}
-        <div className='p-4'>
+        <div className='p-1 sm:p-4'>
           {sortedEvents.length > 0 ? (
             <div className='relative'>
               {/* Línea vertical central */}
               <div className='absolute left-1/2 top-0 bottom-0 w-1 bg-green-500 transform -translate-x-1/2'></div>
 
               {/* Events */}
-              <div className='space-y-6'>
+              <div className='space-y-2 sm:space-y-6'>
                 {sortedEvents.map((event) => {
                   // Eventos especiales que van en el medio de la línea
                   const isSpecialEvent =
@@ -288,16 +288,18 @@ export default function MatchTimelinePage({
                         {/* Special event content - centered */}
                         <div className='flex justify-center'>
                           <div
-                            className={`flex items-center space-x-2 px-3 py-2 rounded-lg shadow-lg ${
+                            className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg shadow-lg ${
                               event.eventType === 'half_time'
                                 ? 'bg-orange-100 border-2 border-orange-300'
                                 : 'bg-green-100 border-2 border-green-300'
                             }`}
                           >
-                            {getEventIcon(event.eventType)}
-                            <div className='flex items-center space-x-2'>
+                            <div className='w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center'>
+                              {getEventIcon(event.eventType)}
+                            </div>
+                            <div className='flex items-center space-x-1 sm:space-x-2'>
                               <span
-                                className={`text-sm font-semibold ${
+                                className={`text-xs sm:text-sm font-semibold ${
                                   event.eventType === 'half_time'
                                     ? 'text-orange-700'
                                     : 'text-green-700'
@@ -334,12 +336,12 @@ export default function MatchTimelinePage({
                       <div
                         className={`flex items-center ${
                           isLeft || defaultToLeft
-                            ? 'justify-end pr-2'
-                            : 'justify-start pl-2'
+                            ? 'justify-end pr-1 sm:pr-2'
+                            : 'justify-start pl-1 sm:pl-2'
                         }`}
                       >
                         <div
-                          className={`flex items-center space-x-4 max-w-xs ${
+                          className={`flex items-center space-x-2 sm:space-x-4 max-w-xs ${
                             isLeft || defaultToLeft
                               ? 'flex-row-reverse'
                               : 'flex-row'
@@ -347,12 +349,12 @@ export default function MatchTimelinePage({
                         >
                           {/* Player Avatar with Event Icon */}
                           {event.playerName && event.playerId && (
-                            <div className='relative flex-shrink-0 mr-3'>
+                            <div className='relative flex-shrink-0 mr-2 sm:mr-3'>
                               <Link
                                 href={`/admin/players/${event.playerId}`}
                                 className='cursor-pointer hover:opacity-80 transition-opacity'
                               >
-                                <Avatar className='w-10 h-10'>
+                                <Avatar className='w-8 h-8 sm:w-10 sm:h-10'>
                                   <AvatarImage
                                     src={
                                       event.playerAvatar || '/no-profile.webp'
@@ -370,8 +372,8 @@ export default function MatchTimelinePage({
                                   </AvatarFallback>
                                 </Avatar>
                               </Link>
-                              <div className='absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md border border-gray-200 flex items-center justify-center'>
-                                <div className='w-4 h-4 flex items-center justify-center'>
+                              <div className='absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-white rounded-full p-0.5 sm:p-1 shadow-md border border-gray-200 flex items-center justify-center'>
+                                <div className='w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center'>
                                   {getEventIcon(event.eventType)}
                                 </div>
                               </div>
@@ -380,26 +382,42 @@ export default function MatchTimelinePage({
 
                           {/* Event Icon (if no player) */}
                           {!event.playerName && (
-                            <div className='flex-shrink-0 mr-3'>
-                              <div className='w-8 h-8 flex items-center justify-center'>
+                            <div className='flex-shrink-0 mr-2 sm:mr-3'>
+                              <div className='w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center'>
                                 {getEventIcon(event.eventType)}
                               </div>
                             </div>
                           )}
 
                           <div
-                            className={`text-sm ${
+                            className={`text-xs sm:text-sm ${
                               isLeft ? 'text-right' : 'text-left'
                             }`}
                           >
-                            <div className='font-semibold text-gray-800 mb-1'>
-                              {event.playerName || 'Unknown Player'}
+                            <div className='font-semibold text-gray-800 mb-0.5 sm:mb-1'>
+                              {/* Mostrar solo iniciales en móvil, nombre completo en desktop */}
+                              {event.playerName ? (
+                                <>
+                                  <span className='sm:hidden'>
+                                    {event.playerName
+                                      .split(' ')
+                                      .map((n) => n[0])
+                                      .join('')}
+                                  </span>
+                                  <span className='hidden sm:inline'>
+                                    {event.playerName}
+                                  </span>
+                                </>
+                              ) : (
+                                'Unknown Player'
+                              )}
                             </div>
-                            <div className='text-xs text-gray-500 mb-1'>
+                            <div className='text-xs text-gray-500 mb-0.5 sm:mb-1'>
                               {getEventLabel(event.eventType)}
                             </div>
+                            {/* Ocultar descripción en móviles */}
                             {event.description && (
-                              <div className='text-xs text-gray-400'>
+                              <div className='hidden sm:block text-xs text-gray-400'>
                                 {event.description}
                               </div>
                             )}
