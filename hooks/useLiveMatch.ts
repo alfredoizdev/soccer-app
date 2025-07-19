@@ -4,7 +4,6 @@ import {
   updateLivePlayerStats,
   updateLiveMatchScore,
   endLiveMatch,
-  debugLiveMatchData,
 } from '@/lib/actions/matches.action'
 
 interface PlayerStat {
@@ -62,41 +61,16 @@ export function useLiveMatch(
     [matchId]
   )
 
-  // Actualizar estadísticas de jugador
-  const updatePlayerStat = useCallback(
-    (
-      playerId: string,
-      statType:
-        | 'timePlayed'
-        | 'goals'
-        | 'assists'
-        | 'goalsSaved'
-        | 'goalsAllowed'
-        | 'passesCompleted',
-      value: number
-    ) => {
-      setStats((prev) => {
-        const updated = { ...prev }
-        updated[playerId][statType] = value
-        return updated
-      })
+  // Update player stats
+  const updatePlayerStats = useCallback(
+    (playerId: string, updates: Partial<PlayerStat>) => {
+      setStats((prev) => ({
+        ...prev,
+        [playerId]: { ...prev[playerId], ...updates },
+      }))
 
       setPendingUpdates((prev) => new Set(prev).add(playerId))
-
-      // Send only the fields that can be updated
-      const currentPlayerStats = stats[playerId]
-      const updatedStats = {
-        isPlaying: currentPlayerStats.isPlaying,
-        timePlayed: currentPlayerStats.timePlayed,
-        goals: currentPlayerStats.goals,
-        assists: currentPlayerStats.assists,
-        passesCompleted: currentPlayerStats.passesCompleted,
-        goalsAllowed: currentPlayerStats.goalsAllowed,
-        goalsSaved: currentPlayerStats.goalsSaved,
-        [statType]: value,
-      }
-
-      debouncedUpdate(playerId, updatedStats)
+      debouncedUpdate(playerId, updates)
     },
     [debouncedUpdate, stats]
   )
@@ -173,71 +147,72 @@ export function useLiveMatch(
     }
   }, [matchId])
 
-  // Save time played periodically
-  useEffect(() => {
-    if (!isRunning) return
-
-    const saveInterval = setInterval(async () => {
-      for (const playerId in stats) {
-        const playerStat = stats[playerId]
-        if (playerStat.isPlaying) {
-          try {
-            // Send only the fields that can be updated
-            const updateableStats = {
-              isPlaying: playerStat.isPlaying,
-              timePlayed: playerStat.timePlayed,
-              goals: playerStat.goals,
-              assists: playerStat.assists,
-              passesCompleted: playerStat.passesCompleted,
-              goalsAllowed: playerStat.goalsAllowed,
-              goalsSaved: playerStat.goalsSaved,
-            }
-
-            await updateLivePlayerStats({
-              matchId,
-              playerId,
-              stats: updateableStats,
-            })
-          } catch (error) {
-            console.error('Error saving player time:', error)
-          }
-        }
-      }
-
-      // Debug: Verificar el estado de los datos cada 30 segundos
-      try {
-        await debugLiveMatchData(matchId)
-      } catch (error) {
-        console.error('Error in debug function:', error)
-      }
-    }, 30000) // Save every 30 seconds
-
-    return () => clearInterval(saveInterval)
-  }, [isRunning, stats, matchId])
-
-  // Update time played for playing players
+  // Update time played for all playing players
   const updateTimePlayed = useCallback(() => {
     setStats((prev) => {
       const updated = { ...prev }
-      for (const id in updated) {
-        if (updated[id].isPlaying) {
-          updated[id].timePlayed += 1
+      for (const playerId in updated) {
+        if (updated[playerId].isPlaying) {
+          updated[playerId].timePlayed += 1
         }
       }
       return updated
     })
   }, [])
 
+  // Save time played periodically - REDUCIDO A UNA VEZ POR MINUTO
+  useEffect(() => {
+    if (!isRunning) return
+
+    const saveInterval = setInterval(async () => {
+      // Solo guardar si hay cambios pendientes o cada 60 segundos
+      const hasPendingUpdates = pendingUpdates.size > 0
+
+      if (hasPendingUpdates) {
+        for (const playerId of pendingUpdates) {
+          const playerStat = stats[playerId]
+          if (playerStat && playerStat.isPlaying) {
+            try {
+              // Send only the fields that can be updated
+              const updateableStats = {
+                isPlaying: playerStat.isPlaying,
+                timePlayed: playerStat.timePlayed,
+                goals: playerStat.goals,
+                assists: playerStat.assists,
+                passesCompleted: playerStat.passesCompleted,
+                goalsAllowed: playerStat.goalsAllowed,
+                goalsSaved: playerStat.goalsSaved,
+              }
+
+              await updateLivePlayerStats({
+                matchId,
+                playerId,
+                stats: updateableStats,
+              })
+            } catch (error) {
+              console.error('Error saving player time:', error)
+            }
+          }
+        }
+
+        // Limpiar pending updates después de guardar
+        setPendingUpdates(new Set())
+      }
+    }, 60000) // Save every 60 seconds instead of 30
+
+    return () => clearInterval(saveInterval)
+  }, [isRunning, stats, matchId, pendingUpdates])
+
   return {
     stats,
     matchScore,
     isRunning,
     setIsRunning,
-    updatePlayerStat,
-    updateScore,
+    updatePlayerStats,
     togglePlayer,
-    updateTimePlayed,
+    updateScore,
     endMatch,
+    updateTimePlayed,
     pendingUpdates,
   }
 }

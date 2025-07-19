@@ -688,36 +688,41 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
         endLiveMatch,
       } = await import('@/lib/actions/matches.action')
 
-      // Guardar stats de jugadores
+      // Guardar stats de jugadores en paralelo para reducir tiempo
       console.log('👥 Guardando stats de jugadores...')
-      for (const [playerId, stats] of Object.entries(playerStats)) {
-        console.log('📊 Guardando stats para jugador:', playerId)
-        await updateLivePlayerStats({
-          matchId,
-          playerId,
-          stats: {
-            isPlaying: stats.isPlaying,
-            timePlayed: stats.timePlayed,
-            goals: stats.goals,
-            assists: stats.assists,
-            passesCompleted: stats.passesCompleted,
-            goalsAllowed: stats.goalsAllowed,
-            goalsSaved: stats.goalsSaved,
-          },
-        })
-      }
+      const playerUpdatePromises = Object.entries(playerStats).map(
+        async ([playerId, stats]) => {
+          console.log('📊 Guardando stats para jugador:', playerId)
+          return updateLivePlayerStats({
+            matchId,
+            playerId,
+            stats: {
+              isPlaying: stats.isPlaying,
+              timePlayed: stats.timePlayed,
+              goals: stats.goals,
+              assists: stats.assists,
+              passesCompleted: stats.passesCompleted,
+              goalsAllowed: stats.goalsAllowed,
+              goalsSaved: stats.goalsSaved,
+            },
+          })
+        }
+      )
 
       // Guardar marcador
       console.log('⚽ Guardando marcador:', team1Goals, '-', team2Goals)
-      await updateLiveMatchScore({
+      const scoreUpdatePromise = updateLiveMatchScore({
         matchId,
         team1Goals,
         team2Goals,
       })
 
-      // Guardar eventos
+      // Ejecutar actualizaciones de jugadores y marcador en paralelo
+      await Promise.all([...playerUpdatePromises, scoreUpdatePromise])
+
+      // Guardar eventos en paralelo
       console.log('📝 Guardando eventos...')
-      for (const event of events) {
+      const eventPromises = events.map(async (event) => {
         console.log(
           '📊 Guardando evento:',
           event.eventType,
@@ -728,7 +733,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
           'playerName:',
           event.playerName
         )
-        await createMatchEvent({
+        return createMatchEvent({
           matchId,
           playerId: event.playerId,
           eventType: event.eventType,
@@ -736,9 +741,12 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
           teamId: event.teamId,
           description: event.description,
         })
-      }
+      })
 
-      // Terminar partido en BD
+      // Ejecutar guardado de eventos en paralelo
+      await Promise.all(eventPromises)
+
+      // Terminar partido en BD (esto transferirá los datos de live a permanentes)
       console.log('🏁 Terminando partido en BD...')
       await endLiveMatch(matchId)
 

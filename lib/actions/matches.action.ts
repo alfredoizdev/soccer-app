@@ -641,13 +641,6 @@ export async function endLiveMatch(matchId: string) {
     .where(eq(liveMatchDataTable.matchId, matchId))
 
   console.log(`📊 Datos en vivo encontrados: ${liveData.length} registros`)
-  liveData.forEach((data, index) => {
-    console.log(`   ${index + 1}. Jugador ${data.playerId}:`)
-    console.log(`      - Goals: ${data.goals}`)
-    console.log(`      - Assists: ${data.assists}`)
-    console.log(`      - Passes: ${data.passesCompleted}`)
-    console.log(`      - Time: ${data.timePlayed}s`)
-  })
 
   const liveScore = await db
     .select()
@@ -689,8 +682,6 @@ export async function endLiveMatch(matchId: string) {
     liveScore.push(newLiveScore[0])
   } else if (liveData.length > 0 && !liveScore.length) {
     // Tenemos datos de jugadores pero no de score, crear score básico
-
-    // Crear score básico
     await db.insert(liveMatchScoreTable).values({
       matchId,
       team1Goals: 0,
@@ -720,12 +711,10 @@ export async function endLiveMatch(matchId: string) {
     })
     .where(eq(matchesTable.id, matchId))
 
-  // Transferir estadísticas de jugadores a player_stats
-  for (const liveStat of liveData) {
+  // Preparar todas las operaciones de actualización de player_stats en paralelo
+  const playerStatsPromises = liveData.map(async (liveStat) => {
     try {
       // Calcular el tiempo real jugado
-      // Si el jugador jugó más tiempo del que debería, limitarlo a un máximo razonable
-      // Por defecto, limitamos a 90 minutos (5400 segundos) para partidos normales
       const maxTimePlayed = 5400 // 90 minutos en segundos
       const actualTimePlayed = Math.min(liveStat.timePlayed, maxTimePlayed)
       const minutesPlayed = Math.floor(actualTimePlayed / 60)
@@ -744,77 +733,48 @@ export async function endLiveMatch(matchId: string) {
 
       if (existingStat.length > 0) {
         // Actualizar registro existente
-        await db
+        return db
           .update(playerStatsTable)
           .set({
             minutesPlayed: minutesPlayed,
             goals: liveStat.goals,
             assists: liveStat.assists,
             passesCompleted: liveStat.passesCompleted,
-
             goalsAllowed: liveStat.goalsAllowed,
             goalsSaved: liveStat.goalsSaved,
           })
           .where(eq(playerStatsTable.id, existingStat[0].id))
       } else {
         // Crear nuevo registro
-        await db.insert(playerStatsTable).values({
+        return db.insert(playerStatsTable).values({
           matchId,
           playerId: liveStat.playerId,
           minutesPlayed: minutesPlayed,
           goals: liveStat.goals,
           assists: liveStat.assists,
           passesCompleted: liveStat.passesCompleted,
-
           goalsAllowed: liveStat.goalsAllowed,
           goalsSaved: liveStat.goalsSaved,
         })
       }
-    } catch {
-      // Continuar con el siguiente jugador en caso de error
-      continue
+    } catch (error) {
+      console.error(`Error processing player ${liveStat.playerId}:`, error)
+      return null
     }
+  })
 
-    // Actualizar estadísticas acumulativas en la tabla players
+  // Ejecutar todas las actualizaciones de player_stats en paralelo
+  await Promise.all(playerStatsPromises)
+
+  // Actualizar estadísticas acumulativas en paralelo
+  const cumulativeStatsPromises = liveData.map(async (liveStat) => {
     try {
-      // Obtener valores actuales del jugador
-      const [currentPlayer] = await db
-        .select({
-          totalGoals: playersTable.totalGoals,
-          totalAssists: playersTable.totalAssists,
-          totalPassesCompleted: playersTable.totalPassesCompleted,
-        })
-        .from(playersTable)
-        .where(eq(playersTable.id, liveStat.playerId))
-
-      console.log(
-        `📊 Actualizando stats acumulativas para jugador ${liveStat.playerId}:`
-      )
-      console.log(
-        `   - Goals actuales: ${currentPlayer?.totalGoals || 0} + ${
-          liveStat.goals
-        } = ${(currentPlayer?.totalGoals || 0) + liveStat.goals}`
-      )
-      console.log(
-        `   - Assists actuales: ${currentPlayer?.totalAssists || 0} + ${
-          liveStat.assists
-        } = ${(currentPlayer?.totalAssists || 0) + liveStat.assists}`
-      )
-      console.log(
-        `   - Passes actuales: ${currentPlayer?.totalPassesCompleted || 0} + ${
-          liveStat.passesCompleted
-        } = ${
-          (currentPlayer?.totalPassesCompleted || 0) + liveStat.passesCompleted
-        }`
-      )
-
       await db
         .update(playersTable)
         .set({
           totalGoals: sql`COALESCE(${playersTable.totalGoals}, 0) + ${liveStat.goals}`,
           totalAssists: sql`COALESCE(${playersTable.totalAssists}, 0) + ${liveStat.assists}`,
           totalPassesCompleted: sql`COALESCE(${playersTable.totalPassesCompleted}, 0) + ${liveStat.passesCompleted}`,
-
           updatedAt: new Date(),
         })
         .where(eq(playersTable.id, liveStat.playerId))
@@ -827,20 +787,25 @@ export async function endLiveMatch(matchId: string) {
         `❌ Error actualizando stats acumulativas para jugador ${liveStat.playerId}:`,
         error
       )
-      // Continuar con el siguiente jugador en caso de error
-      continue
     }
-  }
+  })
 
-  // Limpiar datos en vivo
-  await db
-    .delete(liveMatchDataTable)
-    .where(eq(liveMatchDataTable.matchId, matchId))
+  // Ejecutar actualizaciones acumulativas en paralelo
+  await Promise.all(cumulativeStatsPromises)
 
-  await db
-    .delete(liveMatchScoreTable)
-    .where(eq(liveMatchScoreTable.matchId, matchId))
+  // Limpiar datos en vivo en paralelo
+  const cleanupPromises = [
+    db
+      .delete(liveMatchDataTable)
+      .where(eq(liveMatchDataTable.matchId, matchId)),
+    db
+      .delete(liveMatchScoreTable)
+      .where(eq(liveMatchScoreTable.matchId, matchId)),
+  ]
 
+  await Promise.all(cleanupPromises)
+
+  console.log('✅ endLiveMatch completado exitosamente')
   return { success: true }
 }
 
