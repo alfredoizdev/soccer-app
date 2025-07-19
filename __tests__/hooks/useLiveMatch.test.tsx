@@ -78,7 +78,7 @@ describe('useLiveMatch', () => {
 
     // Update a player stat
     act(() => {
-      result.current.updatePlayerStat('player-1', 'goals', 2)
+      result.current.updatePlayerStats('player-1', { goals: 2 })
     })
 
     // Check that pending updates includes the player
@@ -158,7 +158,7 @@ describe('useLiveMatch', () => {
   })
 
   it('should end match successfully', async () => {
-    mockEndLiveMatch.mockResolvedValue(undefined)
+    mockEndLiveMatch.mockResolvedValue({ success: true })
 
     const { result } = renderHook(() =>
       useLiveMatch(mockMatchId, mockInitialStats, mockInitialScore)
@@ -236,9 +236,9 @@ describe('useLiveMatch', () => {
     // Match is not running by default
     expect(result.current.isRunning).toBe(false)
 
-    // Fast forward 30 seconds
+    // Fast forward 60 seconds (new interval)
     act(() => {
-      vi.advanceTimersByTime(30000)
+      vi.advanceTimersByTime(60000)
     })
 
     // Should not have called updateLivePlayerStats
@@ -254,7 +254,7 @@ describe('useLiveMatch', () => {
 
     // Update a player stat
     act(() => {
-      result.current.updatePlayerStat('player-1', 'goals', 2)
+      result.current.updatePlayerStats('player-1', { goals: 2 })
     })
 
     // Test that the state was updated even if the API call fails
