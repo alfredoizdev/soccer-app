@@ -4,10 +4,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFutbol } from '@fortawesome/free-regular-svg-icons'
 import {
   faSocks,
-  faClock,
   faArrowLeft,
   faCheck,
+  faExclamationTriangle,
+  faExchange,
+  faUserInjured,
+  faCalendarTimes,
+  faShield,
+  faUserPlus,
+  faPause,
+  faPlay,
 } from '@fortawesome/free-solid-svg-icons'
+import { RefreshCw } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -15,7 +23,20 @@ import Link from 'next/link'
 export type MatchEvent = {
   id: string
   minute: number
-  eventType: 'goal' | 'assist' | 'pass'
+  eventType:
+    | 'goal'
+    | 'assist'
+    | 'yellow_card'
+    | 'red_card'
+    | 'substitution'
+    | 'injury'
+    | 'pass'
+    | 'goal_saved'
+    | 'goal_allowed'
+    | 'player_in'
+    | 'player_out'
+    | 'half_time'
+    | 'resume_match'
   playerName?: string
   teamName: string
   teamAvatar?: string
@@ -29,21 +50,74 @@ interface MatchTimelinePageProps {
   team1Avatar?: string
   team2Avatar?: string
   matchId: string
+  team1Goals: number
+  team2Goals: number
+  duration?: number
 }
 
 const getEventIcon = (eventType: MatchEvent['eventType']) => {
   switch (eventType) {
     case 'goal':
       return (
-        <FontAwesomeIcon icon={faFutbol} className='w-4 h-4 text-green-400' />
+        <FontAwesomeIcon icon={faFutbol} className='w-4 h-4 text-green-500' />
       )
     case 'assist':
       return (
-        <FontAwesomeIcon icon={faSocks} className='w-4 h-4 text-blue-400' />
+        <FontAwesomeIcon icon={faSocks} className='w-4 h-4 text-blue-500' />
+      )
+    case 'yellow_card':
+      return (
+        <FontAwesomeIcon
+          icon={faExclamationTriangle}
+          className='w-4 h-4 text-yellow-500'
+        />
+      )
+    case 'red_card':
+      return (
+        <FontAwesomeIcon
+          icon={faExclamationTriangle}
+          className='w-4 h-4 text-red-500'
+        />
+      )
+    case 'substitution':
+      return (
+        <FontAwesomeIcon
+          icon={faExchange}
+          className='w-4 h-4 text-purple-500'
+        />
+      )
+    case 'injury':
+      return (
+        <FontAwesomeIcon
+          icon={faUserInjured}
+          className='w-4 h-4 text-orange-500'
+        />
       )
     case 'pass':
       return (
-        <FontAwesomeIcon icon={faCheck} className='w-4 h-4 text-purple-400' />
+        <FontAwesomeIcon icon={faCheck} className='w-4 h-4 text-gray-500' />
+      )
+    case 'goal_saved':
+      return (
+        <FontAwesomeIcon icon={faShield} className='w-4 h-4 text-green-600' />
+      )
+    case 'goal_allowed':
+      return (
+        <FontAwesomeIcon icon={faShield} className='w-4 h-4 text-red-600' />
+      )
+    case 'player_in':
+      return (
+        <FontAwesomeIcon icon={faUserPlus} className='w-4 h-4 text-green-600' />
+      )
+    case 'player_out':
+      return <RefreshCw className='w-4 h-4 text-red-600' />
+    case 'half_time':
+      return (
+        <FontAwesomeIcon icon={faPause} className='w-4 h-4 text-orange-500' />
+      )
+    case 'resume_match':
+      return (
+        <FontAwesomeIcon icon={faPlay} className='w-4 h-4 text-green-500' />
       )
   }
 }
@@ -54,8 +128,59 @@ const getEventLabel = (eventType: MatchEvent['eventType']) => {
       return 'Goal'
     case 'assist':
       return 'Assist'
+    case 'yellow_card':
+      return 'Yellow Card'
+    case 'red_card':
+      return 'Red Card'
+    case 'substitution':
+      return 'Substitution'
+    case 'injury':
+      return 'Injury'
     case 'pass':
       return 'Pass'
+    case 'goal_saved':
+      return 'Goal Saved'
+    case 'goal_allowed':
+      return 'Goal Allowed'
+    case 'player_in':
+      return 'Player In'
+    case 'player_out':
+      return 'Player Out'
+    case 'half_time':
+      return 'Half Time'
+    case 'resume_match':
+      return 'Match Resumed'
+  }
+}
+
+const getEventColor = (eventType: MatchEvent['eventType']) => {
+  switch (eventType) {
+    case 'goal':
+      return 'bg-green-100 border-green-300'
+    case 'assist':
+      return 'bg-blue-100 border-blue-300'
+    case 'yellow_card':
+      return 'bg-yellow-100 border-yellow-300'
+    case 'red_card':
+      return 'bg-red-100 border-red-300'
+    case 'substitution':
+      return 'bg-purple-100 border-purple-300'
+    case 'injury':
+      return 'bg-orange-100 border-orange-300'
+    case 'pass':
+      return 'bg-gray-100 border-gray-300'
+    case 'goal_saved':
+      return 'bg-green-100 border-green-300'
+    case 'goal_allowed':
+      return 'bg-red-100 border-red-300'
+    case 'player_in':
+      return 'bg-green-100 border-green-300'
+    case 'player_out':
+      return 'bg-red-100 border-red-300'
+    case 'half_time':
+      return 'bg-orange-100 border-orange-300'
+    case 'resume_match':
+      return 'bg-green-100 border-green-300'
   }
 }
 
@@ -66,6 +191,9 @@ export default function MatchTimelinePage({
   team1Avatar,
   team2Avatar,
   matchId,
+  team1Goals,
+  team2Goals,
+  duration,
 }: MatchTimelinePageProps) {
   // Ordenar eventos por minuto (más recientes primero)
   const sortedEvents = [...events].sort((a, b) => b.minute - a.minute)
@@ -112,11 +240,17 @@ export default function MatchTimelinePage({
               {/* Marcador central */}
               <div className='flex flex-col items-center'>
                 <div className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-2'>
-                  2 : 1
+                  {team1Goals} : {team2Goals}
                 </div>
                 <div className='text-xs sm:text-sm text-gray-500 bg-gray-100 px-3 sm:px-4 py-1 sm:py-2 rounded-full'>
                   Final Score
                 </div>
+                {duration && (
+                  <div className='text-xs sm:text-sm text-gray-500 px-3 sm:px-4 py-1 sm:py-2 rounded-full mt-2'>
+                    Duration: {Math.floor(duration / 60)}:
+                    {(duration % 60).toString().padStart(2, '0')}
+                  </div>
+                )}
               </div>
 
               {/* Equipo 2 */}
@@ -143,72 +277,85 @@ export default function MatchTimelinePage({
       <div className='bg-white p-5'>
         {/* Timeline */}
         <div className='p-4'>
-          <div className='relative'>
-            {/* Línea vertical central */}
-            <div className='absolute left-1/2 top-0 bottom-0 w-1 bg-green-500 transform -translate-x-1/2'></div>
+          {sortedEvents.length > 0 ? (
+            <div className='relative'>
+              {/* Línea vertical central */}
+              <div className='absolute left-1/2 top-0 bottom-0 w-1 bg-green-500 transform -translate-x-1/2'></div>
 
-            {/* Events */}
-            <div className='space-y-6'>
-              {sortedEvents.map((event) => {
-                const isTeam1 = event.teamName === team1Name
-                const isLeft = isTeam1
+              {/* Events */}
+              <div className='space-y-6'>
+                {sortedEvents.map((event) => {
+                  const isTeam1 = event.teamName === team1Name
+                  const isLeft = isTeam1
 
-                return (
-                  <div key={event.id} className='relative'>
-                    {/* Minute marker on timeline */}
-                    <div className='absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-full z-10'>
-                      {event.minute}&apos;
-                    </div>
+                  return (
+                    <div key={event.id} className='relative'>
+                      {/* Minute marker on timeline */}
+                      <div className='absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-full z-10'>
+                        {event.minute}&apos;
+                      </div>
 
-                    {/* Event content */}
-                    <div
-                      className={`flex items-center ${
-                        isLeft ? 'justify-end pr-2' : 'justify-start pl-2'
-                      }`}
-                    >
+                      {/* Event content */}
                       <div
-                        className={`flex items-center space-x-4 max-w-xs ${
-                          isLeft ? 'flex-row-reverse' : 'flex-row'
+                        className={`flex items-center ${
+                          isLeft ? 'justify-end pr-2' : 'justify-start pl-2'
                         }`}
                       >
-                        {getEventIcon(event.eventType)}
                         <div
-                          className={`text-sm ${
-                            isLeft ? 'text-right' : 'text-left'
+                          className={`flex items-center space-x-4 max-w-xs ${
+                            isLeft ? 'flex-row-reverse' : 'flex-row'
                           }`}
                         >
-                          <div className='font-medium text-gray-900'>
-                            {event.playerName}
+                          <div
+                            className={`ml-2 p-1 rounded-lg border ${getEventColor(
+                              event.eventType
+                            )}`}
+                          >
+                            {getEventIcon(event.eventType)}
                           </div>
-                          <div className='text-xs text-gray-500 mt-1'>
-                            {getEventLabel(event.eventType)}
+                          <div
+                            className={`text-sm ${
+                              isLeft ? 'text-right' : 'text-left'
+                            }`}
+                          >
+                            <div className='font-medium text-gray-900'>
+                              {event.playerName || 'Unknown Player'}
+                            </div>
+                            <div className='text-xs text-gray-500 mt-1'>
+                              {getEventLabel(event.eventType)}
+                            </div>
+                            {event.description && (
+                              <div className='text-xs text-gray-400 mt-1'>
+                                {event.description}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-
-              {/* Half Time Marker */}
-              <div className='relative'>
-                <div className='absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-500 text-white text-xs px-3 py-1 rounded-full z-10'>
-                  Half Time (1-0)
-                </div>
+                  )
+                })}
               </div>
             </div>
-
-            {/* Empty State */}
-            {sortedEvents.length === 0 && (
-              <div className='text-center py-12 text-gray-500'>
+          ) : (
+            /* Empty State */
+            <div className='text-center py-16 text-gray-500'>
+              <div className='mb-4'>
                 <FontAwesomeIcon
-                  icon={faClock}
-                  className='w-8 h-8 mx-auto mb-2 text-gray-400'
+                  icon={faCalendarTimes}
+                  className='w-16 h-16 mx-auto text-gray-300'
                 />
-                <p className='text-sm'>No events recorded yet</p>
               </div>
-            )}
-          </div>
+              <h3 className='text-lg font-medium text-gray-600 mb-2'>
+                No Events Recorded
+              </h3>
+              <p className='text-sm text-gray-400 max-w-md mx-auto'>
+                No events have been recorded for this match yet. Events like
+                goals, assists, cards, and substitutions will appear here when
+                they occur.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

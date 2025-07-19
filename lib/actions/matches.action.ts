@@ -187,6 +187,7 @@ export async function getAllMatchesWithTeams() {
       team2Goals: match.team2Goals,
       team1Avatar: team1?.avatar || '',
       team2Avatar: team2?.avatar || '',
+      duration: match.duration,
     }
   })
 }
@@ -658,12 +659,13 @@ export async function endLiveMatch(matchId: string) {
 
   const finalScore = liveScore[0]
 
-  // Actualizar marcador final en matches
+  // Actualizar marcador final y duración en matches
   await db
     .update(matchesTable)
     .set({
       team1Goals: finalScore.team1Goals,
       team2Goals: finalScore.team2Goals,
+      duration: Math.max(...liveData.map((stat) => stat.timePlayed), 0), // Duración en segundos
     })
     .where(eq(matchesTable.id, matchId))
 
@@ -770,6 +772,11 @@ export async function createMatchEvent({
     | 'red_card'
     | 'substitution'
     | 'injury'
+    | 'pass'
+    | 'goal_saved'
+    | 'goal_allowed'
+    | 'player_in'
+    | 'player_out'
   minute: number
   teamId: string
   description?: string

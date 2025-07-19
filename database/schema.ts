@@ -66,6 +66,7 @@ export const matchesTable = pgTable('matches', {
   team2Id: uuid('team2_id').notNull(),
   team1Goals: integer('team1_goals').default(0).notNull(), // Goles equipo 1
   team2Goals: integer('team2_goals').default(0).notNull(), // Goles equipo 2
+  duration: integer('duration'), // Duración del partido en segundos
   // Puedes agregar más campos según necesidad
 })
 

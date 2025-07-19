@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Info } from 'lucide-react'
-import { useLiveMatch } from '@/hooks/useLiveMatch'
+import { useLiveMatchStore } from '@/lib/stores/liveMatchStore'
 import Link from 'next/link'
 
 type Player = {
@@ -29,25 +29,13 @@ type Match = {
   team2Avatar: string
 }
 
-type PlayerStat = {
-  id: string
-  isPlaying: boolean
-  timePlayed: number // segundos
-  lastUpTimestamp?: number
-  goals: number
-  assists: number
-  goalsSaved: number
-  goalsAllowed: number
-  passesCompleted: number
-}
-
 function formatTime(seconds: number) {
-  const min = Math.floor(seconds / 60)
-  const sec = seconds % 60
-  return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds
+    .toString()
+    .padStart(2, '0')}`
 }
-
-const MATCH_DURATION = 90 * 60 // 90 minutos en segundos
 
 export default function LiveMatchPageClient({
   match,
@@ -73,81 +61,82 @@ export default function LiveMatchPageClient({
   >
 }) {
   const [selectedTeam, setSelectedTeam] = useState<'team1' | 'team2'>('team1')
-  const players = selectedTeam === 'team1' ? playersTeam1 : playersTeam2
 
-  // Inicializar stats para TODOS los jugadores desde la base de datos
-  const allPlayers = [...playersTeam1, ...playersTeam2]
-  const initialStats: Record<string, PlayerStat> = Object.fromEntries(
-    allPlayers.map((p) => {
-      const dbStats = initialPlayerStats[p.id]
-      return [
-        p.id,
-        {
-          id: dbStats?.id || '',
-          isPlaying: dbStats?.isPlaying || true,
-          timePlayed: dbStats?.timePlayed || 0, // Ya está en segundos
-          goals: dbStats?.goals || 0,
-          assists: dbStats?.assists || 0,
-
-          goalsSaved: dbStats?.goalsSaved || 0,
-          goalsAllowed: dbStats?.goalsAllowed || 0,
-          passesCompleted: dbStats?.passesCompleted || 0,
-        },
-      ]
-    })
-  )
-
-  const [timer, setTimer] = useState(0)
-  const [duration, setDuration] = useState(MATCH_DURATION)
-
-  // Usar el hook personalizado para manejar las estadísticas
+  // Usar el store Zustand
   const {
-    stats,
-    matchScore,
+    matchId,
+    timer,
     isRunning,
-    setIsRunning,
-    updatePlayerStat,
-    updateScore,
-    togglePlayer,
-    updateTimePlayed,
+    isHalfTime,
+    isMatchEnded,
+    team1Goals,
+    team2Goals,
+    playerStats,
+    initializeMatch,
+    startMatch,
+    pauseMatch,
+    resumeMatch,
     endMatch,
-    pendingUpdates,
-  } = useLiveMatch(match.id, initialStats, {
-    team1Goals: match.team1Goals,
-    team2Goals: match.team2Goals,
-  })
+    updateTimer,
+    addGoal,
+    addTeamGoal,
+    addAssist,
+    addPass,
+    addGoalSaved,
+    addGoalAllowed,
+    togglePlayer,
+    saveToDatabase,
+  } = useLiveMatchStore()
 
-  // Timer global
+  // Inicializar el partido cuando se carga el componente
   useEffect(() => {
-    if (!isRunning) return
+    // Siempre inicializar si no hay matchId o si playerStats está vacío
+    if (!matchId || Object.keys(playerStats).length === 0) {
+      initializeMatch(match.id, initialPlayerStats)
+    }
+  }, [match.id, initialPlayerStats, matchId, playerStats, initializeMatch])
+
+  // Timer effect
+  useEffect(() => {
+    if (!isRunning || isHalfTime) return
+
     const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev < duration) return prev + 1
-        setIsRunning(false)
-        return prev
-      })
-      // Actualizar tiempo jugado de los jugadores
-      updateTimePlayed()
+      updateTimer()
     }, 1000)
+
     return () => clearInterval(interval)
-  }, [isRunning, duration, setIsRunning, updateTimePlayed])
+  }, [isRunning, isHalfTime, updateTimer])
 
-  // Acciones de timer global
-  const handleStart = () => setIsRunning(true)
-  const handleSetDuration = (min: number) => {
-    setDuration(min * 60)
-    setTimer(0)
-    setIsRunning(false)
+  // Obtener jugadores del equipo seleccionado
+  const players = selectedTeam === 'team1' ? playersTeam1 : playersTeam2
+  const currentTeamId = selectedTeam === 'team1' ? match.team1Id : match.team2Id
+
+  // Handlers
+  const handleStart = () => {
+    startMatch()
   }
 
-  // Acciones de jugador
-  const togglePlaying = (id: string) => {
-    togglePlayer(id)
+  const handleHalfTime = () => {
+    if (isHalfTime) {
+      resumeMatch()
+    } else {
+      pauseMatch()
+    }
   }
 
-  // Función para cambiar de equipo
+  const handleEndMatch = async () => {
+    endMatch()
+    await saveToDatabase()
+  }
+
   const handleTeamChange = (team: 'team1' | 'team2') => {
     setSelectedTeam(team)
+  }
+
+  const handleTeamGoal = (team: 'team1' | 'team2') => {
+    const teamId = team === 'team1' ? match.team1Id : match.team2Id
+    const teamName = team === 'team1' ? match.team1 : match.team2
+    addTeamGoal(team, teamId, teamName)
   }
 
   return (
@@ -158,29 +147,57 @@ export default function LiveMatchPageClient({
 
       {/* Marcador */}
       <div className='flex justify-center items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg'>
-        <div className='flex items-center gap-2'>
+        <div
+          className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors ${
+            selectedTeam === 'team1' ? 'bg-gray-200' : 'hover:bg-gray-100'
+          }`}
+          onClick={() => handleTeamChange('team1')}
+        >
           <Avatar className='w-8 h-8'>
             <AvatarImage src={match.team1Avatar} alt={match.team1} />
             <AvatarFallback>{match.team1[0]}</AvatarFallback>
           </Avatar>
           <span className='font-bold'>{match.team1}</span>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => updateScore('team1', matchScore.team1Goals + 1)}
-          >
-            {matchScore.team1Goals}
-          </Button>
+          <div className='flex items-center gap-2'>
+            <div className='px-3 py-1 border rounded bg-white font-bold'>
+              {team1Goals}
+            </div>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(e) => {
+                e.stopPropagation()
+                handleTeamGoal('team1')
+              }}
+              title='Add team goal (for unregistered players)'
+            >
+              +
+            </Button>
+          </div>
         </div>
         <span className='text-2xl font-bold'>vs</span>
-        <div className='flex items-center gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => updateScore('team2', matchScore.team2Goals + 1)}
-          >
-            {matchScore.team2Goals}
-          </Button>
+        <div
+          className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors ${
+            selectedTeam === 'team2' ? 'bg-gray-200' : 'hover:bg-gray-100'
+          }`}
+          onClick={() => handleTeamChange('team2')}
+        >
+          <div className='flex items-center gap-2'>
+            <div className='px-3 py-1 border rounded bg-white font-bold'>
+              {team2Goals}
+            </div>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(e) => {
+                e.stopPropagation()
+                handleTeamGoal('team2')
+              }}
+              title='Add team goal (for unregistered players)'
+            >
+              +
+            </Button>
+          </div>
           <span className='font-bold'>{match.team2}</span>
           <Avatar className='w-8 h-8'>
             <AvatarImage src={match.team2Avatar} alt={match.team2} />
@@ -189,56 +206,51 @@ export default function LiveMatchPageClient({
         </div>
       </div>
 
-      <div className='flex gap-4 justify-center mb-6'>
-        <Button
-          variant={selectedTeam === 'team1' ? 'default' : 'outline'}
-          onClick={() => handleTeamChange('team1')}
-          className='flex items-center gap-2'
-        >
-          <Avatar className='w-6 h-6'>
-            <AvatarImage
-              src={match.team1Avatar || '/no-club.jpg'}
-              alt={match.team1}
-              className='w-6 h-6 object-cover'
-            />
-            <AvatarFallback>{match.team1[0]}</AvatarFallback>
-          </Avatar>
-          {match.team1}
-        </Button>
-        <Button
-          variant={selectedTeam === 'team2' ? 'default' : 'outline'}
-          onClick={() => handleTeamChange('team2')}
-          className='flex items-center gap-2'
-        >
-          <Avatar className='w-6 h-6'>
-            <AvatarImage
-              className='w-6 h-6 object-cover'
-              src={match.team2Avatar || '/no-club.jpg'}
-              alt={match.team2}
-            />
-            <AvatarFallback>{match.team2[0]}</AvatarFallback>
-          </Avatar>
-          {match.team2}
-        </Button>
+      {/* Controles del partido */}
+      <div className='flex items-center justify-center gap-4 mb-8'>
+        <div className='flex items-center gap-2'>
+          <span className='text-3xl font-mono'>⏱️ {formatTime(timer)}</span>
+        </div>
+        {!isHalfTime && !isMatchEnded && (
+          <Button onClick={handleStart} disabled={isRunning}>
+            Start
+          </Button>
+        )}
+        {!isMatchEnded && (
+          <>
+            <Button
+              onClick={handleEndMatch}
+              variant='ghost'
+              className='bg-destructive/20 text-destructive'
+            >
+              End of the match
+            </Button>
+            <Button
+              onClick={handleHalfTime}
+              variant={isHalfTime ? 'default' : 'outline'}
+              className={isHalfTime ? 'bg-orange-500 hover:bg-orange-600' : ''}
+            >
+              {isHalfTime ? 'Resume Match' : 'Half Time'}
+            </Button>
+          </>
+        )}
+        {isMatchEnded && (
+          <Link href='/admin/matches/history'>
+            <Button variant='outline'>View History</Button>
+          </Link>
+        )}
       </div>
-      <div className='flex items-center gap-4 mb-8'>
-        <span className='text-3xl font-mono'>⏱️ {formatTime(timer)}</span>
-        <Button onClick={handleStart} disabled={isRunning}>
-          Start
-        </Button>
-        <Button
-          onClick={() => endMatch()}
-          variant='ghost'
-          className='bg-destructive/20 text-destructive'
-        >
-          End of the match
-        </Button>
-        <Link href='/admin/matches/history'>
-          <Button variant='outline'>View History</Button>
-        </Link>
-        <Button onClick={() => handleSetDuration(45)}>Set 45 min</Button>
-        <Button onClick={() => handleSetDuration(90)}>Set 90 min</Button>
-      </div>
+
+      {/* Half Time Banner */}
+      {isHalfTime && (
+        <div className='text-center mb-6'>
+          <div className='bg-orange-100 text-orange-800 px-6 py-3 rounded-lg inline-block'>
+            <span className='text-lg font-semibold'>HALF TIME</span>
+          </div>
+        </div>
+      )}
+
+      {/* Jugadores */}
       <div className='flex flex-col gap-6 sm:max-h-[100vh] max-h-[400px] overflow-y-auto'>
         {players.length === 0 ? (
           <div className='flex flex-col items-center justify-center h-60'>
@@ -250,153 +262,164 @@ export default function LiveMatchPageClient({
             </span>
           </div>
         ) : (
-          players.map((p) => (
-            <Card
-              key={p.id}
-              className='p-4 mt-5 flex flex-col gap-2 relative justify-center items-center'
-            >
-              <div className='absolute top-[-20px] left-[50%] -translate-x-1/2'>
-                <Avatar className='w-16 h-16'>
-                  <AvatarImage
-                    className='w-16 h-16 object-cover'
-                    src={p.avatar || '/no-profile.webp'}
-                    alt={p.name}
-                  />
-                  <AvatarFallback>
-                    {p.name[0]}
-                    {p.lastName[0]}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              <div className='flex items-center gap-4 mt-10'>
-                <div>
-                  <div className='font-semibold'>
-                    {p.name} {p.lastName}{' '}
-                    <span className='text-gray-400'>#{p.jerseyNumber}</span>
-                    <span className='text-gray-400'>
-                      {' '}
-                      (
-                      {p.position
-                        ? p.position.charAt(0).toUpperCase() +
-                          p.position.slice(1)
-                        : ''}
-                      )
-                    </span>
-                  </div>
-                  <div className='text-xs text-gray-500'>
-                    Time played: {formatTime(stats[p.id]?.timePlayed || 0)}
-                    {pendingUpdates.has(p.id) && (
-                      <span className='ml-2 text-blue-500'>●</span>
-                    )}
+          players.map((p) => {
+            const playerStat = playerStats[p.id] || {
+              id: p.id,
+              isPlaying: true,
+              timePlayed: 0,
+              goals: 0,
+              assists: 0,
+              goalsSaved: 0,
+              goalsAllowed: 0,
+              passesCompleted: 0,
+            }
+
+            return (
+              <Card
+                key={p.id}
+                className='p-4 mt-5 flex flex-col gap-2 relative justify-center items-center'
+              >
+                <div className='absolute top-[-20px] left-[50%] -translate-x-1/2'>
+                  <Avatar className='w-16 h-16'>
+                    <AvatarImage
+                      className='w-16 h-16 object-cover'
+                      src={p.avatar || '/no-profile.webp'}
+                      alt={p.name}
+                    />
+                    <AvatarFallback>
+                      {p.name[0]}
+                      {p.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className='flex items-center gap-4 mt-10'>
+                  <div>
+                    <div className='font-semibold'>
+                      {p.name} {p.lastName}{' '}
+                      <span className='text-gray-400'>#{p.jerseyNumber}</span>
+                      <span className='text-gray-400'>
+                        {' '}
+                        (
+                        {p.position
+                          ? p.position.charAt(0).toUpperCase() +
+                            p.position.slice(1)
+                          : ''}
+                        )
+                      </span>
+                    </div>
+                    <div className='text-xs text-gray-500'>
+                      Time played: {formatTime(playerStat.timePlayed)}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className='w-3xs flex justify-center items-center mt-4'>
-                <Button
-                  variant={stats[p.id]?.isPlaying ? 'default' : 'outline'}
-                  onClick={() => togglePlaying(p.id)}
-                  className='w-full'
-                >
-                  {stats[p.id]?.isPlaying ? 'Down' : 'Up'}
-                </Button>
-              </div>
-              <div className='flex gap-2 mt-2 w-full'>
-                {p.position === 'goalkeeper' ? (
-                  <div className='flex gap-2 w-full justify-center items-center'>
-                    <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
-                      <span className='text-xs text-center'>Goals saved</span>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() =>
-                          updatePlayerStat(
-                            p.id,
-                            'goalsSaved',
-                            (stats[p.id]?.goalsSaved || 0) + 1
-                          )
-                        }
-                      >
-                        {stats[p.id]?.goalsSaved || 0}
-                      </Button>
+                <div className='w-3xs flex justify-center items-center mt-4'>
+                  <Button
+                    variant={playerStat.isPlaying ? 'default' : 'outline'}
+                    onClick={() => {
+                      const team = selectedTeam
+                      const teamId = currentTeamId
+                      const playerName = `${p.name} ${p.lastName}`
+                      togglePlayer(p.id, team, teamId, playerName)
+                    }}
+                    className='w-full'
+                  >
+                    {playerStat.isPlaying ? 'Down' : 'Up'}
+                  </Button>
+                </div>
+                <div className='flex gap-2 mt-2 w-full'>
+                  {p.position === 'goalkeeper' ? (
+                    <div className='flex gap-2 w-full justify-center items-center'>
+                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                        <span className='text-xs text-center'>Goals saved</span>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          disabled={!playerStat.isPlaying}
+                          onClick={() => {
+                            const team = selectedTeam
+                            const teamId = currentTeamId
+                            const playerName = `${p.name} ${p.lastName}`
+                            addGoalSaved(p.id, team, teamId, playerName)
+                          }}
+                        >
+                          {playerStat.goalsSaved}
+                        </Button>
+                      </div>
+                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                        <span className='text-xs text-center'>
+                          Goals allowed
+                        </span>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          disabled={!playerStat.isPlaying}
+                          onClick={() => {
+                            const team = selectedTeam
+                            const teamId = currentTeamId
+                            const playerName = `${p.name} ${p.lastName}`
+                            addGoalAllowed(p.id, team, teamId, playerName)
+                          }}
+                        >
+                          {playerStat.goalsAllowed}
+                        </Button>
+                      </div>
                     </div>
-                    <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
-                      <span className='text-xs text-center'>Goals allowed</span>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() =>
-                          updatePlayerStat(
-                            p.id,
-                            'goalsAllowed',
-                            (stats[p.id]?.goalsAllowed || 0) + 1
-                          )
-                        }
-                      >
-                        {stats[p.id]?.goalsAllowed || 0}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
-                      <span className='text-xs text-center'>Goles</span>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() => {
-                          updatePlayerStat(
-                            p.id,
-                            'goals',
-                            (stats[p.id]?.goals || 0) + 1
-                          )
-                          // Automáticamente sumar al marcador del equipo correspondiente
-                          if (selectedTeam === 'team1') {
-                            updateScore('team1', matchScore.team1Goals + 1)
-                          } else {
-                            updateScore('team2', matchScore.team2Goals + 1)
-                          }
-                        }}
-                      >
-                        {stats[p.id]?.goals || 0}
-                      </Button>
-                    </div>
-                    <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
-                      <span className='text-xs text-center'>Assists</span>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() =>
-                          updatePlayerStat(
-                            p.id,
-                            'assists',
-                            (stats[p.id]?.assists || 0) + 1
-                          )
-                        }
-                      >
-                        {stats[p.id]?.assists || 0}
-                      </Button>
-                    </div>
-                    <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
-                      <span className='text-xs text-center'>Passes</span>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() =>
-                          updatePlayerStat(
-                            p.id,
-                            'passesCompleted',
-                            (stats[p.id]?.passesCompleted || 0) + 1
-                          )
-                        }
-                      >
-                        {stats[p.id]?.passesCompleted || 0}
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </Card>
-          ))
+                  ) : (
+                    <>
+                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                        <span className='text-xs text-center'>Goles</span>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          disabled={!playerStat.isPlaying}
+                          onClick={() => {
+                            const team = selectedTeam
+                            const teamId = currentTeamId
+                            const playerName = `${p.name} ${p.lastName}`
+                            addGoal(p.id, team, teamId, playerName)
+                          }}
+                        >
+                          {playerStat.goals}
+                        </Button>
+                      </div>
+                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                        <span className='text-xs text-center'>Assists</span>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          disabled={!playerStat.isPlaying}
+                          onClick={() => {
+                            const team = selectedTeam
+                            const teamId = currentTeamId
+                            const playerName = `${p.name} ${p.lastName}`
+                            addAssist(p.id, team, teamId, playerName)
+                          }}
+                        >
+                          {playerStat.assists}
+                        </Button>
+                      </div>
+                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                        <span className='text-xs text-center'>Passes</span>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          disabled={!playerStat.isPlaying}
+                          onClick={() => {
+                            const team = selectedTeam
+                            const teamId = currentTeamId
+                            const playerName = `${p.name} ${p.lastName}`
+                            addPass(p.id, team, teamId, playerName)
+                          }}
+                        >
+                          {playerStat.passesCompleted}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </Card>
+            )
+          })
         )}
       </div>
     </div>

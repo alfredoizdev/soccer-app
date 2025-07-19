@@ -137,6 +137,12 @@ export default async function MatchDetailPage({
               <div className='text-xs sm:text-sm text-gray-500 bg-white px-3 sm:px-4 py-1 sm:py-2 rounded-full shadow-xs mb-3'>
                 Final Result
               </div>
+              {match.match.duration && (
+                <div className='text-xs sm:text-sm text-gray-500 bg-blue-100 px-3 sm:px-4 py-1 sm:py-2 rounded-full shadow-xs mb-3'>
+                  Duration: {Math.floor(match.match.duration / 60)}:
+                  {(match.match.duration % 60).toString().padStart(2, '0')}
+                </div>
+              )}
               <Link
                 href={`/admin/matches/history/${id}/timeline`}
                 className='inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors'

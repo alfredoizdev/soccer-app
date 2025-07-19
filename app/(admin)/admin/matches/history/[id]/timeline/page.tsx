@@ -24,77 +24,16 @@ export default async function MatchTimelinePageRoute({
   const match = matchRes
   const events = eventsRes || []
 
-  // Eventos de ejemplo para mostrar el timeline (en producción estos vendrían de la base de datos)
-  const exampleEvents: MatchEvent[] = [
-    {
-      id: '1',
-      minute: 15,
-      eventType: 'pass',
-      playerName: 'Juan Pérez',
-      teamName: match.match.team1,
-      teamAvatar: match.match.team1Avatar,
-    },
-    {
-      id: '2',
-      minute: 27,
-      eventType: 'goal',
-      playerName: 'Pedro Ruiz',
-      teamName: match.match.team1,
-      teamAvatar: match.match.team1Avatar,
-    },
-    {
-      id: '3',
-      minute: 34,
-      eventType: 'assist',
-      playerName: 'Luis Gómez',
-      teamName: match.match.team1,
-      teamAvatar: match.match.team1Avatar,
-    },
-    {
-      id: '4',
-      minute: 45,
-      eventType: 'pass',
-      playerName: 'Carlos Silva',
-      teamName: match.match.team2,
-      teamAvatar: match.match.team2Avatar,
-    },
-    {
-      id: '5',
-      minute: 59,
-      eventType: 'goal',
-      playerName: 'Miguel Torres',
-      teamName: match.match.team1,
-      teamAvatar: match.match.team1Avatar,
-    },
-    {
-      id: '6',
-      minute: 72,
-      eventType: 'pass',
-      playerName: 'Roberto Díaz',
-      teamName: match.match.team1,
-      teamAvatar: match.match.team1Avatar,
-    },
-    {
-      id: '7',
-      minute: 78,
-      eventType: 'assist',
-      playerName: 'Ana Martínez',
-      teamName: match.match.team2,
-      teamAvatar: match.match.team2Avatar,
-    },
-    {
-      id: '8',
-      minute: 85,
-      eventType: 'pass',
-      playerName: 'Diego López',
-      teamName: match.match.team2,
-      teamAvatar: match.match.team2Avatar,
-    },
-  ]
-
-  // Usar eventos de ejemplo si no hay eventos reales
-  const timelineEvents =
-    events.length > 0 ? (events as MatchEvent[]) : exampleEvents
+  // Convertir eventos de la base de datos al formato del componente
+  const timelineEvents: MatchEvent[] = events.map((event) => ({
+    id: event.id,
+    minute: event.minute,
+    eventType: event.eventType as MatchEvent['eventType'],
+    playerName: event.playerName,
+    teamName: event.teamName,
+    teamAvatar: event.teamAvatar || undefined,
+    description: event.description || undefined,
+  }))
 
   return (
     <MatchTimelinePage
@@ -104,6 +43,9 @@ export default async function MatchTimelinePageRoute({
       team1Avatar={match.match.team1Avatar}
       team2Avatar={match.match.team2Avatar}
       matchId={id}
+      team1Goals={match.match.team1Goals || 0}
+      team2Goals={match.match.team2Goals || 0}
+      duration={match.match.duration || undefined}
     />
   )
 }

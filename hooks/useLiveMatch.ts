@@ -62,16 +62,24 @@ export function useLiveMatch(
     [matchId]
   )
 
-  // Update player stat with debouncing
+  // Actualizar estadísticas de jugador
   const updatePlayerStat = useCallback(
-    (playerId: string, statType: keyof PlayerStat, value: number) => {
-      setStats((prev) => ({
-        ...prev,
-        [playerId]: {
-          ...prev[playerId],
-          [statType]: value,
-        },
-      }))
+    (
+      playerId: string,
+      statType:
+        | 'timePlayed'
+        | 'goals'
+        | 'assists'
+        | 'goalsSaved'
+        | 'goalsAllowed'
+        | 'passesCompleted',
+      value: number
+    ) => {
+      setStats((prev) => {
+        const updated = { ...prev }
+        updated[playerId][statType] = value
+        return updated
+      })
 
       setPendingUpdates((prev) => new Set(prev).add(playerId))
 

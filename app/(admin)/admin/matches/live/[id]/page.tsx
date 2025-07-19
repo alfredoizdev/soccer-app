@@ -68,7 +68,39 @@ export default async function LiveMatchPage({
   console.log('Successfully loaded match data for ID:', id)
 
   // Convertir datos en vivo al formato esperado por el componente
-  const initialPlayerStats = data.liveData
+  // Si no hay datos en vivo, crear datos iniciales para todos los jugadores
+  const allPlayers = [...data.playersTeam1, ...data.playersTeam2]
+  const initialPlayerStats = allPlayers.reduce(
+    (acc, player) => {
+      const liveData = data.liveData[player.id]
+      acc[player.id] = {
+        id: player.id,
+        isPlaying: liveData?.isPlaying ?? true,
+        timePlayed: liveData?.timePlayed ?? 0,
+        goals: liveData?.goals ?? 0,
+        assists: liveData?.assists ?? 0,
+        goalsSaved: liveData?.goalsSaved ?? 0,
+        goalsAllowed: liveData?.goalsAllowed ?? 0,
+        passesCompleted: liveData?.passesCompleted ?? 0,
+      }
+      return acc
+    },
+    {} as Record<
+      string,
+      {
+        id: string
+        isPlaying: boolean
+        timePlayed: number
+        goals: number
+        assists: number
+        goalsSaved: number
+        goalsAllowed: number
+        passesCompleted: number
+      }
+    >
+  )
+
+  console.log('Initial player stats:', initialPlayerStats)
 
   return (
     <LiveMatchPageClient
