@@ -103,6 +103,7 @@ export default function LiveMatchPageClient({
         match.team2Id
       )
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     match.id,
     initialPlayerStats,
@@ -242,6 +243,34 @@ export default function LiveMatchPageClient({
             <AvatarFallback>{match.team2[0]}</AvatarFallback>
           </Avatar>
         </div>
+
+        {/* End Match Button */}
+        {!isMatchEnded && (
+          <div className='ml-4'>
+            <Button
+              onClick={handleEndMatch}
+              variant='ghost'
+              className='bg-destructive/20 text-destructive hover:bg-destructive/30'
+              disabled={isEndingMatch || timer === 0 || isHalfTime}
+              title={
+                timer === 0
+                  ? 'Match has not started yet'
+                  : isHalfTime
+                  ? 'Match is paused during half-time'
+                  : 'End the match'
+              }
+            >
+              {isEndingMatch ? 'Ending Match...' : 'End Match'}
+            </Button>
+          </div>
+        )}
+        {isMatchEnded && (
+          <div className='ml-4'>
+            <Link href='/admin/matches/history'>
+              <Button variant='outline'>View History</Button>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Controles del partido */}
@@ -256,14 +285,6 @@ export default function LiveMatchPageClient({
         )}
         {!isMatchEnded && (
           <>
-            <Button
-              onClick={handleEndMatch}
-              variant='ghost'
-              className='bg-destructive/20 text-destructive'
-              disabled={isEndingMatch}
-            >
-              {isEndingMatch ? 'Ending Match...' : 'End of the match'}
-            </Button>
             {/* Solo mostrar Half Time si no se ha usado después del Resume */}
             {!isHalfTime && !hasUsedHalfTime && (
               <Button onClick={handleHalfTime} variant='outline'>
@@ -281,11 +302,6 @@ export default function LiveMatchPageClient({
               </Button>
             )}
           </>
-        )}
-        {isMatchEnded && (
-          <Link href='/admin/matches/history'>
-            <Button variant='outline'>View History</Button>
-          </Link>
         )}
       </div>
 

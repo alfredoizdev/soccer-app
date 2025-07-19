@@ -18,6 +18,8 @@ export type MatchEvent = {
     | 'pass'
     | 'goal_saved'
     | 'goal_allowed'
+    | 'half_time'
+    | 'resume_match'
   playerName?: string
   teamName: string
   teamAvatar?: string
@@ -56,6 +58,10 @@ const getEventIcon = (eventType: MatchEvent['eventType']) => {
       return <Circle className='w-4 h-4 text-blue-600' />
     case 'goal_allowed':
       return <Circle className='w-4 h-4 text-red-600' />
+    case 'half_time':
+      return <Clock className='w-4 h-4 text-orange-600' />
+    case 'resume_match':
+      return <Zap className='w-4 h-4 text-green-600' />
     default:
       return <Clock className='w-4 h-4 text-gray-600' />
   }
@@ -81,6 +87,10 @@ const getEventColor = (eventType: MatchEvent['eventType']) => {
       return 'bg-blue-50 border-blue-200'
     case 'goal_allowed':
       return 'bg-red-50 border-red-200'
+    case 'half_time':
+      return 'bg-orange-50 border-orange-200'
+    case 'resume_match':
+      return 'bg-green-50 border-green-200'
     default:
       return 'bg-gray-50 border-gray-200'
   }
@@ -106,6 +116,10 @@ const getEventLabel = (eventType: MatchEvent['eventType']) => {
       return 'Goal Saved'
     case 'goal_allowed':
       return 'Goal Allowed'
+    case 'half_time':
+      return 'Half Time'
+    case 'resume_match':
+      return 'Resume Match'
     default:
       return 'Event'
   }
@@ -196,6 +210,43 @@ export default function MatchTimeline({
           <div className='relative space-y-4'>
             {sortedEvents.map((event) => {
               const eventPosition = (event.minute / 90) * 100
+
+              // Eventos especiales que van en el medio de la línea
+              const isSpecialEvent =
+                event.eventType === 'half_time' ||
+                event.eventType === 'resume_match'
+
+              if (isSpecialEvent) {
+                return (
+                  <div
+                    key={event.id}
+                    className='absolute top-0 transform -translate-y-1/2 left-1/2 -translate-x-1/2'
+                    style={{ left: `${eventPosition}%` }}
+                  >
+                    <div className='bg-white border-2 border-orange-300 rounded-lg px-3 py-2 shadow-lg'>
+                      <div className='flex items-center space-x-2'>
+                        {getEventIcon(event.eventType)}
+                        <div className='text-center'>
+                          <div className='flex items-center justify-center'>
+                            <Badge variant='secondary' className='text-xs'>
+                              {event.minute}&apos;
+                            </Badge>
+                          </div>
+                          <div className='text-sm font-semibold text-orange-700 mt-1'>
+                            {getEventLabel(event.eventType)}
+                          </div>
+                          {event.description && (
+                            <div className='text-xs text-gray-600 mt-1'>
+                              {event.description}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
               // Determinar posición basada en el equipo del evento
               const isTeam1Event = event.teamId === team1Id
               const isTeam2Event = event.teamId === team2Id

@@ -214,8 +214,8 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
     get().addEvent({
       minute: currentMinute,
       eventType: 'half_time',
-      teamId: '',
-      teamName: '',
+      teamId: get().team1Id, // Usar team1Id como valor por defecto
+      teamName: 'Match Event',
       description: 'Half Time - Match Paused',
     })
 
@@ -233,8 +233,8 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
     get().addEvent({
       minute: currentMinute,
       eventType: 'resume_match',
-      teamId: '',
-      teamName: '',
+      teamId: get().team1Id, // Usar team1Id como valor por defecto
+      teamName: 'Match Event',
       description: 'Match Resumed',
     })
 
@@ -509,7 +509,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
     teamId: string,
     playerName: string
   ) => {
-    const { timer, playerStats } = get()
+    const { timer, playerStats, team1Goals, team2Goals } = get()
     const currentMinute = Math.max(1, Math.floor(timer / 60))
 
     // Verificar que el jugador existe en playerStats
@@ -526,9 +526,29 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       goalsAllowed: (updatedPlayerStats[playerId].goalsAllowed || 0) + 1,
     }
 
-    set({ playerStats: updatedPlayerStats })
+    // Agregar gol al equipo contrario
+    const newTeam1Goals = team === 'team1' ? team1Goals : team1Goals + 1
+    const newTeam2Goals = team === 'team2' ? team2Goals : team2Goals + 1
 
-    // Agregar evento
+    set({
+      playerStats: updatedPlayerStats,
+      team1Goals: newTeam1Goals,
+      team2Goals: newTeam2Goals,
+    })
+
+    // Agregar evento de gol para el equipo contrario
+    const opposingTeamId = team === 'team1' ? get().team2Id : get().team1Id
+    const opposingTeamName = team === 'team1' ? 'Team 2' : 'Team 1'
+
+    get().addEvent({
+      minute: currentMinute,
+      eventType: 'goal',
+      teamId: opposingTeamId,
+      teamName: opposingTeamName,
+      description: `Goal scored against ${playerName}`,
+    })
+
+    // Agregar evento de goal_allowed para el portero
     get().addEvent({
       minute: currentMinute,
       eventType: 'goal_allowed',
@@ -539,7 +559,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       description: `${playerName} allowed a goal`,
     })
 
-    toast.success('Goal allowed recorded!')
+    toast.success(`Goal allowed! ${newTeam1Goals}-${newTeam2Goals}`)
   },
 
   // Agregar evento
@@ -659,25 +679,20 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       // Guardar eventos
       console.log('📝 Guardando eventos...')
       for (const event of events) {
-        if (
-          event.eventType !== 'half_time' &&
-          event.eventType !== 'resume_match'
-        ) {
-          console.log(
-            '📊 Guardando evento:',
-            event.eventType,
-            'min',
-            event.minute
-          )
-          await createMatchEvent({
-            matchId,
-            playerId: event.playerId,
-            eventType: event.eventType,
-            minute: event.minute,
-            teamId: event.teamId,
-            description: event.description,
-          })
-        }
+        console.log(
+          '📊 Guardando evento:',
+          event.eventType,
+          'min',
+          event.minute
+        )
+        await createMatchEvent({
+          matchId,
+          playerId: event.playerId,
+          eventType: event.eventType,
+          minute: event.minute,
+          teamId: event.teamId,
+          description: event.description,
+        })
       }
 
       // Terminar partido en BD

@@ -817,6 +817,8 @@ export async function createMatchEvent({
     | 'goal_allowed'
     | 'player_in'
     | 'player_out'
+    | 'half_time'
+    | 'resume_match'
   minute: number
   teamId: string
   description?: string
