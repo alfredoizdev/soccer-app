@@ -66,6 +66,8 @@ export default async function LiveMatchPage({
   }
 
   console.log('Successfully loaded match data for ID:', id)
+  console.log('Players Team 1:', data.playersTeam1)
+  console.log('Players Team 2:', data.playersTeam2)
 
   // Convertir datos en vivo al formato esperado por el componente
   // Si no hay datos en vivo, crear datos iniciales para todos los jugadores

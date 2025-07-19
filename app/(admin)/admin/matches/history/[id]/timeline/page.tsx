@@ -29,7 +29,9 @@ export default async function MatchTimelinePageRoute({
     id: event.id,
     minute: event.minute,
     eventType: event.eventType as MatchEvent['eventType'],
+    playerId: event.playerId || undefined, // Convertir null a undefined
     playerName: event.playerName,
+    playerAvatar: event.playerAvatar || undefined, // Convertir null a undefined
     teamName: event.teamName,
     teamAvatar: event.teamAvatar || undefined,
     description: event.description || undefined,

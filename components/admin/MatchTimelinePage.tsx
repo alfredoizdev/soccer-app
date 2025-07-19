@@ -17,12 +17,14 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { RefreshCw } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import Image from 'next/image'
 import Link from 'next/link'
 
 export type MatchEvent = {
   id: string
   minute: number
+  timestamp?: number // Agregar timestamp para ordenamiento correcto
   eventType:
     | 'goal'
     | 'assist'
@@ -37,7 +39,9 @@ export type MatchEvent = {
     | 'player_out'
     | 'half_time'
     | 'resume_match'
+  playerId?: string // Agregar playerId para navegación
   playerName?: string
+  playerAvatar?: string
   teamName: string
   teamAvatar?: string
   description?: string
@@ -156,37 +160,6 @@ const getEventLabel = (eventType: MatchEvent['eventType']) => {
   }
 }
 
-const getEventColor = (eventType: MatchEvent['eventType']) => {
-  switch (eventType) {
-    case 'goal':
-      return 'bg-green-100 border-green-300'
-    case 'assist':
-      return 'bg-blue-100 border-blue-300'
-    case 'yellow_card':
-      return 'bg-yellow-100 border-yellow-300'
-    case 'red_card':
-      return 'bg-red-100 border-red-300'
-    case 'substitution':
-      return 'bg-purple-100 border-purple-300'
-    case 'injury':
-      return 'bg-orange-100 border-orange-300'
-    case 'pass':
-      return 'bg-gray-100 border-gray-300'
-    case 'goal_saved':
-      return 'bg-green-100 border-green-300'
-    case 'goal_allowed':
-      return 'bg-red-100 border-red-300'
-    case 'player_in':
-      return 'bg-green-100 border-green-300'
-    case 'player_out':
-      return 'bg-red-100 border-red-300'
-    case 'half_time':
-      return 'bg-orange-100 border-orange-300'
-    case 'resume_match':
-      return 'bg-green-100 border-green-300'
-  }
-}
-
 export default function MatchTimelinePage({
   events,
   team1Name,
@@ -200,8 +173,17 @@ export default function MatchTimelinePage({
   team2Goals,
   duration,
 }: MatchTimelinePageProps) {
-  // Ordenar eventos por minuto (más recientes primero)
-  const sortedEvents = [...events].sort((a, b) => b.minute - a.minute)
+  // Ordenar eventos por minuto y timestamp para orden lógico
+  const sortedEvents = [...events].sort((a, b) => {
+    // Primero por minuto (ascendente)
+    if (a.minute !== b.minute) {
+      return a.minute - b.minute
+    }
+    // Si mismo minuto, por timestamp (ascendente) para mantener orden cronológico
+    const timestampA = a.timestamp || 0
+    const timestampB = b.timestamp || 0
+    return timestampA - timestampB
+  })
 
   return (
     <div className='w-full mx-auto p-2 sm:p-4 fade-in duration-300'>
@@ -290,10 +272,56 @@ export default function MatchTimelinePage({
               {/* Events */}
               <div className='space-y-6'>
                 {sortedEvents.map((event) => {
+                  // Eventos especiales que van en el medio de la línea
+                  const isSpecialEvent =
+                    event.eventType === 'half_time' ||
+                    event.eventType === 'resume_match'
+
+                  if (isSpecialEvent) {
+                    return (
+                      <div key={event.id} className='relative'>
+                        {/* Minute marker on timeline */}
+                        <div className='absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-full z-10'>
+                          {event.minute}&apos;
+                        </div>
+
+                        {/* Special event content - centered */}
+                        <div className='flex justify-center'>
+                          <div
+                            className={`flex items-center space-x-2 px-3 py-2 rounded-lg shadow-lg ${
+                              event.eventType === 'half_time'
+                                ? 'bg-orange-100 border-2 border-orange-300'
+                                : 'bg-green-100 border-2 border-green-300'
+                            }`}
+                          >
+                            {getEventIcon(event.eventType)}
+                            <div className='flex items-center space-x-2'>
+                              <span
+                                className={`text-sm font-semibold ${
+                                  event.eventType === 'half_time'
+                                    ? 'text-orange-700'
+                                    : 'text-green-700'
+                                }`}
+                              >
+                                {event.eventType === 'half_time'
+                                  ? 'Half Time'
+                                  : 'Resume Match'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   // Usar teamId para posicionamiento más preciso
                   const isTeam1 = event.teamId === team1Id
                   const isTeam2 = event.teamId === team2Id
-                  const isLeft = isTeam1 || !isTeam2 // Eventos del team1 van a la izquierda, otros a la derecha
+                  // Eventos del team1 van a la izquierda, team2 a la derecha
+                  // team1 es Houstonias FC (izquierda), team2 es Ingoude FC (derecha)
+                  const isLeft = isTeam2
+                  // Si no hay teamId o no coincide con ninguno, usar posición por defecto
+                  const defaultToLeft = !isTeam1 && !isTeam2
 
                   return (
                     <div key={event.id} className='relative'>
@@ -305,34 +333,73 @@ export default function MatchTimelinePage({
                       {/* Event content */}
                       <div
                         className={`flex items-center ${
-                          isLeft ? 'justify-end pr-2' : 'justify-start pl-2'
+                          isLeft || defaultToLeft
+                            ? 'justify-end pr-2'
+                            : 'justify-start pl-2'
                         }`}
                       >
                         <div
                           className={`flex items-center space-x-4 max-w-xs ${
-                            isLeft ? 'flex-row-reverse' : 'flex-row'
+                            isLeft || defaultToLeft
+                              ? 'flex-row-reverse'
+                              : 'flex-row'
                           }`}
                         >
-                          <div
-                            className={`ml-2 p-1 rounded-lg border ${getEventColor(
-                              event.eventType
-                            )}`}
-                          >
-                            {getEventIcon(event.eventType)}
-                          </div>
+                          {/* Player Avatar with Event Icon */}
+                          {event.playerName && event.playerId && (
+                            <div className='relative flex-shrink-0 mr-3'>
+                              <Link
+                                href={`/admin/players/${event.playerId}`}
+                                className='cursor-pointer hover:opacity-80 transition-opacity'
+                              >
+                                <Avatar className='w-10 h-10'>
+                                  <AvatarImage
+                                    src={
+                                      event.playerAvatar || '/no-profile.webp'
+                                    }
+                                    alt={event.playerName}
+                                    onError={(e) => {
+                                      e.currentTarget.src = '/no-profile.webp'
+                                    }}
+                                  />
+                                  <AvatarFallback className='text-xs'>
+                                    {event.playerName
+                                      .split(' ')
+                                      .map((n) => n[0])
+                                      .join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </Link>
+                              <div className='absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md border border-gray-200 flex items-center justify-center'>
+                                <div className='w-4 h-4 flex items-center justify-center'>
+                                  {getEventIcon(event.eventType)}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Event Icon (if no player) */}
+                          {!event.playerName && (
+                            <div className='flex-shrink-0 mr-3'>
+                              <div className='w-8 h-8 flex items-center justify-center'>
+                                {getEventIcon(event.eventType)}
+                              </div>
+                            </div>
+                          )}
+
                           <div
                             className={`text-sm ${
                               isLeft ? 'text-right' : 'text-left'
                             }`}
                           >
-                            <div className='font-medium text-gray-900'>
+                            <div className='font-semibold text-gray-800 mb-1'>
                               {event.playerName || 'Unknown Player'}
                             </div>
-                            <div className='text-xs text-gray-500 mt-1'>
+                            <div className='text-xs text-gray-500 mb-1'>
                               {getEventLabel(event.eventType)}
                             </div>
                             {event.description && (
-                              <div className='text-xs text-gray-400 mt-1'>
+                              <div className='text-xs text-gray-400'>
                                 {event.description}
                               </div>
                             )}

@@ -15,6 +15,7 @@ export interface PlayerStat {
 export interface MatchEvent {
   id: string
   minute: number
+  timestamp?: number // Agregar timestamp para ordenamiento correcto (opcional)
   eventType:
     | 'goal'
     | 'assist'
@@ -33,6 +34,7 @@ export interface MatchEvent {
   teamId: string
   teamName: string
   playerName?: string
+  playerAvatar?: string
   description?: string
 }
 
@@ -58,12 +60,14 @@ interface LiveMatchStore {
     name: string
     lastName: string
     position?: string | null
+    avatar?: string | null
   }[]
   playersTeam2: {
     id: string
     name: string
     lastName: string
     position?: string | null
+    avatar?: string | null
   }[]
 
   // IDs de equipos
@@ -82,12 +86,14 @@ interface LiveMatchStore {
       name: string
       lastName: string
       position?: string | null
+      avatar?: string | null
     }[],
     playersTeam2: {
       id: string
       name: string
       lastName: string
       position?: string | null
+      avatar?: string | null
     }[],
     team1Id: string,
     team2Id: string
@@ -170,12 +176,14 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       name: string
       lastName: string
       position?: string | null
+      avatar?: string | null
     }[],
     playersTeam2: {
       id: string
       name: string
       lastName: string
       position?: string | null
+      avatar?: string | null
     }[],
     team1Id: string,
     team2Id: string
@@ -304,6 +312,10 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       team2Goals: newTeam2Goals,
     })
 
+    // Buscar el jugador para obtener su avatar
+    const allPlayers = [...get().playersTeam1, ...get().playersTeam2]
+    const player = allPlayers.find((p) => p.id === playerId)
+
     // Agregar evento
     get().addEvent({
       minute: currentMinute,
@@ -312,6 +324,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       teamId,
       teamName: team === 'team1' ? 'Team 1' : 'Team 2',
       playerName,
+      playerAvatar: player?.avatar || undefined,
       description: `${playerName} scored a goal`,
     })
 
@@ -408,6 +421,10 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
 
     set({ playerStats: updatedPlayerStats })
 
+    // Buscar el jugador para obtener su avatar
+    const allPlayers = [...get().playersTeam1, ...get().playersTeam2]
+    const player = allPlayers.find((p) => p.id === playerId)
+
     // Agregar evento
     get().addEvent({
       minute: currentMinute,
@@ -416,6 +433,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       teamId,
       teamName: team === 'team1' ? 'Team 1' : 'Team 2',
       playerName,
+      playerAvatar: player?.avatar || undefined,
       description: `${playerName} provided an assist`,
     })
 
@@ -448,6 +466,10 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
 
     set({ playerStats: updatedPlayerStats })
 
+    // Buscar el jugador para obtener su avatar
+    const allPlayers = [...get().playersTeam1, ...get().playersTeam2]
+    const player = allPlayers.find((p) => p.id === playerId)
+
     // Agregar evento
     get().addEvent({
       minute: currentMinute,
@@ -456,6 +478,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       teamId,
       teamName: team === 'team1' ? 'Team 1' : 'Team 2',
       playerName,
+      playerAvatar: player?.avatar || undefined,
       description: `${playerName} completed a pass`,
     })
 
@@ -488,6 +511,10 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
 
     set({ playerStats: updatedPlayerStats })
 
+    // Buscar el jugador para obtener su avatar
+    const allPlayers = [...get().playersTeam1, ...get().playersTeam2]
+    const player = allPlayers.find((p) => p.id === playerId)
+
     // Agregar evento
     get().addEvent({
       minute: currentMinute,
@@ -496,6 +523,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       teamId,
       teamName: team === 'team1' ? 'Team 1' : 'Team 2',
       playerName,
+      playerAvatar: player?.avatar || undefined,
       description: `${playerName} saved a goal`,
     })
 
@@ -548,6 +576,10 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       description: `Goal scored against ${playerName}`,
     })
 
+    // Buscar el jugador para obtener su avatar
+    const allPlayers = [...get().playersTeam1, ...get().playersTeam2]
+    const player = allPlayers.find((p) => p.id === playerId)
+
     // Agregar evento de goal_allowed para el portero
     get().addEvent({
       minute: currentMinute,
@@ -556,6 +588,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       teamId,
       teamName: team === 'team1' ? 'Team 1' : 'Team 2',
       playerName,
+      playerAvatar: player?.avatar || undefined,
       description: `${playerName} allowed a goal`,
     })
 
@@ -567,6 +600,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
     const newEvent: MatchEvent = {
       ...event,
       id: `event_${Date.now()}_${Math.random()}`,
+      timestamp: Date.now(),
     }
 
     set((state) => ({
@@ -603,6 +637,10 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
 
     set({ playerStats: updatedPlayerStats })
 
+    // Buscar el jugador para obtener su avatar
+    const allPlayers = [...get().playersTeam1, ...get().playersTeam2]
+    const player = allPlayers.find((p) => p.id === playerId)
+
     // Agregar evento
     get().addEvent({
       minute: currentMinute,
@@ -611,6 +649,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       teamId,
       teamName: team === 'team1' ? 'Team 1' : 'Team 2',
       playerName,
+      playerAvatar: player?.avatar || undefined,
       description: newIsPlaying
         ? `${playerName} entered the match`
         : `${playerName} left the match`,
@@ -683,7 +722,11 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
           '📊 Guardando evento:',
           event.eventType,
           'min',
-          event.minute
+          event.minute,
+          'playerId:',
+          event.playerId,
+          'playerName:',
+          event.playerName
         )
         await createMatchEvent({
           matchId,

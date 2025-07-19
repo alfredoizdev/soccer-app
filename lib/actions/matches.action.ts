@@ -632,11 +632,22 @@ export async function updateLiveMatchScore({
 export async function endLiveMatch(matchId: string) {
   const db = await dbPromise
 
+  console.log(`🏁 Iniciando endLiveMatch para matchId: ${matchId}`)
+
   // Obtener datos en vivo para este partido específico
   const liveData = await db
     .select()
     .from(liveMatchDataTable)
     .where(eq(liveMatchDataTable.matchId, matchId))
+
+  console.log(`📊 Datos en vivo encontrados: ${liveData.length} registros`)
+  liveData.forEach((data, index) => {
+    console.log(`   ${index + 1}. Jugador ${data.playerId}:`)
+    console.log(`      - Goals: ${data.goals}`)
+    console.log(`      - Assists: ${data.assists}`)
+    console.log(`      - Passes: ${data.passesCompleted}`)
+    console.log(`      - Time: ${data.timePlayed}s`)
+  })
 
   const liveScore = await db
     .select()
@@ -766,17 +777,56 @@ export async function endLiveMatch(matchId: string) {
 
     // Actualizar estadísticas acumulativas en la tabla players
     try {
+      // Obtener valores actuales del jugador
+      const [currentPlayer] = await db
+        .select({
+          totalGoals: playersTable.totalGoals,
+          totalAssists: playersTable.totalAssists,
+          totalPassesCompleted: playersTable.totalPassesCompleted,
+        })
+        .from(playersTable)
+        .where(eq(playersTable.id, liveStat.playerId))
+
+      console.log(
+        `📊 Actualizando stats acumulativas para jugador ${liveStat.playerId}:`
+      )
+      console.log(
+        `   - Goals actuales: ${currentPlayer?.totalGoals || 0} + ${
+          liveStat.goals
+        } = ${(currentPlayer?.totalGoals || 0) + liveStat.goals}`
+      )
+      console.log(
+        `   - Assists actuales: ${currentPlayer?.totalAssists || 0} + ${
+          liveStat.assists
+        } = ${(currentPlayer?.totalAssists || 0) + liveStat.assists}`
+      )
+      console.log(
+        `   - Passes actuales: ${currentPlayer?.totalPassesCompleted || 0} + ${
+          liveStat.passesCompleted
+        } = ${
+          (currentPlayer?.totalPassesCompleted || 0) + liveStat.passesCompleted
+        }`
+      )
+
       await db
         .update(playersTable)
         .set({
-          totalGoals: sql`${playersTable.totalGoals} + ${liveStat.goals}`,
-          totalAssists: sql`${playersTable.totalAssists} + ${liveStat.assists}`,
-          totalPassesCompleted: sql`${playersTable.totalPassesCompleted} + ${liveStat.passesCompleted}`,
+          totalGoals: sql`COALESCE(${playersTable.totalGoals}, 0) + ${liveStat.goals}`,
+          totalAssists: sql`COALESCE(${playersTable.totalAssists}, 0) + ${liveStat.assists}`,
+          totalPassesCompleted: sql`COALESCE(${playersTable.totalPassesCompleted}, 0) + ${liveStat.passesCompleted}`,
 
           updatedAt: new Date(),
         })
         .where(eq(playersTable.id, liveStat.playerId))
-    } catch {
+
+      console.log(
+        `✅ Stats acumulativas actualizadas para jugador ${liveStat.playerId}`
+      )
+    } catch (error) {
+      console.error(
+        `❌ Error actualizando stats acumulativas para jugador ${liveStat.playerId}:`,
+        error
+      )
       // Continuar con el siguiente jugador en caso de error
       continue
     }
@@ -825,6 +875,15 @@ export async function createMatchEvent({
 }) {
   const db = await dbPromise
 
+  console.log('📝 createMatchEvent:', {
+    matchId,
+    playerId,
+    eventType,
+    minute,
+    teamId,
+    description,
+  })
+
   const [event] = await db
     .insert(matchEventsTable)
     .values({
@@ -837,12 +896,15 @@ export async function createMatchEvent({
     })
     .returning()
 
+  console.log('✅ Evento creado:', event)
   return event
 }
 
 // Obtener eventos de un partido
 export async function getMatchEvents(matchId: string) {
   const db = await dbPromise
+
+  console.log('🔍 getMatchEvents: Buscando eventos para matchId:', matchId)
 
   const events = await db
     .select({
@@ -854,6 +916,7 @@ export async function getMatchEvents(matchId: string) {
       playerId: matchEventsTable.playerId,
       playerName: playersTable.name,
       playerLastName: playersTable.lastName,
+      playerAvatar: playersTable.avatar,
       teamName: organizationsTable.name,
       teamAvatar: organizationsTable.avatar,
     })
@@ -866,19 +929,61 @@ export async function getMatchEvents(matchId: string) {
     .where(eq(matchEventsTable.matchId, matchId))
     .orderBy(matchEventsTable.minute)
 
-  return events.map((event) => ({
-    id: event.id,
-    minute: event.minute,
-    eventType: event.eventType,
-    playerName:
-      event.playerName && event.playerLastName
-        ? `${event.playerName} ${event.playerLastName}`
-        : event.playerId
-        ? 'Unknown Player'
-        : undefined,
-    teamName: event.teamName || 'Unknown',
-    teamAvatar: event.teamAvatar,
-    description: event.description,
-    teamId: event.teamId, // Agregar teamId para posicionamiento
-  }))
+  console.log('📊 Eventos encontrados:', events.length)
+  events.forEach((event, index) => {
+    console.log(`📊 Evento ${index + 1}:`, {
+      playerId: event.playerId,
+      playerName: event.playerName,
+      playerAvatar: event.playerAvatar,
+      eventType: event.eventType,
+    })
+  })
+
+  const mappedEvents = events.map((event) => {
+    // Asegurar que playerId no sea undefined en la serialización
+    const playerId = event.playerId || null
+
+    const mappedEvent = {
+      id: event.id,
+      minute: event.minute,
+      eventType: event.eventType,
+      playerId: playerId, // Asegurar que no sea undefined
+      playerName:
+        event.playerName && event.playerLastName
+          ? `${event.playerName} ${event.playerLastName}`
+          : playerId
+          ? 'Unknown Player'
+          : undefined, // Eventos sin playerId (como goles de equipo) no tienen playerName
+      playerAvatar:
+        event.playerAvatar && event.playerAvatar.trim() !== ''
+          ? event.playerAvatar
+          : null, // Asegurar que no sea string vacío
+      teamName: event.teamName || 'Unknown',
+      teamAvatar: event.teamAvatar,
+      description: event.description,
+      teamId: event.teamId, // Agregar teamId para posicionamiento
+    }
+
+    console.log('🔄 Mapeando evento:', {
+      original: {
+        playerId: event.playerId,
+        playerName: event.playerName,
+        playerLastName: event.playerLastName,
+        playerAvatar: event.playerAvatar,
+        teamId: event.teamId,
+      },
+      mapped: {
+        playerId: mappedEvent.playerId,
+        playerName: mappedEvent.playerName,
+        playerAvatar: mappedEvent.playerAvatar,
+        teamId: mappedEvent.teamId,
+      },
+    })
+
+    return mappedEvent
+  })
+
+  console.log('✅ Eventos mapeados:', mappedEvents.length)
+  console.log('🔍 Primer evento mapeado:', mappedEvents[0])
+  return mappedEvents
 }

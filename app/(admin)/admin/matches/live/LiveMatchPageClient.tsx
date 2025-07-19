@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Info } from 'lucide-react'
 import { useLiveMatchStore } from '@/lib/stores/liveMatchStore'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 type Player = {
   id: string
@@ -143,6 +144,7 @@ export default function LiveMatchPageClient({
   }
 
   const [isEndingMatch, setIsEndingMatch] = useState(false)
+  const router = useRouter()
 
   const handleEndMatch = async () => {
     if (isEndingMatch || isMatchEnded) return // Prevenir múltiples ejecuciones
@@ -151,6 +153,9 @@ export default function LiveMatchPageClient({
     try {
       endMatch()
       await saveToDatabase()
+
+      // Refresh the page to update player stats
+      router.refresh()
     } catch (error) {
       console.error('Error ending match:', error)
     } finally {
