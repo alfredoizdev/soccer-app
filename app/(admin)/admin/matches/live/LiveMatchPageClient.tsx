@@ -174,31 +174,36 @@ export default function LiveMatchPageClient({
   }
 
   return (
-    <div className='w-full mx-auto py-8 px-4 max-h-[100vh] overflow-auto animate-fade-in duration-500'>
-      <h1 className='text-2xl font-bold mb-4'>
-        Match: {match.team1} vs {match.team2}
+    <div className='w-full mx-auto py-4 px-2 sm:py-6 sm:px-4 md:py-8 md:px-6 max-h-[100vh] overflow-auto animate-fade-in duration-500'>
+      {/* Título responsivo */}
+      <h1 className='text-lg sm:text-xl md:text-2xl font-bold mb-4 text-center sm:text-left'>
+        {match.team1} vs {match.team2}
       </h1>
 
-      {/* Marcador */}
-      <div className='flex justify-center items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg'>
+      {/* Marcador responsivo */}
+      <div className='flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg'>
+        {/* Equipo 1 */}
         <div
-          className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors ${
+          className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors w-full sm:w-auto justify-center sm:justify-start ${
             selectedTeam === 'team1' ? 'bg-gray-200' : 'hover:bg-gray-100'
           }`}
           onClick={() => handleTeamChange('team1')}
         >
-          <Avatar className='w-8 h-8'>
+          <Avatar className='w-6 h-6 sm:w-8 sm:h-8'>
             <AvatarImage src={match.team1Avatar} alt={match.team1} />
             <AvatarFallback>{match.team1[0]}</AvatarFallback>
           </Avatar>
-          <span className='font-bold'>{match.team1}</span>
-          <div className='flex items-center gap-2'>
-            <div className='px-3 py-1 border rounded bg-white font-bold'>
+          <span className='font-bold text-sm sm:text-base truncate'>
+            {match.team1}
+          </span>
+          <div className='flex items-center gap-1 sm:gap-2'>
+            <div className='px-2 sm:px-3 py-1 border rounded bg-white font-bold text-sm sm:text-base'>
               {team1Goals}
             </div>
             <Button
               variant='outline'
               size='sm'
+              className='h-6 w-6 sm:h-8 sm:w-8 p-0'
               onClick={(e) => {
                 e.stopPropagation()
                 handleTeamGoal('team1')
@@ -214,20 +219,25 @@ export default function LiveMatchPageClient({
             </Button>
           </div>
         </div>
-        <span className='text-2xl font-bold'>vs</span>
+
+        {/* VS */}
+        <span className='text-lg sm:text-xl md:text-2xl font-bold'>vs</span>
+
+        {/* Equipo 2 */}
         <div
-          className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors ${
+          className={`flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors w-full sm:w-auto justify-center sm:justify-start ${
             selectedTeam === 'team2' ? 'bg-gray-200' : 'hover:bg-gray-100'
           }`}
           onClick={() => handleTeamChange('team2')}
         >
-          <div className='flex items-center gap-2'>
-            <div className='px-3 py-1 border rounded bg-white font-bold'>
+          <div className='flex items-center gap-1 sm:gap-2'>
+            <div className='px-2 sm:px-3 py-1 border rounded bg-white font-bold text-sm sm:text-base'>
               {team2Goals}
             </div>
             <Button
               variant='outline'
               size='sm'
+              className='h-6 w-6 sm:h-8 sm:w-8 p-0'
               onClick={(e) => {
                 e.stopPropagation()
                 handleTeamGoal('team2')
@@ -242,8 +252,10 @@ export default function LiveMatchPageClient({
               +
             </Button>
           </div>
-          <span className='font-bold'>{match.team2}</span>
-          <Avatar className='w-8 h-8'>
+          <span className='font-bold text-sm sm:text-base truncate'>
+            {match.team2}
+          </span>
+          <Avatar className='w-6 h-6 sm:w-8 sm:h-8'>
             <AvatarImage src={match.team2Avatar} alt={match.team2} />
             <AvatarFallback>{match.team2[0]}</AvatarFallback>
           </Avatar>
@@ -251,11 +263,12 @@ export default function LiveMatchPageClient({
 
         {/* End Match Button */}
         {!isMatchEnded && (
-          <div className='ml-4'>
+          <div className='mt-2 sm:mt-0 sm:ml-4'>
             <Button
               onClick={handleEndMatch}
               variant='ghost'
-              className='bg-destructive/20 text-destructive hover:bg-destructive/30'
+              size='sm'
+              className='bg-destructive/20 text-destructive hover:bg-destructive/30 text-xs sm:text-sm'
               disabled={isEndingMatch || timer === 0 || isHalfTime}
               title={
                 timer === 0
@@ -265,66 +278,89 @@ export default function LiveMatchPageClient({
                   : 'End the match'
               }
             >
-              {isEndingMatch ? 'Ending Match...' : 'End Match'}
+              {isEndingMatch ? 'Ending...' : 'End Match'}
             </Button>
           </div>
         )}
         {isMatchEnded && (
-          <div className='ml-4'>
+          <div className='mt-2 sm:mt-0 sm:ml-4'>
             <Link href='/admin/matches/history'>
-              <Button variant='outline'>View History</Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-xs sm:text-sm'
+              >
+                View History
+              </Button>
             </Link>
           </div>
         )}
       </div>
 
-      {/* Controles del partido */}
-      <div className='flex items-center justify-center gap-4 mb-8'>
+      {/* Controles del partido responsivos */}
+      <div className='flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-8'>
         <div className='flex items-center gap-2'>
-          <span className='text-3xl font-mono'>⏱️ {formatTime(timer)}</span>
+          <span className='text-xl sm:text-2xl md:text-3xl font-mono'>
+            ⏱️ {formatTime(timer)}
+          </span>
         </div>
-        {!isHalfTime && !isMatchEnded && (
-          <Button onClick={handleStart} disabled={isRunning}>
-            Start
-          </Button>
-        )}
-        {!isMatchEnded && (
-          <>
-            {/* Solo mostrar Half Time si no se ha usado después del Resume */}
-            {!isHalfTime && !hasUsedHalfTime && (
-              <Button onClick={handleHalfTime} variant='outline'>
-                Half Time
-              </Button>
-            )}
-            {/* Mostrar Resume solo si está en Half Time */}
-            {isHalfTime && (
-              <Button
-                onClick={handleHalfTime}
-                variant='default'
-                className='bg-orange-500 hover:bg-orange-600'
-              >
-                Resume Match
-              </Button>
-            )}
-          </>
-        )}
+        <div className='flex flex-wrap gap-2 justify-center'>
+          {!isHalfTime && !isMatchEnded && (
+            <Button
+              onClick={handleStart}
+              disabled={isRunning}
+              size='sm'
+              className='text-xs sm:text-sm'
+            >
+              Start
+            </Button>
+          )}
+          {!isMatchEnded && (
+            <>
+              {/* Solo mostrar Half Time si no se ha usado después del Resume */}
+              {!isHalfTime && !hasUsedHalfTime && (
+                <Button
+                  onClick={handleHalfTime}
+                  variant='outline'
+                  size='sm'
+                  className='text-xs sm:text-sm'
+                >
+                  Half Time
+                </Button>
+              )}
+              {/* Mostrar Resume solo si está en Half Time */}
+              {isHalfTime && (
+                <Button
+                  onClick={handleHalfTime}
+                  variant='default'
+                  size='sm'
+                  className='bg-orange-500 hover:bg-orange-600 text-xs sm:text-sm'
+                >
+                  Resume Match
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Half Time Banner */}
       {isHalfTime && (
-        <div className='text-center mb-6'>
-          <div className='bg-orange-100 text-orange-800 px-6 py-3 rounded-lg inline-block'>
-            <span className='text-lg font-semibold'>HALF TIME</span>
+        <div className='text-center mb-4 sm:mb-6'>
+          <div className='bg-orange-100 text-orange-800 px-4 sm:px-6 py-2 sm:py-3 rounded-lg inline-block'>
+            <span className='text-base sm:text-lg font-semibold'>
+              HALF TIME
+            </span>
           </div>
         </div>
       )}
 
-      {/* Jugadores */}
-      <div className='flex flex-col gap-6 sm:max-h-[100vh] max-h-[400px] overflow-y-auto'>
+      {/* Jugadores responsivos */}
+      <div className='flex flex-col gap-4 sm:gap-6 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto'>
         {players.length === 0 ? (
-          <div className='flex flex-col items-center justify-center h-60'>
-            <Info className='w-12 h-12 text-gray-400 mb-4' />
-            <span className='text-lg text-gray-500 text-center'>
+          <div className='flex flex-col items-center justify-center h-40 sm:h-60'>
+            <Info className='w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mb-2 sm:mb-4' />
+            <span className='text-sm sm:text-lg text-gray-500 text-center px-4'>
               This club has no lineup available.
               <br />
               Please contact the administrator or check the team configuration.
@@ -346,24 +382,24 @@ export default function LiveMatchPageClient({
             return (
               <Card
                 key={p.id}
-                className='p-4 mt-5 flex flex-col gap-2 relative justify-center items-center'
+                className='p-3 sm:p-4 mt-3 sm:mt-5 flex flex-col gap-2 relative justify-center items-center'
               >
-                <div className='absolute top-[-20px] left-[50%] -translate-x-1/2'>
-                  <Avatar className='w-16 h-16'>
+                <div className='absolute top-[-15px] sm:top-[-20px] left-[50%] -translate-x-1/2'>
+                  <Avatar className='w-12 h-12 sm:w-16 sm:h-16'>
                     <AvatarImage
-                      className='w-16 h-16 object-cover'
+                      className='w-12 h-12 sm:w-16 sm:h-16 object-cover'
                       src={p.avatar || '/no-profile.webp'}
                       alt={p.name}
                     />
-                    <AvatarFallback>
+                    <AvatarFallback className='text-xs sm:text-sm'>
                       {p.name[0]}
                       {p.lastName[0]}
                     </AvatarFallback>
                   </Avatar>
                 </div>
-                <div className='flex items-center gap-4 mt-10'>
-                  <div>
-                    <div className='font-semibold'>
+                <div className='flex items-center gap-2 sm:gap-4 mt-8 sm:mt-10'>
+                  <div className='text-center sm:text-left'>
+                    <div className='font-semibold text-sm sm:text-base'>
                       {p.name} {p.lastName}{' '}
                       <span className='text-gray-400'>#{p.jerseyNumber}</span>
                       <span className='text-gray-400'>
@@ -381,7 +417,7 @@ export default function LiveMatchPageClient({
                     </div>
                   </div>
                 </div>
-                <div className='w-3xs flex justify-center items-center mt-4'>
+                <div className='w-full flex justify-center items-center mt-3 sm:mt-4'>
                   <Button
                     variant={playerStat.isPlaying ? 'default' : 'outline'}
                     onClick={() => {
@@ -390,19 +426,20 @@ export default function LiveMatchPageClient({
                       const playerName = `${p.name} ${p.lastName}`
                       togglePlayer(p.id, team, teamId, playerName)
                     }}
-                    className='w-full'
+                    className='w-full max-w-[120px] text-xs sm:text-sm'
                   >
                     {playerStat.isPlaying ? 'Down' : 'Up'}
                   </Button>
                 </div>
-                <div className='flex gap-2 mt-2 w-full'>
+                <div className='flex gap-1 sm:gap-2 mt-2 w-full'>
                   {p.position === 'goalkeeper' ? (
-                    <div className='flex gap-2 w-full justify-center items-center'>
-                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                    <div className='flex gap-1 sm:gap-2 w-full justify-center items-center'>
+                      <div className='flex flex-col justify-center items-center gap-1 sm:gap-2 w-1/2 bg-gray-100 rounded-md p-1 sm:p-2'>
                         <span className='text-xs text-center'>Goals saved</span>
                         <Button
                           variant='outline'
                           size='icon'
+                          className='h-6 w-6 sm:h-8 sm:w-8'
                           disabled={!playerStat.isPlaying}
                           onClick={() => {
                             const team = selectedTeam
@@ -411,16 +448,19 @@ export default function LiveMatchPageClient({
                             addGoalSaved(p.id, team, teamId, playerName)
                           }}
                         >
-                          {playerStat.goalsSaved}
+                          <span className='text-xs'>
+                            {playerStat.goalsSaved}
+                          </span>
                         </Button>
                       </div>
-                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                      <div className='flex flex-col justify-center items-center gap-1 sm:gap-2 w-1/2 bg-gray-100 rounded-md p-1 sm:p-2'>
                         <span className='text-xs text-center'>
                           Goals allowed
                         </span>
                         <Button
                           variant='outline'
                           size='icon'
+                          className='h-6 w-6 sm:h-8 sm:w-8'
                           disabled={!playerStat.isPlaying}
                           onClick={() => {
                             const team = selectedTeam
@@ -429,17 +469,20 @@ export default function LiveMatchPageClient({
                             addGoalAllowed(p.id, team, teamId, playerName)
                           }}
                         >
-                          {playerStat.goalsAllowed}
+                          <span className='text-xs'>
+                            {playerStat.goalsAllowed}
+                          </span>
                         </Button>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                      <div className='flex flex-col justify-center items-center gap-1 sm:gap-2 w-1/3 bg-gray-100 rounded-md p-1 sm:p-2'>
                         <span className='text-xs text-center'>Goles</span>
                         <Button
                           variant='outline'
                           size='icon'
+                          className='h-6 w-6 sm:h-8 sm:w-8'
                           disabled={!playerStat.isPlaying}
                           onClick={() => {
                             const team = selectedTeam
@@ -448,14 +491,15 @@ export default function LiveMatchPageClient({
                             addGoal(p.id, team, teamId, playerName)
                           }}
                         >
-                          {playerStat.goals}
+                          <span className='text-xs'>{playerStat.goals}</span>
                         </Button>
                       </div>
-                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                      <div className='flex flex-col justify-center items-center gap-1 sm:gap-2 w-1/3 bg-gray-100 rounded-md p-1 sm:p-2'>
                         <span className='text-xs text-center'>Assists</span>
                         <Button
                           variant='outline'
                           size='icon'
+                          className='h-6 w-6 sm:h-8 sm:w-8'
                           disabled={!playerStat.isPlaying}
                           onClick={() => {
                             const team = selectedTeam
@@ -464,14 +508,15 @@ export default function LiveMatchPageClient({
                             addAssist(p.id, team, teamId, playerName)
                           }}
                         >
-                          {playerStat.assists}
+                          <span className='text-xs'>{playerStat.assists}</span>
                         </Button>
                       </div>
-                      <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
+                      <div className='flex flex-col justify-center items-center gap-1 sm:gap-2 w-1/3 bg-gray-100 rounded-md p-1 sm:p-2'>
                         <span className='text-xs text-center'>Passes</span>
                         <Button
                           variant='outline'
                           size='icon'
+                          className='h-6 w-6 sm:h-8 sm:w-8'
                           disabled={!playerStat.isPlaying}
                           onClick={() => {
                             const team = selectedTeam
@@ -480,7 +525,9 @@ export default function LiveMatchPageClient({
                             addPass(p.id, team, teamId, playerName)
                           }}
                         >
-                          {playerStat.passesCompleted}
+                          <span className='text-xs'>
+                            {playerStat.passesCompleted}
+                          </span>
                         </Button>
                       </div>
                     </>

@@ -6,7 +6,7 @@ if [ -f ".env.local" ]; then
     export $(grep -v '^#' .env.local | xargs)
 fi
 
-echo "🚀 Aplicando migraciones en Neon..."
+echo "🗑️  Haciendo drop completo de Neon..."
 
 # Verificar que DATABASE_PRODUCTION_URL esté configurada
 if [ -z "$DATABASE_PRODUCTION_URL" ]; then
@@ -18,16 +18,15 @@ fi
 # Configurar DATABASE_URL para la migración
 export DATABASE_URL="$DATABASE_PRODUCTION_URL"
 
-# Aplicar migraciones usando push para sincronizar esquema
-echo "📦 Sincronizando esquema con Neon..."
-npx drizzle-kit push
+# Ejecutar el script de drop
+echo "🗑️  Ejecutando drop de tablas..."
+psql "$DATABASE_URL" -f scripts/drop-neon-tables.sql
 
-if [ $? -eq 0 ]; then
-    echo "✅ Migraciones aplicadas exitosamente en Neon"
-else
-    echo "❌ Error aplicando migraciones"
-    exit 1
-fi
+echo "✅ Drop completado"
 
-echo "🎉 ¡Migraciones completadas!"
+# Aplicar migraciones limpias
+echo "🚀 Aplicando migraciones limpias..."
+npm run db:migrate
+
+echo "🎉 ¡Neon reseteado exitosamente!"
 echo "📊 Tu base de datos Neon está lista para usar" 

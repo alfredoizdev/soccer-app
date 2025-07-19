@@ -21,7 +21,9 @@ export default async function AdminLayout({
       <Navbar user={{ ...user, avatar: user.avatar ?? '' }} />
       <div className='flex flex-1'>
         <Sidebar />
-        <main className='flex-1 bg-gray-100'>{children}</main>
+        <main className='flex-1 bg-gray-100 w-full overflow-hidden'>
+          {children}
+        </main>
       </div>
     </div>
   )

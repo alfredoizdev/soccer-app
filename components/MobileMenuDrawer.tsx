@@ -1,24 +1,27 @@
-import Link from 'next/link'
+import React from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from './ui/drawer'
-import { Button } from './ui/button'
-import React from 'react'
+} from '@/components/ui/drawer'
 import { Menu, LayoutDashboard, Users, User, House } from 'lucide-react'
+import Link from 'next/link'
 
-type Props = {
+interface MenuItem {
+  label: string
+  href: string
+  icon: string
+  value: string
+}
+
+interface Props {
   open?: boolean
   setOpen?: (open: boolean) => void
   title: string
-  menus: {
-    label: string
-    href: string
-    icon: React.ReactNode
-  }[]
+  menus: MenuItem[]
 }
 
 export default function MobileMenuDrawer({
@@ -44,19 +47,19 @@ export default function MobileMenuDrawer({
     <Drawer open={open} onOpenChange={setOpen} direction='left'>
       <DrawerTrigger asChild>
         <Button
-          className='2xl:hidden mr-4 p-2 rounded hover:bg-gray-800 focus:outline-none'
+          className='2xl:hidden mr-2 sm:mr-4 p-1.5 sm:p-2 rounded hover:bg-gray-800 focus:outline-none'
           variant='ghost'
         >
-          <Menu size={24} />
+          <Menu size={20} className='sm:w-6 sm:h-6' />
         </Button>
       </DrawerTrigger>
       <DrawerContent className='bg-gray-900 text-white'>
         <DrawerHeader>
-          <DrawerTitle className='text-2xl font-bold text-white'>
+          <DrawerTitle className='text-xl sm:text-2xl font-bold text-white'>
             {title}
           </DrawerTitle>
         </DrawerHeader>
-        <div className='flex flex-col gap-2 items-start h-full p-4'>
+        <div className='flex flex-col gap-2 items-start h-full p-3 sm:p-4'>
           {menus.map((menu, index) => {
             const Icon =
               icons[menu.icon as keyof typeof icons] || LayoutDashboard
@@ -65,10 +68,10 @@ export default function MobileMenuDrawer({
                 onClick={() => setOpen(false)}
                 key={index}
                 href={menu.href}
-                className='hover:bg-gray-700 rounded px-3 py-2 flex items-center gap-2'
+                className='hover:bg-gray-700 rounded px-2 sm:px-3 py-2 flex items-center gap-2 w-full text-sm sm:text-base'
               >
-                <Icon size={20} />
-                <span>{menu.label}</span>
+                <Icon size={18} className='sm:w-5 sm:h-5' />
+                <span className='truncate'>{menu.label}</span>
               </Link>
             )
           })}
