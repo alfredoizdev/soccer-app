@@ -15,10 +15,8 @@ export default async function AddPlayerPage() {
       <div className='max-w-6xl mx-auto py-12 px-4 sm:px-8'>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-8'>
           <h2 className='text-2xl font-bold'>Register a Player</h2>
-          <Link href='/members/players' passHref>
-            <Button asChild>
-              <a className='w-full sm:w-auto'>Back to My Players</a>
-            </Button>
+          <Link href='/members/players'>
+            <Button className='w-full sm:w-auto'>Back to My Players</Button>
           </Link>
         </div>
         <p className='text-gray-600 text-center'>

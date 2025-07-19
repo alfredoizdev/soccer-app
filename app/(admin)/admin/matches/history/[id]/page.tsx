@@ -5,19 +5,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Eye } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
+  DataTableMatchPlayerStats,
+  MatchPlayerStats,
+} from '@/components/admin/MatchPlayerStatsTable'
 import { notFound } from 'next/navigation'
 import { formatDate } from '@/lib/utils/formatDate'
+import Image from 'next/image'
+import { ArrowLeft, Clock } from 'lucide-react'
+import Link from 'next/link'
 
 interface MatchDetailPageProps {
   params: Promise<{ id: string }>
@@ -45,26 +40,29 @@ export default async function MatchDetailPage({
   )
 
   // Calcular totales por equipo
+  // Si no hay jugadores registrados, usar los goles del marcador del partido
   const team1Totals = {
-    goals: team1Stats.reduce((sum, stat) => sum + stat.goals, 0),
+    goals:
+      team1Stats.length > 0
+        ? team1Stats.reduce((sum, stat) => sum + stat.goals, 0)
+        : match.match.team1Goals || 0,
     assists: team1Stats.reduce((sum, stat) => sum + stat.assists, 0),
     passesCompleted: team1Stats.reduce(
       (sum, stat) => sum + stat.passesCompleted,
       0
     ),
-    duelsWon: team1Stats.reduce((sum, stat) => sum + stat.duelsWon, 0),
-    duelsLost: team1Stats.reduce((sum, stat) => sum + stat.duelsLost, 0),
   }
 
   const team2Totals = {
-    goals: team2Stats.reduce((sum, stat) => sum + stat.goals, 0),
+    goals:
+      team2Stats.length > 0
+        ? team2Stats.reduce((sum, stat) => sum + stat.goals, 0)
+        : match.match.team2Goals || 0,
     assists: team2Stats.reduce((sum, stat) => sum + stat.assists, 0),
     passesCompleted: team2Stats.reduce(
       (sum, stat) => sum + stat.passesCompleted,
       0
     ),
-    duelsWon: team2Stats.reduce((sum, stat) => sum + stat.duelsWon, 0),
-    duelsLost: team2Stats.reduce((sum, stat) => sum + stat.duelsLost, 0),
   }
 
   // Combinar todos los jugadores con sus estadísticas
@@ -84,131 +82,200 @@ export default async function MatchDetailPage({
   ]
 
   return (
-    <div className='w-full mx-auto p-4'>
-      <div className='mb-6'>
-        <h1 className='text-3xl font-bold mb-2'>Match Details</h1>
-        <p className='text-gray-600'>
+    <div className='w-full mx-auto p-2 sm:p-4'>
+      {/* Header con botón de regreso */}
+      <div className='mb-4 sm:mb-6 flex justify-between items-center w-full mx-auto gap-2'>
+        <Link
+          href='/admin/matches/history'
+          className='inline-flex bg-gray-800 rounded-md p-2 items-center text-white mb-2 sm:mb-4 text-sm'
+        >
+          <ArrowLeft className='w-4 h-4 mr-2' />
+          Back
+        </Link>
+        <h1 className='text-2xl sm:text-3xl font-bold mb-2'>Match Details</h1>
+        <p className='text-sm sm:text-base text-gray-600'>
           {formatDate(new Date(match.match.date))}
         </p>
       </div>
 
-      {/* Score Card */}
-      <Card className='mb-6'>
-        <CardHeader>
-          <CardTitle className='text-center'>Final Score</CardTitle>
+      {/* Score Card mejorado */}
+      <Card className='mb-6 sm:mb-8 border-2 border-gray-200 shadow-sm'>
+        <CardHeader className='text-center pb-3 sm:pb-4'>
+          <CardTitle className='text-lg sm:text-xl text-gray-700'>
+            Final Score
+          </CardTitle>
+          <Badge
+            variant='secondary'
+            className='w-fit mx-auto text-xs sm:text-sm'
+          >
+            {formatDate(new Date(match.match.date))}
+          </Badge>
         </CardHeader>
-        <CardContent>
-          <div className='flex items-center justify-center space-x-8'>
-            <div className='text-center'>
-              <Image
-                src={match.match.team1Avatar || '/no-club.jpg'}
-                alt={match.match.team1}
-                width={64}
-                height={64}
-                className='rounded-full mx-auto mb-2'
-              />
-              <h3 className='font-semibold text-lg'>{match.match.team1}</h3>
-              <div className='text-3xl font-bold text-blue-600'>
-                {match.match.team1Goals}
+        <CardContent className='pb-6 sm:pb-8'>
+          <div className='flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 lg:space-x-12'>
+            {/* Equipo 1 */}
+            <div className='text-center flex-1 order-1 md:order-1'>
+              <div className='w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 mb-3 sm:mb-4 mx-auto'>
+                <Image
+                  src={match.match.team1Avatar || '/no-club.jpg'}
+                  alt={match.match.team1}
+                  width={96}
+                  height={96}
+                  className='w-full h-full object-cover rounded-full border-4 border-white shadow-sm'
+                />
               </div>
+              <h3 className='font-bold text-sm sm:text-base md:text-lg text-gray-800'>
+                {match.match.team1}
+              </h3>
             </div>
 
-            <div className='text-4xl font-bold'>VS</div>
-
-            <div className='text-center'>
-              <Image
-                src={match.match.team2Avatar || '/no-club.jpg'}
-                alt={match.match.team2}
-                width={64}
-                height={64}
-                className='rounded-full mx-auto mb-2'
-              />
-              <h3 className='font-semibold text-lg'>{match.match.team2}</h3>
-              <div className='text-3xl font-bold text-blue-600'>
-                {match.match.team2Goals}
+            {/* Marcador central */}
+            <div className='flex flex-col items-center order-2 md:order-2'>
+              <div className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-2'>
+                {match.match.team1Goals} : {match.match.team2Goals}
               </div>
+              <div className='text-xs sm:text-sm text-gray-500 bg-white px-3 sm:px-4 py-1 sm:py-2 rounded-full shadow-xs mb-3'>
+                Final Result
+              </div>
+              <Link
+                href={`/admin/matches/history/${id}/timeline`}
+                className='inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors'
+              >
+                <Clock className='w-4 h-4 mr-2' />
+                View Match Timeline
+              </Link>
+            </div>
+
+            {/* Equipo 2 */}
+            <div className='text-center flex-1 order-3 md:order-3'>
+              <div className='w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 mb-3 sm:mb-4 mx-auto'>
+                <Image
+                  src={match.match.team2Avatar || '/no-club.jpg'}
+                  alt={match.match.team2}
+                  width={96}
+                  height={96}
+                  className='w-full h-full object-cover rounded-full border-4 border-white shadow-sm'
+                />
+              </div>
+              <h3 className='font-bold text-sm sm:text-base md:text-lg text-gray-800'>
+                {match.match.team2}
+              </h3>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Team Statistics */}
-      <div className='grid md:grid-cols-2 gap-6 mb-6'>
+      {/* Team Statistics mejoradas */}
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8'>
         {/* Team 1 Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center space-x-2'>
-              <Image
-                src={match.match.team1Avatar || '/no-club.jpg'}
-                alt={match.match.team1}
-                width={32}
-                height={32}
-                className='rounded-full'
-              />
-              <span>{match.match.team1} Statistics</span>
+        <Card className='border-l-4 border-l-blue-500 shadow-sm'>
+          <CardHeader className='pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center space-x-2 sm:space-x-3'>
+              <div className='w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10'>
+                <Image
+                  src={match.match.team1Avatar || '/no-club.jpg'}
+                  alt={match.match.team1}
+                  width={40}
+                  height={40}
+                  className='w-full h-full object-cover rounded-full'
+                />
+              </div>
+              <span className='text-sm sm:text-base md:text-lg'>
+                {match.match.team1} Statistics
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='space-y-3'>
-              <div className='flex justify-between'>
-                <span>Goals:</span>
-                <Badge variant='secondary'>{team1Totals.goals}</Badge>
+            <div className='space-y-2 sm:space-y-3 md:space-y-4'>
+              <div className='flex justify-between items-center p-2 sm:p-2 md:p-3 bg-blue-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm md:text-base'>
+                  Goals:
+                </span>
+                <Badge
+                  variant='default'
+                  className='text-sm sm:text-base md:text-lg px-2 md:px-3 py-1'
+                >
+                  {team1Totals.goals}
+                </Badge>
               </div>
-              <div className='flex justify-between'>
-                <span>Assists:</span>
-                <Badge variant='secondary'>{team1Totals.assists}</Badge>
+              <div className='flex justify-between items-center p-2 sm:p-2 md:p-3 bg-green-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm md:text-base'>
+                  Assists:
+                </span>
+                <Badge
+                  variant='secondary'
+                  className='text-sm sm:text-base md:text-lg px-2 md:px-3 py-1'
+                >
+                  {team1Totals.assists}
+                </Badge>
               </div>
-              <div className='flex justify-between'>
-                <span>Passes Completed:</span>
-                <Badge variant='secondary'>{team1Totals.passesCompleted}</Badge>
-              </div>
-              <div className='flex justify-between'>
-                <span>Duels Won:</span>
-                <Badge variant='secondary'>{team1Totals.duelsWon}</Badge>
-              </div>
-              <div className='flex justify-between'>
-                <span>Duels Lost:</span>
-                <Badge variant='secondary'>{team1Totals.duelsLost}</Badge>
+              <div className='flex justify-between items-center p-2 sm:p-2 md:p-3 bg-yellow-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm md:text-base'>
+                  Passes Completed:
+                </span>
+                <Badge
+                  variant='outline'
+                  className='text-sm sm:text-base md:text-lg px-2 md:px-3 py-1'
+                >
+                  {team1Totals.passesCompleted}
+                </Badge>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Team 2 Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center space-x-2'>
-              <Image
-                src={match.match.team2Avatar || '/no-club.jpg'}
-                alt={match.match.team2}
-                width={32}
-                height={32}
-                className='rounded-full'
-              />
-              <span>{match.match.team2} Statistics</span>
+        <Card className='border-l-4 border-l-red-500 shadow-sm'>
+          <CardHeader className='pb-3 sm:pb-4'>
+            <CardTitle className='flex items-center space-x-2 sm:space-x-3'>
+              <div className='w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10'>
+                <Image
+                  src={match.match.team2Avatar || '/no-club.jpg'}
+                  alt={match.match.team2}
+                  width={40}
+                  height={40}
+                  className='w-full h-full object-cover rounded-full'
+                />
+              </div>
+              <span className='text-sm sm:text-base md:text-lg'>
+                {match.match.team2} Statistics
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='space-y-3'>
-              <div className='flex justify-between'>
-                <span>Goals:</span>
-                <Badge variant='secondary'>{team2Totals.goals}</Badge>
+            <div className='space-y-2 sm:space-y-3 md:space-y-4'>
+              <div className='flex justify-between items-center p-2 sm:p-2 md:p-3 bg-red-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm md:text-base'>
+                  Goals:
+                </span>
+                <Badge
+                  variant='default'
+                  className='text-sm sm:text-base md:text-lg px-2 md:px-3 py-1'
+                >
+                  {team2Totals.goals}
+                </Badge>
               </div>
-              <div className='flex justify-between'>
-                <span>Assists:</span>
-                <Badge variant='secondary'>{team2Totals.assists}</Badge>
+              <div className='flex justify-between items-center p-2 sm:p-2 md:p-3 bg-green-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm md:text-base'>
+                  Assists:
+                </span>
+                <Badge
+                  variant='secondary'
+                  className='text-sm sm:text-base md:text-lg px-2 md:px-3 py-1'
+                >
+                  {team2Totals.assists}
+                </Badge>
               </div>
-              <div className='flex justify-between'>
-                <span>Passes Completed:</span>
-                <Badge variant='secondary'>{team2Totals.passesCompleted}</Badge>
-              </div>
-              <div className='flex justify-between'>
-                <span>Duels Won:</span>
-                <Badge variant='secondary'>{team2Totals.duelsWon}</Badge>
-              </div>
-              <div className='flex justify-between'>
-                <span>Duels Lost:</span>
-                <Badge variant='secondary'>{team2Totals.duelsLost}</Badge>
+              <div className='flex justify-between items-center p-2 sm:p-2 md:p-3 bg-yellow-50 rounded-lg'>
+                <span className='font-medium text-xs sm:text-sm md:text-base'>
+                  Passes Completed:
+                </span>
+                <Badge
+                  variant='outline'
+                  className='text-sm sm:text-base md:text-lg px-2 md:px-3 py-1'
+                >
+                  {team2Totals.passesCompleted}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -216,103 +283,16 @@ export default async function MatchDetailPage({
       </div>
 
       {/* Player Statistics Table */}
-      <Card>
+      <Card className='shadow-sm'>
         <CardHeader>
-          <CardTitle>Player Statistics</CardTitle>
+          <CardTitle className='text-base sm:text-lg md:text-xl'>
+            Player Statistics
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='overflow-x-auto'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Player</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead className='text-center'>Goals</TableHead>
-                  <TableHead className='text-center'>Assists</TableHead>
-                  <TableHead className='text-center'>Minutes</TableHead>
-                  <TableHead className='text-center'>Passes</TableHead>
-                  <TableHead className='text-center'>Duels Won</TableHead>
-                  <TableHead className='text-center'>Duels Lost</TableHead>
-                  <TableHead className='text-center'>Goals Saved</TableHead>
-                  <TableHead className='text-center'>Goals Allowed</TableHead>
-                  <TableHead className='text-center'>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allPlayersWithStats.map((player) => (
-                  <TableRow key={player.id}>
-                    <TableCell>
-                      <div className='flex items-center space-x-3'>
-                        <Image
-                          src={player.avatar || '/no-profile.webp'}
-                          alt={player.name}
-                          width={32}
-                          height={32}
-                          className='rounded-full'
-                        />
-                        <div>
-                          <div className='font-medium'>
-                            {player.name} {player.lastName}
-                          </div>
-                          <div className='text-sm text-gray-500'>
-                            #{player.jerseyNumber} • {player.position}
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center space-x-2'>
-                        <Image
-                          src={player.teamAvatar || '/no-club.jpg'}
-                          alt={player.team}
-                          width={20}
-                          height={20}
-                          className='rounded-full'
-                        />
-                        <span className='text-sm'>{player.team}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className='text-center font-medium'>
-                      {player.stats?.goals || 0}
-                    </TableCell>
-                    <TableCell className='text-center font-medium'>
-                      {player.stats?.assists || 0}
-                    </TableCell>
-                    <TableCell className='text-center font-medium'>
-                      {player.stats?.minutesPlayed || 0}
-                    </TableCell>
-                    <TableCell className='text-center font-medium'>
-                      {player.stats?.passesCompleted || 0}
-                    </TableCell>
-                    <TableCell className='text-center font-medium'>
-                      {player.stats?.duelsWon || 0}
-                    </TableCell>
-                    <TableCell className='text-center font-medium'>
-                      {player.stats?.duelsLost || 0}
-                    </TableCell>
-                    <TableCell className='text-center font-medium'>
-                      {player.stats?.goalsSaved || 0}
-                    </TableCell>
-                    <TableCell className='text-center font-medium'>
-                      {player.stats?.goalsAllowed || 0}
-                    </TableCell>
-                    <TableCell className='text-center'>
-                      <Link href={`/admin/players/${player.id}`}>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          className='h-8 w-8 p-0'
-                        >
-                          <Eye className='h-4 w-4' />
-                          <span className='sr-only'>View player details</span>
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTableMatchPlayerStats
+            players={allPlayersWithStats as MatchPlayerStats[]}
+          />
         </CardContent>
       </Card>
     </div>

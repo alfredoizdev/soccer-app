@@ -3,6 +3,9 @@ import Navbar from '@/components/members/navbar'
 import { userAuth } from '@/lib/actions/auth.action'
 import { redirect } from 'next/navigation'
 
+// Force dynamic rendering for root routes
+export const dynamic = 'force-dynamic'
+
 export default async function RootLayout({
   children,
 }: {

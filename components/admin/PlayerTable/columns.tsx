@@ -52,6 +52,15 @@ export function getPlayerColumns(
       header: 'Position',
     },
     {
+      accessorKey: 'jerseyNumber',
+      header: 'Dorsal',
+      cell: ({ row }) => (
+        <div className='text-center font-medium'>
+          {row.original.jerseyNumber ? `#${row.original.jerseyNumber}` : '-'}
+        </div>
+      ),
+    },
+    {
       accessorKey: 'user',
       header: 'Parent',
       cell: ({ row }) =>
@@ -71,14 +80,7 @@ export function getPlayerColumns(
       accessorKey: 'totalPassesCompleted',
       header: 'Passes Completed',
     },
-    {
-      accessorKey: 'totalDuelsWon',
-      header: 'Duels Won',
-    },
-    {
-      accessorKey: 'totalDuelsLost',
-      header: 'Duels Lost',
-    },
+
     {
       id: 'actions',
       header: 'Action',

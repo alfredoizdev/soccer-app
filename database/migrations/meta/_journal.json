@@ -1,17 +1,26 @@
 {
+  "version": "7",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
       "version": "7",
-      "when": 1752680812686,
-      "tag": "0000_brainy_punisher",
+      "when": 1752847347764,
+      "tag": "0000_clammy_darwin",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1752787060272,
-      "tag": "0001_public_killer_shrike",
+      "when": 1752866113457,
+      "tag": "0001_lean_psylocke",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1752868942323,
+      "tag": "0002_wise_microchip",
       "breakpoints": true
     }
   ]

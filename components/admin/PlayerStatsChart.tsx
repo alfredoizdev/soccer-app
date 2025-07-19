@@ -14,32 +14,24 @@ interface PlayerStatsChartProps {
   goals: number
   assists: number
   passesCompleted: number
-  duelsWon: number
-  duelsLost: number
 }
 
 const chartConfig = {
   Goals: { label: 'Goals', color: '#3b82f6' },
   Assists: { label: 'Assists', color: '#10b981' },
   Pass: { label: 'Passes Completed', color: '#f59e42' },
-  DuelsWon: { label: 'Duels Won', color: '#6366f1' },
-  DuelsLost: { label: 'Duels Lost', color: '#ef4444' },
 }
 
 export default function PlayerStatsChart({
   goals,
   assists,
   passesCompleted,
-  duelsWon,
-  duelsLost,
 }: PlayerStatsChartProps) {
-  // Order: Goals (top), Assists (top right), Pass (bottom right), DuelsWon (bottom left), DuelsLost (top left)
+  // Order: Goals (top), Assists (top right), Pass (bottom right)
   const data = [
     { stat: 'Goals', value: goals },
     { stat: 'Assists', value: assists },
     { stat: 'Pass', value: passesCompleted },
-    { stat: 'DuelsWon', value: duelsWon },
-    { stat: 'DuelsLost', value: duelsLost },
   ]
 
   return (
@@ -50,10 +42,7 @@ export default function PlayerStatsChart({
           <PolarAngleAxis dataKey='stat' />
           <PolarRadiusAxis
             angle={30}
-            domain={[
-              0,
-              Math.max(goals, assists, passesCompleted, duelsWon, duelsLost, 5),
-            ]}
+            domain={[0, Math.max(goals, assists, passesCompleted, 5)]}
             tick={false}
             axisLine={false}
             tickLine={false}

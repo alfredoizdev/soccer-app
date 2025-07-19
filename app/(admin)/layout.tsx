@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import Navbar from '@/components/admin/Navbar'
 import Sidebar from '@/components/admin/Sidebar'
 
+// Force dynamic rendering for admin routes
+export const dynamic = 'force-dynamic'
+
 export default async function AdminLayout({
   children,
 }: {

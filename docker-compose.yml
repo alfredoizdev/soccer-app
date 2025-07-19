@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: soccer-app-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: soccer_app
+      POSTGRES_USER: soccer_user
+      POSTGRES_PASSWORD: soccer_password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - soccer-network
+
+volumes:
+  postgres_data:
+
+networks:
+  soccer-network:
+    driver: bridge

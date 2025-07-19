@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { UserType } from '@/types/UserType'
-import { searchUsersAction } from '@/lib/actions/users.action'
+import { useGlobalStore } from '@/lib/stores/globalStore'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import { useDebounceCallback } from '@/hooks/useDebounceCallback'
 
 interface UserSearchProps {
   onSelect: (user: UserType) => void
@@ -15,7 +14,7 @@ export default function UserSearch({ onSelect, defaultUser }: UserSearchProps) {
     defaultUser?.id ? String(defaultUser.id) : undefined
   )
   const [results, setResults] = useState<UserType[]>([])
-  const [loading, setLoading] = useState(false)
+  const { users, usersLoaded, loadUsers } = useGlobalStore()
 
   useEffect(() => {
     setSelectedUserId(defaultUser?.id ? String(defaultUser.id) : undefined)
@@ -24,23 +23,31 @@ export default function UserSearch({ onSelect, defaultUser }: UserSearchProps) {
     }
   }, [defaultUser])
 
-  // Debounced search function
-  const debouncedSearch = useDebounceCallback(async (...args: unknown[]) => {
-    const value = String(args[0] ?? '')
-    setLoading(true)
-    const res = await searchUsersAction(value)
-    setResults(res.data || [])
-    setLoading(false)
-  }, 400)
+  // Cargar usuarios si no están cargados
+  useEffect(() => {
+    if (!usersLoaded) {
+      loadUsers()
+    }
+  }, [usersLoaded, loadUsers])
 
+  // Filtrar usuarios localmente
   useEffect(() => {
     if (!search || selectedUserId) {
       setResults([])
       return
     }
-    debouncedSearch(search)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, selectedUserId])
+
+    const filteredUsers = users.filter((user) => {
+      const fullName = `${user.name} ${user.lastName}`.toLowerCase()
+      const searchTerm = search.toLowerCase()
+      return (
+        fullName.includes(searchTerm) ||
+        user.email.toLowerCase().includes(searchTerm)
+      )
+    })
+
+    setResults(filteredUsers.slice(0, 10)) // Limitar a 10 resultados
+  }, [search, selectedUserId, users])
 
   return (
     <div className='space-y-2'>
@@ -54,7 +61,9 @@ export default function UserSearch({ onSelect, defaultUser }: UserSearchProps) {
         }}
         className='mb-2 border-2 border-gray-300 rounded-md p-2 w-full'
       />
-      {loading && <div className='text-xs text-gray-400'>Searching...</div>}
+      {!usersLoaded && (
+        <div className='text-xs text-gray-400'>Loading users...</div>
+      )}
       {!selectedUserId && results.length > 0 && (
         <ul className='border rounded bg-white shadow max-h-40 overflow-y-auto'>
           {results.map((user) => (

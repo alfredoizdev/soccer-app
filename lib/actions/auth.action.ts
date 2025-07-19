@@ -74,8 +74,6 @@ export const loginAction = async (email: string, password: string) => {
 
     const user = users[0]
 
-    console.log(users)
-
     if (!user) {
       return { success: false, error: 'User not found' }
     }

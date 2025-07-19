@@ -11,8 +11,6 @@ export type PlayerStatsAdminProps = {
     goals: number
     assists: number
     passesCompleted: number
-    duelsWon: number
-    duelsLost: number
     goalsAllowed?: number
     goalsSaved?: number
   }
@@ -49,12 +47,10 @@ const PlayerStatsAdmin: React.FC<PlayerStatsAdminProps> = ({
       { label: 'Goals', value: stats.goals },
       { label: 'Assists', value: stats.assists },
       { label: 'Passes', value: stats.passesCompleted },
-      { label: 'Duels Won', value: stats.duelsWon },
-      { label: 'Duels Lost', value: stats.duelsLost },
     ]
     chartData = [
-      { name: 'Duels Won', value: stats.duelsWon, fill: '#10b981' },
-      { name: 'Duels Lost', value: stats.duelsLost, fill: '#ef4444' },
+      { name: 'Goals', value: stats.goals, fill: '#10b981' },
+      { name: 'Assists', value: stats.assists, fill: '#3b82f6' },
     ]
   } else {
     statItems = [
@@ -62,12 +58,10 @@ const PlayerStatsAdmin: React.FC<PlayerStatsAdminProps> = ({
       { label: 'Goals', value: stats.goals },
       { label: 'Assists', value: stats.assists },
       { label: 'Passes', value: stats.passesCompleted },
-      { label: 'Duels Won', value: stats.duelsWon },
-      { label: 'Duels Lost', value: stats.duelsLost },
     ]
     chartData = [
-      { name: 'Duels Won', value: stats.duelsWon, fill: '#10b981' },
-      { name: 'Duels Lost', value: stats.duelsLost, fill: '#ef4444' },
+      { name: 'Goals', value: stats.goals, fill: '#10b981' },
+      { name: 'Assists', value: stats.assists, fill: '#3b82f6' },
     ]
   }
 
@@ -79,8 +73,6 @@ const PlayerStatsAdmin: React.FC<PlayerStatsAdminProps> = ({
             goals={stats.goals}
             assists={stats.assists}
             passesCompleted={stats.passesCompleted}
-            duelsWon={stats.duelsWon}
-            duelsLost={stats.duelsLost}
           />
         </div>
       )}

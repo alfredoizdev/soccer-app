@@ -54,8 +54,6 @@ export const playersTable = pgTable('players', {
   totalGoals: integer('total_goals').default(0).notNull(),
   totalAssists: integer('total_assists').default(0).notNull(),
   totalPassesCompleted: integer('total_passes_completed').default(0).notNull(),
-  totalDuelsWon: integer('total_duels_won').default(0).notNull(),
-  totalDuelsLost: integer('total_duels_lost').default(0).notNull(),
   jerseyNumber: integer('jersey_number'), // Nuevo campo para el dorsal
   position: text('position'), // Temporalmente opcional para migración
 })
@@ -84,8 +82,6 @@ export const playerStatsTable = pgTable('player_stats', {
   goals: integer('goals').default(0).notNull(),
   assists: integer('assists').default(0).notNull(),
   passesCompleted: integer('passes_completed').default(0).notNull(),
-  duelsWon: integer('duels_won').default(0).notNull(),
-  duelsLost: integer('duels_lost').default(0).notNull(),
   goalsAllowed: integer('goals_allowed').default(0).notNull(), // Nuevo campo
   goalsSaved: integer('goals_saved').default(0).notNull(), // Nuevo campo
   // Puedes agregar más stats si necesitas
@@ -105,8 +101,6 @@ export const liveMatchDataTable = pgTable('live_match_data', {
   goals: integer('goals').default(0).notNull(),
   assists: integer('assists').default(0).notNull(),
   passesCompleted: integer('passes_completed').default(0).notNull(),
-  duelsWon: integer('duels_won').default(0).notNull(),
-  duelsLost: integer('duels_lost').default(0).notNull(),
   goalsAllowed: integer('goals_allowed').default(0).notNull(),
   goalsSaved: integer('goals_saved').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -125,6 +119,24 @@ export const liveMatchScoreTable = pgTable('live_match_score', {
   isLive: boolean('is_live').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
+
+// Tabla para eventos del partido (goles, tarjetas, sustituciones, etc.)
+export const matchEventsTable = pgTable('match_events', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  matchId: uuid('match_id')
+    .notNull()
+    .references(() => matchesTable.id, { onDelete: 'cascade' }),
+  playerId: uuid('player_id').references(() => playersTable.id, {
+    onDelete: 'set null',
+  }),
+  eventType: text('event_type').notNull(), // 'goal', 'assist', 'yellow_card', 'red_card', 'substitution', 'injury'
+  minute: integer('minute').notNull(), // Minuto del evento
+  teamId: uuid('team_id')
+    .notNull()
+    .references(() => organizationsTable.id, { onDelete: 'cascade' }),
+  description: text('description'), // Descripción opcional del evento
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
 export type InsertUser = typeof usersTable.$inferInsert

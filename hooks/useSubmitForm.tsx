@@ -40,6 +40,7 @@ function useSubmitForm<T extends Record<string, unknown>>({
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
+    watch,
   } = useForm<T>({
     defaultValues,
   })
@@ -97,6 +98,7 @@ function useSubmitForm<T extends Record<string, unknown>>({
     imagePreview,
     actionResult,
     setValue,
+    watch,
   }
 }
 

@@ -8,6 +8,7 @@ import React from 'react'
 import {
   createPlayerAction,
   updatePlayerAction,
+  checkJerseyNumberAvailabilityAction,
 } from '@/lib/actions/player.action'
 import UserSearch from './UserSearch'
 import { UserType } from '@/types/UserType'
@@ -24,6 +25,7 @@ export type PlayerFormInputs = {
   user: UserType
   organizationId?: string // <-- Agregado
   position: string
+  jerseyNumber?: string | number | null
 }
 
 type Props = {
@@ -55,6 +57,7 @@ export default function PlayerForm({
     userId: fixedUserId ?? player?.userId ?? '',
     ...(fixedOrganizationId ? { organizationId: fixedOrganizationId } : {}), // <-- Solo si existe
     position: player?.position ?? '',
+    jerseyNumber: player?.jerseyNumber?.toString() ?? '',
   } as const
 
   const {
@@ -74,8 +77,43 @@ export default function PlayerForm({
       if ((!data.avatar || data.avatar === '') && player?.avatar) {
         data.avatar = player.avatar
       }
-      // Convertir age a number antes de enviar al backend
-      const dataToSend = { ...data, age: Number(data.age) }
+
+      // Validar número de jersey si se proporciona
+      if (data.jerseyNumber) {
+        const jerseyNumber = Number(data.jerseyNumber)
+        if (isNaN(jerseyNumber) || jerseyNumber < 1 || jerseyNumber > 99) {
+          return {
+            data: null,
+            error: 'Jersey number must be between 1 and 99',
+            success: false,
+          }
+        }
+
+        // Solo verificar disponibilidad si el jugador está asignado a un equipo
+        if (data.organizationId) {
+          const availability = await checkJerseyNumberAvailabilityAction(
+            jerseyNumber,
+            data.organizationId,
+            player?.id
+          )
+
+          if (!availability.isAvailable) {
+            return {
+              data: null,
+              error: `Jersey number ${jerseyNumber} is already taken in this team`,
+              success: false,
+            }
+          }
+        }
+      }
+
+      // Convertir age y jerseyNumber a number antes de enviar al backend
+      const dataToSend = {
+        ...data,
+        age: Number(data.age),
+        jerseyNumber: data.jerseyNumber ? Number(data.jerseyNumber) : null,
+      }
+
       const result =
         action === 'create'
           ? await createPlayerAction(dataToSend)
@@ -168,6 +206,28 @@ export default function PlayerForm({
           ))}
         </select>
         {errors?.age && <p className='text-red-500'>{errors.age.message}</p>}
+      </div>
+      <div>
+        <input
+          type='number'
+          placeholder='Jersey Number (1-99)'
+          className='border-2 border-gray-300 rounded-md p-2 w-full'
+          {...register('jerseyNumber', {
+            min: 1,
+            max: 99,
+            pattern: {
+              value: /^[1-9][0-9]?$/,
+              message: 'Jersey number must be between 1 and 99',
+            },
+          })}
+        />
+        {errors?.jerseyNumber && (
+          <p className='text-red-500'>{errors.jerseyNumber.message}</p>
+        )}
+        <p className='text-sm text-gray-500 mt-1'>
+          Enter a number between 1-99. If the player is assigned to a team, the
+          system will check if the number is available.
+        </p>
       </div>
       <div>
         <label htmlFor='user' className='text-sm font-medium mb-2 block'>

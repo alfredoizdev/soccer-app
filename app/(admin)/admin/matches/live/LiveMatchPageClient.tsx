@@ -36,8 +36,6 @@ type PlayerStat = {
   lastUpTimestamp?: number
   goals: number
   assists: number
-  duelsWon: number
-  duelsLost: number
   goalsSaved: number
   goalsAllowed: number
   passesCompleted: number
@@ -68,8 +66,6 @@ export default function LiveMatchPageClient({
       goals: number
       assists: number
       passesCompleted: number
-      duelsWon: number
-      duelsLost: number
       goalsAllowed: number
       goalsSaved: number
       isPlaying: boolean
@@ -92,8 +88,7 @@ export default function LiveMatchPageClient({
           timePlayed: dbStats?.timePlayed || 0, // Ya está en segundos
           goals: dbStats?.goals || 0,
           assists: dbStats?.assists || 0,
-          duelsWon: dbStats?.duelsWon || 0,
-          duelsLost: dbStats?.duelsLost || 0,
+
           goalsSaved: dbStats?.goalsSaved || 0,
           goalsAllowed: dbStats?.goalsAllowed || 0,
           passesCompleted: dbStats?.passesCompleted || 0,
@@ -395,38 +390,6 @@ export default function LiveMatchPageClient({
                         }
                       >
                         {stats[p.id]?.passesCompleted || 0}
-                      </Button>
-                    </div>
-                    <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
-                      <span className='text-xs text-center'>Lost duels</span>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() =>
-                          updatePlayerStat(
-                            p.id,
-                            'duelsLost',
-                            (stats[p.id]?.duelsLost || 0) + 1
-                          )
-                        }
-                      >
-                        {stats[p.id]?.duelsLost || 0}
-                      </Button>
-                    </div>
-                    <div className='flex flex-col justify-center items-center gap-2 w-1/3 bg-gray-100 rounded-md p-2'>
-                      <span className='text-xs text-center'>Won duels</span>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() =>
-                          updatePlayerStat(
-                            p.id,
-                            'duelsWon',
-                            (stats[p.id]?.duelsWon || 0) + 1
-                          )
-                        }
-                      >
-                        {stats[p.id]?.duelsWon || 0}
                       </Button>
                     </div>
                   </>

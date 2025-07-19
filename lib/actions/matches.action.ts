@@ -6,6 +6,7 @@ import {
   playersTable,
   liveMatchDataTable,
   liveMatchScoreTable,
+  matchEventsTable,
 } from '@/database/schema'
 import { eq, inArray, and } from 'drizzle-orm'
 import { TeamType } from '@/types/TeamType'
@@ -28,8 +29,6 @@ export type PlayerMatchWithStats = {
     goals: number
     assists: number
     passesCompleted: number
-    duelsWon: number
-    duelsLost: number
   }
   player: {
     id: string
@@ -91,8 +90,6 @@ export async function getPlayerMatchesWithStats(
               goals: stat.goals,
               assists: stat.assists,
               passesCompleted: stat.passesCompleted,
-              duelsWon: stat.duelsWon,
-              duelsLost: stat.duelsLost,
             },
             player: player || {},
           }
@@ -154,8 +151,7 @@ export async function createMatchWithPlayers({
         goals: 0,
         assists: 0,
         passesCompleted: 0,
-        duelsWon: 0,
-        duelsLost: 0,
+
         goalsAllowed: 0,
         goalsSaved: 0,
       }))
@@ -229,8 +225,7 @@ export async function getMatchPlayerStats(matchId: string) {
       goals: playerStatsTable.goals,
       assists: playerStatsTable.assists,
       passesCompleted: playerStatsTable.passesCompleted,
-      duelsWon: playerStatsTable.duelsWon,
-      duelsLost: playerStatsTable.duelsLost,
+
       goalsAllowed: playerStatsTable.goalsAllowed,
       goalsSaved: playerStatsTable.goalsSaved,
     })
@@ -262,8 +257,7 @@ export async function updatePlayerStats({
     goals?: number
     assists?: number
     passesCompleted?: number
-    duelsWon?: number
-    duelsLost?: number
+
     goalsAllowed?: number
     goalsSaved?: number
   }
@@ -491,8 +485,7 @@ export async function updateLivePlayerStats({
     goals?: number
     assists?: number
     passesCompleted?: number
-    duelsWon?: number
-    duelsLost?: number
+
     goalsAllowed?: number
     goalsSaved?: number
     timePlayed?: number
@@ -508,8 +501,7 @@ export async function updateLivePlayerStats({
     goals: stats.goals,
     assists: stats.assists,
     passesCompleted: stats.passesCompleted,
-    duelsWon: stats.duelsWon,
-    duelsLost: stats.duelsLost,
+
     goalsAllowed: stats.goalsAllowed,
     goalsSaved: stats.goalsSaved,
     updatedAt: new Date(),
@@ -678,6 +670,13 @@ export async function endLiveMatch(matchId: string) {
   // Transferir estadísticas de jugadores a player_stats
   for (const liveStat of liveData) {
     try {
+      // Calcular el tiempo real jugado
+      // Si el jugador jugó más tiempo del que debería, limitarlo a un máximo razonable
+      // Por defecto, limitamos a 90 minutos (5400 segundos) para partidos normales
+      const maxTimePlayed = 5400 // 90 minutos en segundos
+      const actualTimePlayed = Math.min(liveStat.timePlayed, maxTimePlayed)
+      const minutesPlayed = Math.floor(actualTimePlayed / 60)
+
       // Verificar si ya existe un registro en player_stats
       const existingStat = await db
         .select()
@@ -695,12 +694,11 @@ export async function endLiveMatch(matchId: string) {
         await db
           .update(playerStatsTable)
           .set({
-            minutesPlayed: Math.floor(liveStat.timePlayed / 60),
+            minutesPlayed: minutesPlayed,
             goals: liveStat.goals,
             assists: liveStat.assists,
             passesCompleted: liveStat.passesCompleted,
-            duelsWon: liveStat.duelsWon,
-            duelsLost: liveStat.duelsLost,
+
             goalsAllowed: liveStat.goalsAllowed,
             goalsSaved: liveStat.goalsSaved,
           })
@@ -710,12 +708,11 @@ export async function endLiveMatch(matchId: string) {
         await db.insert(playerStatsTable).values({
           matchId,
           playerId: liveStat.playerId,
-          minutesPlayed: Math.floor(liveStat.timePlayed / 60),
+          minutesPlayed: minutesPlayed,
           goals: liveStat.goals,
           assists: liveStat.assists,
           passesCompleted: liveStat.passesCompleted,
-          duelsWon: liveStat.duelsWon,
-          duelsLost: liveStat.duelsLost,
+
           goalsAllowed: liveStat.goalsAllowed,
           goalsSaved: liveStat.goalsSaved,
         })
@@ -733,8 +730,7 @@ export async function endLiveMatch(matchId: string) {
           totalGoals: sql`${playersTable.totalGoals} + ${liveStat.goals}`,
           totalAssists: sql`${playersTable.totalAssists} + ${liveStat.assists}`,
           totalPassesCompleted: sql`${playersTable.totalPassesCompleted} + ${liveStat.passesCompleted}`,
-          totalDuelsWon: sql`${playersTable.totalDuelsWon} + ${liveStat.duelsWon}`,
-          totalDuelsLost: sql`${playersTable.totalDuelsLost} + ${liveStat.duelsLost}`,
+
           updatedAt: new Date(),
         })
         .where(eq(playersTable.id, liveStat.playerId))
@@ -754,4 +750,83 @@ export async function endLiveMatch(matchId: string) {
     .where(eq(liveMatchScoreTable.matchId, matchId))
 
   return { success: true }
+}
+
+// Crear un evento del partido
+export async function createMatchEvent({
+  matchId,
+  playerId,
+  eventType,
+  minute,
+  teamId,
+  description,
+}: {
+  matchId: string
+  playerId?: string
+  eventType:
+    | 'goal'
+    | 'assist'
+    | 'yellow_card'
+    | 'red_card'
+    | 'substitution'
+    | 'injury'
+  minute: number
+  teamId: string
+  description?: string
+}) {
+  const db = await dbPromise
+
+  const [event] = await db
+    .insert(matchEventsTable)
+    .values({
+      matchId,
+      playerId,
+      eventType,
+      minute,
+      teamId,
+      description,
+    })
+    .returning()
+
+  return event
+}
+
+// Obtener eventos de un partido
+export async function getMatchEvents(matchId: string) {
+  const db = await dbPromise
+
+  const events = await db
+    .select({
+      id: matchEventsTable.id,
+      minute: matchEventsTable.minute,
+      eventType: matchEventsTable.eventType,
+      description: matchEventsTable.description,
+      teamId: matchEventsTable.teamId,
+      playerId: matchEventsTable.playerId,
+      playerName: playersTable.name,
+      playerLastName: playersTable.lastName,
+      teamName: organizationsTable.name,
+      teamAvatar: organizationsTable.avatar,
+    })
+    .from(matchEventsTable)
+    .leftJoin(playersTable, eq(matchEventsTable.playerId, playersTable.id))
+    .leftJoin(
+      organizationsTable,
+      eq(matchEventsTable.teamId, organizationsTable.id)
+    )
+    .where(eq(matchEventsTable.matchId, matchId))
+    .orderBy(matchEventsTable.minute)
+
+  return events.map((event) => ({
+    id: event.id,
+    minute: event.minute,
+    eventType: event.eventType,
+    playerName:
+      event.playerName && event.playerLastName
+        ? `${event.playerName} ${event.playerLastName}`
+        : undefined,
+    teamName: event.teamName || 'Unknown',
+    teamAvatar: event.teamAvatar,
+    description: event.description,
+  }))
 }

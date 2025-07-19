@@ -21,8 +21,6 @@ type PlayerStats = {
   goals: number
   assists: number
   passesCompleted: number
-  duelsWon: number
-  duelsLost: number
   minutesPlayed: number
 }
 
@@ -52,8 +50,6 @@ export default async function PlayerDetailPage({
     goals: Number(statsRes?.data?.goals ?? 0),
     assists: Number(statsRes?.data?.assists ?? 0),
     passesCompleted: Number(statsRes?.data?.passesCompleted ?? 0),
-    duelsWon: Number(statsRes?.data?.duelsWon ?? 0),
-    duelsLost: Number(statsRes?.data?.duelsLost ?? 0),
     minutesPlayed: Number(statsRes?.data?.minutesPlayed ?? 0),
   }
 
@@ -109,8 +105,6 @@ export default async function PlayerDetailPage({
         goals={stats.goals}
         assists={stats.assists}
         passesCompleted={stats.passesCompleted}
-        duelsWon={stats.duelsWon}
-        duelsLost={stats.duelsLost}
       />
       <div className='grid grid-cols-2 md:grid-cols-3 gap-4 mb-6'>
         <div className='bg-gray-50 rounded-lg p-4 text-center'>
@@ -132,14 +126,6 @@ export default async function PlayerDetailPage({
         <div className='bg-gray-50 rounded-lg p-4 text-center'>
           <div className='text-xs text-gray-500'>Passes Completed</div>
           <div className='text-xl font-bold'>{stats.passesCompleted}</div>
-        </div>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Duels Won</div>
-          <div className='text-xl font-bold'>{stats.duelsWon}</div>
-        </div>
-        <div className='bg-gray-50 rounded-lg p-4 text-center'>
-          <div className='text-xs text-gray-500'>Duels Lost</div>
-          <div className='text-xl font-bold'>{stats.duelsLost}</div>
         </div>
       </div>
       {teammates.length > 0 && (

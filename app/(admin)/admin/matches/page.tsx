@@ -20,25 +20,9 @@ interface MatchListItem {
 export default async function MatchesPage() {
   const allMatches: MatchListItem[] = await getAllMatchesWithTeams()
 
-  console.log(
-    'All matches:',
-    allMatches.map((m) => ({
-      id: m.id,
-      team1Goals: m.team1Goals,
-      team2Goals: m.team2Goals,
-      isCompleted: m.team1Goals > 0 || m.team2Goals > 0,
-    }))
-  )
-
   // Filtrar solo partidos que NO han finalizado (sin goles registrados)
   const activeMatches = allMatches.filter(
     (match) => match.team1Goals === 0 && match.team2Goals === 0
-  )
-
-  console.log('Active matches count:', activeMatches.length)
-  console.log(
-    'Active matches:',
-    activeMatches.map((m) => m.id)
   )
 
   return (

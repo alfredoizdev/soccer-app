@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getAllMatchesWithTeams } from '@/lib/actions/matches.action'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -31,50 +31,79 @@ export default async function MatchHistoryPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className='grid gap-4'>
+        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
           {completedMatches.map((match: any) => (
-            <Card key={match.id} className='hover:shadow-md transition-shadow'>
-              <CardHeader>
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center space-x-4'>
-                    <div className='flex items-center space-x-2'>
-                      <Image
-                        src={match.team1?.avatar || '/no-club.jpg'}
-                        alt={match.team1?.name || 'Team 1'}
-                        width={32}
-                        height={32}
-                        className='rounded-full'
-                      />
-                      <span className='font-semibold'>{match.team1?.name}</span>
-                    </div>
-                    <div className='text-2xl font-bold'>
-                      {match.team1Goals} - {match.team2Goals}
-                    </div>
-                    <div className='flex items-center space-x-2'>
-                      <span className='font-semibold'>{match.team2?.name}</span>
-                      <Image
-                        src={match.team2?.avatar || '/no-club.jpg'}
-                        alt={match.team2?.name || 'Team 2'}
-                        width={32}
-                        height={32}
-                        className='rounded-full'
-                      />
-                    </div>
-                  </div>
-                  <div className='flex items-center space-x-2'>
-                    <Badge variant='secondary'>
+            <Link
+              key={match.id}
+              href={`/admin/matches/history/${match.id}`}
+              className='block'
+            >
+              <Card className='hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer'>
+                <CardContent className='p-6'>
+                  {/* Header con información del partido */}
+                  <div className='flex items-center justify-between mb-4'>
+                    <div className='text-sm text-gray-500'>
                       {formatDate(new Date(match.date))}
+                    </div>
+                    <Badge variant='secondary' className='text-xs'>
+                      Completed
                     </Badge>
-                    <Link
-                      href={`/admin/matches/history/${match.id}`}
-                      className='text-blue-600 hover:text-blue-800 font-medium'
-                    >
-                      View Details →
-                    </Link>
                   </div>
-                </div>
-              </CardHeader>
-            </Card>
+
+                  {/* Contenido principal del partido */}
+                  <div className='flex items-center justify-between'>
+                    {/* Equipo 1 */}
+                    <div className='flex flex-col items-center text-center flex-1'>
+                      <div className='w-16 h-16 mb-2'>
+                        <Image
+                          src={match.team1Avatar || '/no-club.jpg'}
+                          alt={match.team1 || 'Team 1'}
+                          width={64}
+                          height={64}
+                          className='w-full h-full object-cover rounded-full'
+                        />
+                      </div>
+                      <span className='font-semibold text-sm text-gray-700'>
+                        {match.team1}
+                      </span>
+                    </div>
+
+                    {/* Marcador */}
+                    <div className='flex flex-col items-center mx-4'>
+                      <div className='text-2xl font-bold text-gray-800'>
+                        {match.team1Goals} : {match.team2Goals}
+                      </div>
+                      <div className='text-xs text-gray-500 mt-1'>
+                        Final Score
+                      </div>
+                    </div>
+
+                    {/* Equipo 2 */}
+                    <div className='flex flex-col items-center text-center flex-1'>
+                      <div className='w-16 h-16 mb-2'>
+                        <Image
+                          src={match.team2Avatar || '/no-club.jpg'}
+                          alt={match.team2 || 'Team 2'}
+                          width={64}
+                          height={64}
+                          className='w-full h-full object-cover rounded-full'
+                        />
+                      </div>
+                      <span className='font-semibold text-sm text-gray-700'>
+                        {match.team2}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Información adicional */}
+                  <div className='mt-4 pt-4 border-t border-gray-100'>
+                    <div className='flex items-center justify-center text-xs text-gray-500'>
+                      <span>Click to view details</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

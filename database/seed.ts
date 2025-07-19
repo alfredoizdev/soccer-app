@@ -83,8 +83,6 @@ async function main() {
       totalGoals: 18,
       totalAssists: 4,
       totalPassesCompleted: 60,
-      totalDuelsWon: 28,
-      totalDuelsLost: 5,
     })
     .returning()
   // 6. Crear Yallie Izquierdo (player destacado)
@@ -103,8 +101,6 @@ async function main() {
       totalGoals: 2,
       totalAssists: 6,
       totalPassesCompleted: 150,
-      totalDuelsWon: 10,
-      totalDuelsLost: 3,
     })
     .returning()
 
@@ -122,8 +118,6 @@ async function main() {
         totalGoals: 0,
         totalAssists: 0,
         totalPassesCompleted: faker.number.int({ min: 10, max: 200 }),
-        totalDuelsWon: 0,
-        totalDuelsLost: 0,
         goalsAllowed: faker.number.int({ min: 0, max: 20 }),
         goalsSaved: faker.number.int({ min: 0, max: 40 }),
       }
@@ -132,8 +126,6 @@ async function main() {
         totalGoals: faker.number.int({ min: 0, max: 20 }),
         totalAssists: faker.number.int({ min: 0, max: 10 }),
         totalPassesCompleted: faker.number.int({ min: 10, max: 200 }),
-        totalDuelsWon: faker.number.int({ min: 0, max: 30 }),
-        totalDuelsLost: faker.number.int({ min: 0, max: 30 }),
         goalsAllowed: 0,
         goalsSaved: 0,
       }
@@ -187,8 +179,6 @@ async function main() {
         goals: faker.number.int({ min: 0, max: 3 }),
         assists: faker.number.int({ min: 0, max: 2 }),
         passesCompleted: faker.number.int({ min: 0, max: 50 }),
-        duelsWon: faker.number.int({ min: 0, max: 10 }),
-        duelsLost: faker.number.int({ min: 0, max: 10 }),
       })
     }
   }

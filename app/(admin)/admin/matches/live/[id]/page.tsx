@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import {
   getLiveMatchData,
   initializeLiveMatchData,
@@ -40,18 +41,18 @@ export default async function LiveMatchPage({
             </p>
             <p className='text-sm text-gray-500 mb-6'>Match ID: {id}</p>
             <div className='space-x-4'>
-              <a
+              <Link
                 href='/admin/matches'
                 className='inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700'
               >
                 Go to Matches
-              </a>
-              <a
+              </Link>
+              <Link
                 href='/admin/matches/history'
                 className='inline-block px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700'
               >
                 View History
-              </a>
+              </Link>
             </div>
           </div>
         </div>

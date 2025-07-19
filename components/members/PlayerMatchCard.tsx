@@ -10,8 +10,6 @@ interface PlayerMatchCardProps {
     goals: number
     assists: number
     passesCompleted: number
-    duelsWon: number
-    duelsLost: number
     jerseyNumber?: number // dorsal del jugador
   }
   date: Date | string
@@ -84,12 +82,6 @@ export default function PlayerMatchCard({
         </Badge>
         <Badge variant='outline' className='bg-gray-200'>
           Passes: {stats.passesCompleted}
-        </Badge>
-        <Badge variant='outline' className='bg-gray-200'>
-          Duels Won: {stats.duelsWon}
-        </Badge>
-        <Badge variant='outline' className='bg-gray-200'>
-          Duels Lost: {stats.duelsLost}
         </Badge>
       </div>
     </div>

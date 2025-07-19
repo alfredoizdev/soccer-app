@@ -13,8 +13,6 @@ interface PlayerStat {
   timePlayed: number
   goals: number
   assists: number
-  duelsWon: number
-  duelsLost: number
   goalsSaved: number
   goalsAllowed: number
   passesCompleted: number
@@ -85,8 +83,6 @@ export function useLiveMatch(
         goals: currentPlayerStats.goals,
         assists: currentPlayerStats.assists,
         passesCompleted: currentPlayerStats.passesCompleted,
-        duelsWon: currentPlayerStats.duelsWon,
-        duelsLost: currentPlayerStats.duelsLost,
         goalsAllowed: currentPlayerStats.goalsAllowed,
         goalsSaved: currentPlayerStats.goalsSaved,
         [statType]: value,
@@ -117,8 +113,6 @@ export function useLiveMatch(
         goals: currentPlayerStats.goals,
         assists: currentPlayerStats.assists,
         passesCompleted: currentPlayerStats.passesCompleted,
-        duelsWon: currentPlayerStats.duelsWon,
-        duelsLost: currentPlayerStats.duelsLost,
         goalsAllowed: currentPlayerStats.goalsAllowed,
         goalsSaved: currentPlayerStats.goalsSaved,
       }
@@ -187,8 +181,6 @@ export function useLiveMatch(
               goals: playerStat.goals,
               assists: playerStat.assists,
               passesCompleted: playerStat.passesCompleted,
-              duelsWon: playerStat.duelsWon,
-              duelsLost: playerStat.duelsLost,
               goalsAllowed: playerStat.goalsAllowed,
               goalsSaved: playerStat.goalsSaved,
             }

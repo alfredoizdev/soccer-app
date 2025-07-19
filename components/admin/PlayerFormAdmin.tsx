@@ -8,12 +8,13 @@ import React from 'react'
 import {
   updatePlayerAction,
   adminCreatePlayerAction,
+  checkJerseyNumberAvailabilityAction,
 } from '@/lib/actions/player.action'
 import UserSearch from './UserSearch'
-import { UserType, OrganizationType } from '@/types/UserType'
 import { toast } from 'sonner'
 import ClubSearch from './ClubSearch'
 import { RANGE_AGE, SOCCER_POSITIONS } from '@/lib/constants'
+import { useGlobalStore } from '@/lib/stores/globalStore'
 
 // Tipos de entrada para el formulario de usuario
 export type PlayerFormAdminInputs = {
@@ -22,12 +23,17 @@ export type PlayerFormAdminInputs = {
   age: string | number
   avatar?: string
   userId: string
-  user?: UserType
   organizationId?: string | null
   position: string
+  jerseyNumber?: string
+  user?: {
+    id: string
+    name: string
+    lastName: string
+  }
 }
 
-type Props = {
+interface Props {
   player?: PlayerFormAdminInputs & { id?: string }
   action?: 'create' | 'update'
   onSuccess?: () => void
@@ -35,7 +41,6 @@ type Props = {
   fixedUserName?: string
   fixedUserLastName?: string
   redirectPath?: string
-  clubs: OrganizationType[]
 }
 
 export default function PlayerFormAdmin({
@@ -46,8 +51,11 @@ export default function PlayerFormAdmin({
   fixedUserName,
   fixedUserLastName,
   redirectPath,
-  clubs,
 }: Props) {
+  const [validationError, setValidationError] = React.useState<string | null>(
+    null
+  )
+
   const defaultValues = {
     name: player?.name ?? '',
     lastName: player?.lastName ?? '',
@@ -56,6 +64,7 @@ export default function PlayerFormAdmin({
     userId: fixedUserId ?? player?.userId ?? '',
     organizationId: player?.organizationId ?? '',
     position: player?.position ?? '',
+    jerseyNumber: player?.jerseyNumber?.toString() ?? '',
   } as const
 
   const {
@@ -67,60 +76,108 @@ export default function PlayerFormAdmin({
     handleClearImage,
     isSubmitting,
     imagePreview,
-    actionResult,
     setValue,
+    watch,
+    actionResult,
   } = useSubmitForm<PlayerFormAdminInputs>({
     actionFn: async (data) => {
+      setValidationError(null) // Limpiar errores anteriores
+
       if ((!data.avatar || data.avatar === '') && player?.avatar) {
         data.avatar = player.avatar
       }
+
       // Si organizationId es string vacío, ponerlo en null
       if (data.organizationId === '') {
         data.organizationId = null
       }
-      // Convertir age a number antes de enviar al backend
-      const dataToSend = { ...data, age: Number(data.age) }
-      const result =
-        action === 'create'
-          ? await adminCreatePlayerAction(dataToSend)
-          : await updatePlayerAction(player?.id ?? '', dataToSend)
+
+      // Validar número de jersey si se proporciona
+      if (data.jerseyNumber) {
+        const jerseyNumber = Number(data.jerseyNumber)
+        if (isNaN(jerseyNumber) || jerseyNumber < 1 || jerseyNumber > 99) {
+          setValidationError('Jersey number must be between 1 and 99')
+          return {
+            success: false,
+            error: 'Jersey number must be between 1 and 99',
+          }
+        }
+
+        // Solo verificar disponibilidad si el jugador está asignado a un equipo
+        if (data.organizationId) {
+          const availability = await checkJerseyNumberAvailabilityAction(
+            jerseyNumber,
+            data.organizationId,
+            player?.id
+          )
+
+          if (!availability.isAvailable) {
+            setValidationError(
+              `Jersey number ${jerseyNumber} is already taken in this team`
+            )
+            return {
+              success: false,
+              error: `Jersey number ${jerseyNumber} is already taken in this team`,
+            }
+          }
+        }
+      }
+
+      const dataToSend = {
+        ...data,
+        age: Number(data.age),
+        jerseyNumber: data.jerseyNumber ? Number(data.jerseyNumber) : null,
+      }
+
+      let result
+      if (action === 'create') {
+        result = await adminCreatePlayerAction(dataToSend)
+      } else {
+        result = await updatePlayerAction(player?.id || '', dataToSend)
+      }
+
+      // Normalizar la respuesta para que coincida con el tipo esperado
       return {
-        ...result,
-        error: result.error ?? undefined,
         success: !result.error,
+        error: result.error || undefined,
       }
     },
     defaultValues,
-    redirectPath: redirectPath ?? '/admin/players?page=1&perPage=10',
   })
 
-  const [selectedClub, setSelectedClub] =
-    React.useState<OrganizationType | null>(
-      clubs.find((c) => c.id === (player?.organizationId ?? '')) || null
-    )
-
-  // Sincronizar club seleccionado cuando cambian player o clubs
+  // Manejar el éxito del formulario
   React.useEffect(() => {
-    setSelectedClub(
-      clubs.find((c) => c.id === (player?.organizationId ?? '')) || null
-    )
-  }, [player?.organizationId, clubs])
-
-  React.useEffect(() => {
-    if (actionResult?.success && onSuccess) {
-      onSuccess()
-    }
-    if (actionResult?.error) {
+    if (actionResult?.success) {
+      toast.success(
+        action === 'create'
+          ? 'Player created successfully!'
+          : 'Player updated successfully!'
+      )
+      if (onSuccess) {
+        onSuccess()
+      } else if (redirectPath) {
+        window.location.href = redirectPath
+      }
+    } else if (actionResult?.error) {
       toast.error(actionResult.error)
     }
-  }, [actionResult, onSuccess])
+  }, [actionResult, action, onSuccess, redirectPath])
+
+  const selectedClub = watch('organizationId')
+  const { organizationsLoaded, loadOrganizations } = useGlobalStore()
+
+  React.useEffect(() => {
+    if (!organizationsLoaded) {
+      loadOrganizations()
+    }
+  }, [organizationsLoaded, loadOrganizations])
 
   return (
     <form
       onSubmit={handleSubmit(handleFormSubmit)}
       className='space-y-4 w-full max-w-md px-4'
     >
-      <div className='min-w-[300px]'>
+      <div>
         <ImageInput
           name='avatar'
           register={register}
@@ -131,8 +188,12 @@ export default function PlayerFormAdmin({
         />
       </div>
       <div>
+        <label htmlFor='name' className='text-sm font-medium mb-2 block'>
+          Name
+        </label>
         <input
           type='text'
+          id='name'
           placeholder='Name'
           className='border-2 border-gray-300 rounded-md p-2 w-full'
           {...register('name', { required: 'The name is required' })}
@@ -140,8 +201,12 @@ export default function PlayerFormAdmin({
         {errors?.name && <p className='text-red-500'>{errors.name.message}</p>}
       </div>
       <div>
+        <label htmlFor='lastName' className='text-sm font-medium mb-2 block'>
+          Last Name
+        </label>
         <input
           type='text'
+          id='lastName'
           placeholder='Last Name'
           className='border-2 border-gray-300 rounded-md p-2 w-full'
           {...register('lastName', { required: 'The last name is required' })}
@@ -151,14 +216,18 @@ export default function PlayerFormAdmin({
         )}
       </div>
       <div>
+        <label htmlFor='position' className='text-sm font-medium mb-2 block'>
+          Position
+        </label>
         <select
+          id='position'
           className='border-2 border-gray-300 rounded-md p-2 w-full'
           {...register('position', { required: 'The position is required' })}
         >
           <option value=''>Select position</option>
-          {SOCCER_POSITIONS.map((pos) => (
-            <option key={pos.value} value={pos.value}>
-              {pos.label}
+          {SOCCER_POSITIONS.map((position) => (
+            <option key={position.value} value={position.value}>
+              {position.label}
             </option>
           ))}
         </select>
@@ -167,13 +236,13 @@ export default function PlayerFormAdmin({
         )}
       </div>
       <div>
+        <label htmlFor='age' className='text-sm font-medium mb-2 block'>
+          Age
+        </label>
         <select
+          id='age'
           className='border-2 border-gray-300 rounded-md p-2 w-full'
-          {...register('age', {
-            required: 'The age is required',
-            min: 5,
-            max: 45,
-          })}
+          {...register('age', { required: 'The age is required' })}
         >
           <option value=''>Select age</option>
           {RANGE_AGE.map((age) => (
@@ -185,6 +254,39 @@ export default function PlayerFormAdmin({
         {errors?.age && <p className='text-red-500'>{errors.age.message}</p>}
       </div>
       <div>
+        <label
+          htmlFor='jerseyNumber'
+          className='text-sm font-medium mb-2 block'
+        >
+          Jersey Number
+        </label>
+        <input
+          type='number'
+          id='jerseyNumber'
+          placeholder='Jersey Number (1-99)'
+          min='1'
+          max='99'
+          className='border-2 border-gray-300 rounded-md p-2 w-full'
+          {...register('jerseyNumber', {
+            min: {
+              value: 1,
+              message: 'Jersey number must be at least 1',
+            },
+            max: {
+              value: 99,
+              message: 'Jersey number must be at most 99',
+            },
+          })}
+        />
+        {errors?.jerseyNumber && (
+          <p className='text-red-500'>{errors.jerseyNumber.message}</p>
+        )}
+        {validationError && <p className='text-red-500'>{validationError}</p>}
+        <p className='text-xs text-gray-500 mt-1'>
+          Enter a number between 1 and 99.
+        </p>
+      </div>
+      <div>
         <label htmlFor='user' className='text-sm font-medium mb-2 block'>
           Parent
         </label>
@@ -194,48 +296,41 @@ export default function PlayerFormAdmin({
           </p>
         ) : (
           <UserSearch
-            key={player?.user?.id || 'no-user'}
+            key={player?.id || 'no-user'}
             onSelect={(user) => {
               setValue('userId', user.id, { shouldValidate: true })
             }}
-            defaultUser={player?.user}
+            defaultUser={
+              player?.user
+                ? {
+                    id: player.user.id,
+                    name: player.user.name,
+                    lastName: player.user.lastName,
+                    email: '',
+                    role: 'user',
+                    avatar: '',
+                    organizationId: undefined,
+                    password: '',
+                    status: 'active',
+                  }
+                : undefined
+            }
           />
         )}
+        {errors?.userId && (
+          <p className='text-red-500'>{errors.userId.message}</p>
+        )}
       </div>
-      <input
-        type='hidden'
-        {...register('userId', { required: 'The user is required' })}
-      />
-      {/* Permitir al admin asignar cualquier club visualmente */}
       <div>
-        <label
-          htmlFor='organizationId'
-          className='text-sm font-medium mb-2 block'
-        >
-          Club (opcional)
+        <label htmlFor='club' className='text-sm font-medium mb-2 block'>
+          Club
         </label>
         <ClubSearch
-          clubs={clubs}
           onSelect={(club) => {
-            setSelectedClub(club)
-            setValue('organizationId', club.id)
+            setValue('organizationId', club.id, { shouldValidate: true })
           }}
-          selectedClubId={selectedClub?.id}
+          selectedClubId={selectedClub || undefined}
         />
-        {selectedClub && (
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            className='mt-2 text-xs bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-gray-200'
-            onClick={() => {
-              setSelectedClub(null)
-              setValue('organizationId', '')
-            }}
-          >
-            Remove club selection
-          </Button>
-        )}
         {errors?.organizationId && (
           <p className='text-red-500'>{errors.organizationId.message}</p>
         )}

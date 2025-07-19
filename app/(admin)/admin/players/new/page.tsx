@@ -1,10 +1,8 @@
 import PlayerFormAdmin from '@/components/admin/PlayerFormAdmin'
 import { ArrowLeftIcon } from 'lucide-react'
 import Link from 'next/link'
-import { getOrganizationsAction } from '@/lib/actions/organization.action'
 
 export default async function NewPlayerPage() {
-  const { data: clubs } = await getOrganizationsAction()
   return (
     <div className='w-full h-full flex items-center flex-col'>
       <div className='w-full flex items-center justify-between p-4'>
@@ -18,7 +16,7 @@ export default async function NewPlayerPage() {
       </div>
       <div className='container mx-auto py-10 w-full max-w-md'>
         <h1 className='text-2xl font-bold mx-4 mb-4'>Add Player</h1>
-        <PlayerFormAdmin clubs={clubs || []} />
+        <PlayerFormAdmin />
       </div>
     </div>
   )

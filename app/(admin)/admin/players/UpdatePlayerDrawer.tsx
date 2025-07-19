@@ -14,8 +14,7 @@ import {
 import PlayerFormAdmin, {
   PlayerFormAdminInputs,
 } from '@/components/admin/PlayerFormAdmin'
-import { getOrganizationsAction } from '@/lib/actions/organization.action'
-import { OrganizationType } from '@/types/UserType'
+import { useGlobalStore } from '@/lib/stores/globalStore'
 
 interface Props {
   open: boolean
@@ -30,12 +29,20 @@ export function UpdatePlayerDrawer({
   player,
   onSuccess,
 }: Props) {
-  const [clubs, setClubs] = React.useState<OrganizationType[]>([])
+  const { organizationsLoaded, loadOrganizations } = useGlobalStore()
+
+  // Solo cargar organizaciones cuando el drawer está abierto
   React.useEffect(() => {
-    getOrganizationsAction().then((res) => {
-      setClubs(res.data || [])
-    })
-  }, [])
+    if (open && !organizationsLoaded) {
+      loadOrganizations()
+    }
+  }, [open, organizationsLoaded, loadOrganizations])
+
+  // No renderizar nada si está cerrado
+  if (!open) {
+    return null
+  }
+
   return (
     <Drawer open={open} onOpenChange={setOpen} direction='right'>
       <DrawerContent>
@@ -48,7 +55,6 @@ export function UpdatePlayerDrawer({
             player={player}
             action='update'
             onSuccess={onSuccess || (() => setOpen(false))}
-            clubs={clubs}
           />
           <DrawerFooter>
             <DrawerClose asChild>

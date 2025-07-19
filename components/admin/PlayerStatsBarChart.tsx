@@ -13,7 +13,6 @@ interface PlayerStatsBarChartProps {
   goalsPerMatch: number
   assistsPerMatch: number
   minutesPerMatch: number
-  duelWinPercentage: number
   passesPerMatch: number
 }
 
@@ -28,14 +27,12 @@ export default function PlayerStatsPerformance({
   goalsPerMatch,
   assistsPerMatch,
   minutesPerMatch,
-  duelWinPercentage,
   passesPerMatch,
 }: PlayerStatsBarChartProps) {
   const chartData = [
     { stat: 'Goals/Match', value: Number(goalsPerMatch.toFixed(1)) },
     { stat: 'Assists/Match', value: Number(assistsPerMatch.toFixed(1)) },
     { stat: 'Min/Match', value: Number(minutesPerMatch.toFixed(1)) },
-    { stat: '% Duels Won', value: Number(duelWinPercentage.toFixed(1)) },
     { stat: 'Passes/Match', value: Number(passesPerMatch.toFixed(1)) },
   ]
 

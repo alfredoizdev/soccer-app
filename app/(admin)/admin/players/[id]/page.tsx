@@ -27,8 +27,6 @@ type PlayerStats = {
   goals: number
   assists: number
   passesCompleted: number
-  duelsWon: number
-  duelsLost: number
   minutesPlayed: number
   goalsAllowed?: number
   goalsSaved?: number
@@ -63,8 +61,7 @@ export default async function PlayerDetailAdminPage({
       goals: Number((p as ClubRankingPlayer).goals ?? 0),
       assists: Number((p as ClubRankingPlayer).assists ?? 0),
       passesCompleted: Number((p as ClubRankingPlayer).passesCompleted ?? 0),
-      duelsWon: Number((p as ClubRankingPlayer).duelsWon ?? 0),
-      duelsLost: Number((p as ClubRankingPlayer).duelsLost ?? 0),
+
       minutesPlayed: Number((p as ClubRankingPlayer).minutesPlayed ?? 0),
     }))
   }
@@ -79,8 +76,7 @@ export default async function PlayerDetailAdminPage({
     goals: Number(statsRes?.data?.goals ?? 0),
     assists: Number(statsRes?.data?.assists ?? 0),
     passesCompleted: Number(statsRes?.data?.passesCompleted ?? 0),
-    duelsWon: Number(statsRes?.data?.duelsWon ?? 0),
-    duelsLost: Number(statsRes?.data?.duelsLost ?? 0),
+
     minutesPlayed: Number(statsRes?.data?.minutesPlayed ?? 0),
     goalsAllowed: Number(statsRes?.data?.goalsAllowed ?? 0),
     goalsSaved: Number(statsRes?.data?.goalsSaved ?? 0),
@@ -167,11 +163,6 @@ export default async function PlayerDetailAdminPage({
               minutesPerMatch={
                 sortedMatches.length > 0
                   ? stats.minutesPlayed / sortedMatches.length
-                  : 0
-              }
-              duelWinPercentage={
-                stats.duelsWon + stats.duelsLost > 0
-                  ? (stats.duelsWon / (stats.duelsWon + stats.duelsLost)) * 100
                   : 0
               }
               passesPerMatch={

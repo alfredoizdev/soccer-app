@@ -432,8 +432,7 @@ export async function getPlayerStatsByPlayerId(playerId: string) {
         passesCompleted: sql`SUM(${playerStatsTable.passesCompleted})`.as(
           'passesCompleted'
         ),
-        duelsWon: sql`SUM(${playerStatsTable.duelsWon})`.as('duelsWon'),
-        duelsLost: sql`SUM(${playerStatsTable.duelsLost})`.as('duelsLost'),
+
         minutesPlayed: sql`SUM(${playerStatsTable.minutesPlayed})`.as(
           'minutesPlayed'
         ),
@@ -465,8 +464,6 @@ export const updatePlayerCumulativeStats = async (playerId: string) => {
         totalGoals: sql<number>`COALESCE(SUM(${playerStatsTable.goals}), 0)`,
         totalAssists: sql<number>`COALESCE(SUM(${playerStatsTable.assists}), 0)`,
         totalPassesCompleted: sql<number>`COALESCE(SUM(${playerStatsTable.passesCompleted}), 0)`,
-        totalDuelsWon: sql<number>`COALESCE(SUM(${playerStatsTable.duelsWon}), 0)`,
-        totalDuelsLost: sql<number>`COALESCE(SUM(${playerStatsTable.duelsLost}), 0)`,
       })
       .from(playerStatsTable)
       .where(eq(playerStatsTable.playerId, playerId))
@@ -482,8 +479,6 @@ export const updatePlayerCumulativeStats = async (playerId: string) => {
           totalGoals: totalStats.totalGoals,
           totalAssists: totalStats.totalAssists,
           totalPassesCompleted: totalStats.totalPassesCompleted,
-          totalDuelsWon: totalStats.totalDuelsWon,
-          totalDuelsLost: totalStats.totalDuelsLost,
         })
         .where(eq(playersTable.id, playerId))
     }
@@ -517,12 +512,7 @@ export const getPlayerStatsRankingByOrganizationAction = async (
           sql`COALESCE(SUM(${playerStatsTable.passesCompleted}), 0)`.as(
             'passesCompleted'
           ),
-        duelsWon: sql`COALESCE(SUM(${playerStatsTable.duelsWon}), 0)`.as(
-          'duelsWon'
-        ),
-        duelsLost: sql`COALESCE(SUM(${playerStatsTable.duelsLost}), 0)`.as(
-          'duelsLost'
-        ),
+
         minutesPlayed:
           sql`COALESCE(SUM(${playerStatsTable.minutesPlayed}), 0)`.as(
             'minutesPlayed'
@@ -552,6 +542,44 @@ export const getPlayerStatsRankingByOrganizationAction = async (
     return {
       data: null,
       error: 'Failed to fetch player ranking by organization',
+    }
+  }
+}
+
+// Verificar si un número de jersey está disponible en un equipo
+export const checkJerseyNumberAvailabilityAction = async (
+  jerseyNumber: number,
+  organizationId: string,
+  excludePlayerId?: string
+) => {
+  try {
+    const db = await dbPromise
+
+    // Construir las condiciones de la consulta
+    const conditions = [
+      eq(playersTable.jerseyNumber, jerseyNumber),
+      eq(playersTable.organizationId, organizationId),
+    ]
+
+    // Excluir el jugador actual si se está editando
+    if (excludePlayerId) {
+      conditions.push(sql`${playersTable.id} != ${excludePlayerId}`)
+    }
+
+    const existingPlayer = await db
+      .select({ id: playersTable.id })
+      .from(playersTable)
+      .where(and(...conditions))
+
+    return {
+      isAvailable: existingPlayer.length === 0,
+      error: null,
+    }
+  } catch (error) {
+    console.error('Error checking jersey number availability:', error)
+    return {
+      isAvailable: false,
+      error: 'Failed to check jersey number availability',
     }
   }
 }
