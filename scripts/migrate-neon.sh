@@ -1,23 +1,24 @@
 #!/bin/bash
 
-# Cargar variables de entorno desde .env.local
-if [ -f .env.local ]; then
-    export $(cat .env.local | grep -v '^#' | xargs)
-fi
+echo "🚀 Aplicando migraciones en Neon..."
 
-# Script para ejecutar migraciones en Neon
-echo "🚀 Ejecutando migraciones en Neon..."
-
-# Verificar que DATABASE_PRODUCTION_URL esté configurada
-if [ -z "$DATABASE_PRODUCTION_URL" ]; then
-    echo "❌ Error: DATABASE_PRODUCTION_URL no está configurada"
-    echo "Por favor, configura la variable de entorno DATABASE_PRODUCTION_URL en .env.local"
+# Verificar que DATABASE_URL esté configurada
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ Error: DATABASE_URL no está configurada"
+    echo "Por favor, configura tu variable de entorno DATABASE_URL para Neon"
     exit 1
 fi
 
-# Ejecutar migraciones usando la URL de producción
-echo "📦 Ejecutando migraciones..."
-echo "URL: $DATABASE_PRODUCTION_URL"
-DATABASE_URL="$DATABASE_PRODUCTION_URL" npm run db:migrate
+# Aplicar migraciones
+echo "📦 Aplicando migraciones..."
+npm run db:migrate
 
-echo "✅ Migraciones completadas!" 
+if [ $? -eq 0 ]; then
+    echo "✅ Migraciones aplicadas exitosamente en Neon"
+else
+    echo "❌ Error aplicando migraciones"
+    exit 1
+fi
+
+echo "🎉 ¡Migraciones completadas!"
+echo "📊 Tu base de datos Neon está lista para usar" 

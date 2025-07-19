@@ -69,6 +69,7 @@ export default function LiveMatchPageClient({
     isRunning,
     isHalfTime,
     isMatchEnded,
+    hasUsedHalfTime,
     team1Goals,
     team2Goals,
     playerStats,
@@ -86,15 +87,31 @@ export default function LiveMatchPageClient({
     addGoalAllowed,
     togglePlayer,
     saveToDatabase,
+    hasRegisteredPlayers,
   } = useLiveMatchStore()
 
   // Inicializar el partido cuando se carga el componente
   useEffect(() => {
     // Siempre inicializar si no hay matchId o si playerStats está vacío
     if (!matchId || Object.keys(playerStats).length === 0) {
-      initializeMatch(match.id, initialPlayerStats)
+      initializeMatch(
+        match.id,
+        initialPlayerStats,
+        playersTeam1,
+        playersTeam2,
+        match.team1Id,
+        match.team2Id
+      )
     }
-  }, [match.id, initialPlayerStats, matchId, playerStats, initializeMatch])
+  }, [
+    match.id,
+    initialPlayerStats,
+    matchId,
+    playerStats,
+    initializeMatch,
+    playersTeam1,
+    playersTeam2,
+  ])
 
   // Timer effect
   useEffect(() => {
@@ -124,9 +141,20 @@ export default function LiveMatchPageClient({
     }
   }
 
+  const [isEndingMatch, setIsEndingMatch] = useState(false)
+
   const handleEndMatch = async () => {
-    endMatch()
-    await saveToDatabase()
+    if (isEndingMatch || isMatchEnded) return // Prevenir múltiples ejecuciones
+
+    setIsEndingMatch(true)
+    try {
+      endMatch()
+      await saveToDatabase()
+    } catch (error) {
+      console.error('Error ending match:', error)
+    } finally {
+      setIsEndingMatch(false)
+    }
   }
 
   const handleTeamChange = (team: 'team1' | 'team2') => {
@@ -169,7 +197,12 @@ export default function LiveMatchPageClient({
                 e.stopPropagation()
                 handleTeamGoal('team1')
               }}
-              title='Add team goal (for unregistered players)'
+              disabled={hasRegisteredPlayers('team1')}
+              title={
+                hasRegisteredPlayers('team1')
+                  ? 'Team has registered players - use individual player goals'
+                  : 'Add team goal (for unregistered players)'
+              }
             >
               +
             </Button>
@@ -193,7 +226,12 @@ export default function LiveMatchPageClient({
                 e.stopPropagation()
                 handleTeamGoal('team2')
               }}
-              title='Add team goal (for unregistered players)'
+              disabled={hasRegisteredPlayers('team2')}
+              title={
+                hasRegisteredPlayers('team2')
+                  ? 'Team has registered players - use individual player goals'
+                  : 'Add team goal (for unregistered players)'
+              }
             >
               +
             </Button>
@@ -222,16 +260,26 @@ export default function LiveMatchPageClient({
               onClick={handleEndMatch}
               variant='ghost'
               className='bg-destructive/20 text-destructive'
+              disabled={isEndingMatch}
             >
-              End of the match
+              {isEndingMatch ? 'Ending Match...' : 'End of the match'}
             </Button>
-            <Button
-              onClick={handleHalfTime}
-              variant={isHalfTime ? 'default' : 'outline'}
-              className={isHalfTime ? 'bg-orange-500 hover:bg-orange-600' : ''}
-            >
-              {isHalfTime ? 'Resume Match' : 'Half Time'}
-            </Button>
+            {/* Solo mostrar Half Time si no se ha usado después del Resume */}
+            {!isHalfTime && !hasUsedHalfTime && (
+              <Button onClick={handleHalfTime} variant='outline'>
+                Half Time
+              </Button>
+            )}
+            {/* Mostrar Resume solo si está en Half Time */}
+            {isHalfTime && (
+              <Button
+                onClick={handleHalfTime}
+                variant='default'
+                className='bg-orange-500 hover:bg-orange-600'
+              >
+                Resume Match
+              </Button>
+            )}
           </>
         )}
         {isMatchEnded && (

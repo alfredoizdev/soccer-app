@@ -163,7 +163,7 @@ export async function createMatchWithPlayers({
 // Devuelve todos los partidos con los nombres y avatares de los equipos
 export async function getAllMatchesWithTeams() {
   const db = await dbPromise
-  // 1. Obtener todos los partidos
+  // 1. Obtener todos los partidos (activos e inactivos)
   const matches = await db.select().from(matchesTable)
   if (!matches.length) return []
   // 2. Obtener los equipos involucrados
@@ -188,6 +188,45 @@ export async function getAllMatchesWithTeams() {
       team1Avatar: team1?.avatar || '',
       team2Avatar: team2?.avatar || '',
       duration: match.duration,
+      status: match.status,
+    }
+  })
+}
+
+// Obtener solo matches activos
+export async function getActiveMatchesWithTeams() {
+  const db = await dbPromise
+  // 1. Obtener solo partidos activos
+  const matches = await db
+    .select()
+    .from(matchesTable)
+    .where(eq(matchesTable.status, 'active'))
+  if (!matches.length) return []
+
+  // 2. Obtener los equipos involucrados
+  const teamIds = [...new Set(matches.flatMap((m) => [m.team1Id, m.team2Id]))]
+  const teams = await db
+    .select()
+    .from(organizationsTable)
+    .where(inArray(organizationsTable.id, teamIds))
+
+  // 3. Mapear los nombres y avatares de los equipos
+  return matches.map((match) => {
+    const team1 = teams.find((t) => t.id === match.team1Id)
+    const team2 = teams.find((t) => t.id === match.team2Id)
+    return {
+      id: match.id,
+      date: match.date,
+      team1: team1?.name || 'Unknown',
+      team2: team2?.name || 'Unknown',
+      team1Id: match.team1Id,
+      team2Id: match.team2Id,
+      team1Goals: match.team1Goals,
+      team2Goals: match.team2Goals,
+      team1Avatar: team1?.avatar || '',
+      team2Avatar: team2?.avatar || '',
+      duration: match.duration,
+      status: match.status,
     }
   })
 }
@@ -659,13 +698,14 @@ export async function endLiveMatch(matchId: string) {
 
   const finalScore = liveScore[0]
 
-  // Actualizar marcador final y duración en matches
+  // Actualizar marcador final, duración y estado en matches
   await db
     .update(matchesTable)
     .set({
       team1Goals: finalScore.team1Goals,
       team2Goals: finalScore.team2Goals,
       duration: Math.max(...liveData.map((stat) => stat.timePlayed), 0), // Duración en segundos
+      status: 'inactive', // Marcar como terminado
     })
     .where(eq(matchesTable.id, matchId))
 
@@ -831,9 +871,12 @@ export async function getMatchEvents(matchId: string) {
     playerName:
       event.playerName && event.playerLastName
         ? `${event.playerName} ${event.playerLastName}`
+        : event.playerId
+        ? 'Unknown Player'
         : undefined,
     teamName: event.teamName || 'Unknown',
     teamAvatar: event.teamAvatar,
     description: event.description,
+    teamId: event.teamId, // Agregar teamId para posicionamiento
   }))
 }

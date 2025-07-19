@@ -33,6 +33,7 @@ export default async function MatchTimelinePageRoute({
     teamName: event.teamName,
     teamAvatar: event.teamAvatar || undefined,
     description: event.description || undefined,
+    teamId: event.teamId, // Agregar teamId para posicionamiento
   }))
 
   return (
@@ -42,6 +43,8 @@ export default async function MatchTimelinePageRoute({
       team2Name={match.match.team2}
       team1Avatar={match.match.team1Avatar}
       team2Avatar={match.match.team2Avatar}
+      team1Id={match.match.team1Id}
+      team2Id={match.match.team2Id}
       matchId={id}
       team1Goals={match.match.team1Goals || 0}
       team2Goals={match.match.team2Goals || 0}

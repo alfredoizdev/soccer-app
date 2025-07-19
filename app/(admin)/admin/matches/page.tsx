@@ -1,7 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { getAllMatchesWithTeams } from '@/lib/actions/matches.action'
+import { getActiveMatchesWithTeams } from '@/lib/actions/matches.action'
 import MatchSearch from './MatchSearch'
 
 interface MatchListItem {
@@ -18,12 +18,7 @@ interface MatchListItem {
 }
 
 export default async function MatchesPage() {
-  const allMatches: MatchListItem[] = await getAllMatchesWithTeams()
-
-  // Filtrar solo partidos que NO han finalizado (sin goles registrados)
-  const activeMatches = allMatches.filter(
-    (match) => match.team1Goals === 0 && match.team2Goals === 0
-  )
+  const activeMatches: MatchListItem[] = await getActiveMatchesWithTeams()
 
   return (
     <div className='w-full px-4 mx-auto mt-5 animate-fade-in duration-500'>

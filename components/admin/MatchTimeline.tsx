@@ -15,10 +15,14 @@ export type MatchEvent = {
     | 'red_card'
     | 'substitution'
     | 'injury'
+    | 'pass'
+    | 'goal_saved'
+    | 'goal_allowed'
   playerName?: string
   teamName: string
   teamAvatar?: string
   description?: string
+  teamId?: string // Agregar teamId para posicionamiento
 }
 
 interface MatchTimelineProps {
@@ -28,6 +32,8 @@ interface MatchTimelineProps {
   team2Name: string
   team1Avatar?: string
   team2Avatar?: string
+  team1Id?: string // Agregar team1Id para posicionamiento
+  team2Id?: string // Agregar team2Id para posicionamiento
 }
 
 const getEventIcon = (eventType: MatchEvent['eventType']) => {
@@ -44,6 +50,12 @@ const getEventIcon = (eventType: MatchEvent['eventType']) => {
       return <Users className='w-4 h-4 text-purple-600' />
     case 'injury':
       return <UserX className='w-4 h-4 text-orange-600' />
+    case 'pass':
+      return <Circle className='w-4 h-4 text-green-600' />
+    case 'goal_saved':
+      return <Circle className='w-4 h-4 text-blue-600' />
+    case 'goal_allowed':
+      return <Circle className='w-4 h-4 text-red-600' />
     default:
       return <Clock className='w-4 h-4 text-gray-600' />
   }
@@ -63,6 +75,12 @@ const getEventColor = (eventType: MatchEvent['eventType']) => {
       return 'bg-purple-50 border-purple-200'
     case 'injury':
       return 'bg-orange-50 border-orange-200'
+    case 'pass':
+      return 'bg-green-50 border-green-200'
+    case 'goal_saved':
+      return 'bg-blue-50 border-blue-200'
+    case 'goal_allowed':
+      return 'bg-red-50 border-red-200'
     default:
       return 'bg-gray-50 border-gray-200'
   }
@@ -82,6 +100,12 @@ const getEventLabel = (eventType: MatchEvent['eventType']) => {
       return 'Substitution'
     case 'injury':
       return 'Injury'
+    case 'pass':
+      return 'Pass'
+    case 'goal_saved':
+      return 'Goal Saved'
+    case 'goal_allowed':
+      return 'Goal Allowed'
     default:
       return 'Event'
   }
@@ -94,6 +118,8 @@ export default function MatchTimeline({
   team2Name,
   team1Avatar,
   team2Avatar,
+  team1Id,
+  team2Id,
 }: MatchTimelineProps) {
   // Ordenar eventos por minuto
   const sortedEvents = [...events].sort((a, b) => a.minute - b.minute)
@@ -168,19 +194,29 @@ export default function MatchTimeline({
 
           {/* Events */}
           <div className='relative space-y-4'>
-            {sortedEvents.map((event, index) => {
+            {sortedEvents.map((event) => {
               const eventPosition = (event.minute / 90) * 100
-              const isLeft = index % 2 === 0
+              // Determinar posición basada en el equipo del evento
+              const isTeam1Event = event.teamId === team1Id
+              const isTeam2Event = event.teamId === team2Id
+              // Eventos del team1 van a la izquierda, team2 a la derecha
+              const isLeft = isTeam1Event
+              const isRight = isTeam2Event
+              // Si no hay teamId o no coincide con ninguno, usar posición por defecto
+              const defaultToLeft = !isTeam1Event && !isTeam2Event
 
               return (
                 <div
                   key={event.id}
                   className={`absolute top-0 transform -translate-y-1/2 ${
-                    isLeft ? 'left-0' : 'right-0'
+                    isLeft || defaultToLeft ? 'left-0' : 'right-0'
                   }`}
                   style={{
-                    left: isLeft ? `${Math.min(eventPosition, 45)}%` : 'auto',
-                    right: !isLeft
+                    left:
+                      isLeft || defaultToLeft
+                        ? `${Math.min(eventPosition, 45)}%`
+                        : 'auto',
+                    right: isRight
                       ? `${Math.min(100 - eventPosition, 45)}%`
                       : 'auto',
                   }}
@@ -205,6 +241,12 @@ export default function MatchTimeline({
                           {event.playerName}
                         </div>
                       )}
+                      {!event.playerName &&
+                        event.eventType === 'substitution' && (
+                          <div className='text-xs text-gray-500 font-medium truncate'>
+                            Match Event
+                          </div>
+                        )}
                       <div className='flex items-center space-x-1 mt-1'>
                         <div className='w-4 h-4'>
                           <Image

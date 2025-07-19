@@ -7,6 +7,7 @@ import {
   House,
   ShieldUser,
   Volleyball,
+  TestTube,
 } from 'lucide-react'
 import { MENUS_DASHBOARD } from '@/lib/constants'
 
@@ -35,6 +36,15 @@ const Sidebar = () => {
           </Link>
         )
       })}
+
+      {/* Enlace de prueba automática */}
+      <Link
+        href='/admin/test-auto-match'
+        className='hover:bg-gray-700 rounded px-3 py-2 flex items-center gap-2 mt-4 border-t border-gray-700 pt-4'
+      >
+        <TestTube size={20} />
+        <span>Prueba Automática</span>
+      </Link>
     </aside>
   )
 }

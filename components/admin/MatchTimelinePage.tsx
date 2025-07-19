@@ -41,6 +41,7 @@ export type MatchEvent = {
   teamName: string
   teamAvatar?: string
   description?: string
+  teamId?: string // Agregar teamId para posicionamiento
 }
 
 interface MatchTimelinePageProps {
@@ -49,6 +50,8 @@ interface MatchTimelinePageProps {
   team2Name: string
   team1Avatar?: string
   team2Avatar?: string
+  team1Id?: string // Agregar team1Id para posicionamiento
+  team2Id?: string // Agregar team2Id para posicionamiento
   matchId: string
   team1Goals: number
   team2Goals: number
@@ -190,6 +193,8 @@ export default function MatchTimelinePage({
   team2Name,
   team1Avatar,
   team2Avatar,
+  team1Id,
+  team2Id,
   matchId,
   team1Goals,
   team2Goals,
@@ -285,8 +290,10 @@ export default function MatchTimelinePage({
               {/* Events */}
               <div className='space-y-6'>
                 {sortedEvents.map((event) => {
-                  const isTeam1 = event.teamName === team1Name
-                  const isLeft = isTeam1
+                  // Usar teamId para posicionamiento más preciso
+                  const isTeam1 = event.teamId === team1Id
+                  const isTeam2 = event.teamId === team2Id
+                  const isLeft = isTeam1 || !isTeam2 // Eventos del team1 van a la izquierda, otros a la derecha
 
                   return (
                     <div key={event.id} className='relative'>

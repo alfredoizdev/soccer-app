@@ -48,6 +48,7 @@ CREATE TABLE "matches" (
 	"team1_goals" integer DEFAULT 0 NOT NULL,
 	"team2_goals" integer DEFAULT 0 NOT NULL,
 	"duration" integer,
+	"status" "status" DEFAULT 'active' NOT NULL,
 	CONSTRAINT "matches_id_unique" UNIQUE("id")
 );
 --> statement-breakpoint

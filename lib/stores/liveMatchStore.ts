@@ -43,6 +43,7 @@ interface LiveMatchStore {
   isRunning: boolean
   isHalfTime: boolean
   isMatchEnded: boolean
+  hasUsedHalfTime: boolean
 
   // Marcador
   team1Goals: number
@@ -51,13 +52,45 @@ interface LiveMatchStore {
   // Jugadores y sus stats
   playerStats: Record<string, PlayerStat>
 
+  // Jugadores por equipo (para buscar porteros)
+  playersTeam1: {
+    id: string
+    name: string
+    lastName: string
+    position?: string | null
+  }[]
+  playersTeam2: {
+    id: string
+    name: string
+    lastName: string
+    position?: string | null
+  }[]
+
+  // IDs de equipos
+  team1Id: string
+  team2Id: string
+
   // Eventos del partido
   events: MatchEvent[]
 
   // Acciones
   initializeMatch: (
     matchId: string,
-    initialPlayerStats: Record<string, PlayerStat>
+    initialPlayerStats: Record<string, PlayerStat>,
+    playersTeam1: {
+      id: string
+      name: string
+      lastName: string
+      position?: string | null
+    }[],
+    playersTeam2: {
+      id: string
+      name: string
+      lastName: string
+      position?: string | null
+    }[],
+    team1Id: string,
+    team2Id: string
   ) => void
   startMatch: () => void
   pauseMatch: () => void
@@ -75,6 +108,7 @@ interface LiveMatchStore {
     teamId: string,
     teamName: string
   ) => void
+  hasRegisteredPlayers: (team: 'team1' | 'team2') => boolean
   addAssist: (
     playerId: string,
     team: 'team1' | 'team2',
@@ -117,15 +151,34 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
   isRunning: false,
   isHalfTime: false,
   isMatchEnded: false,
+  hasUsedHalfTime: false,
   team1Goals: 0,
   team2Goals: 0,
   playerStats: {},
+  playersTeam1: [],
+  playersTeam2: [],
+  team1Id: '',
+  team2Id: '',
   events: [],
 
   // Inicializar partido
   initializeMatch: (
     matchId: string,
-    initialPlayerStats: Record<string, PlayerStat>
+    initialPlayerStats: Record<string, PlayerStat>,
+    playersTeam1: {
+      id: string
+      name: string
+      lastName: string
+      position?: string | null
+    }[],
+    playersTeam2: {
+      id: string
+      name: string
+      lastName: string
+      position?: string | null
+    }[],
+    team1Id: string,
+    team2Id: string
   ) => {
     set({
       matchId,
@@ -136,6 +189,10 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       team1Goals: 0,
       team2Goals: 0,
       playerStats: initialPlayerStats,
+      playersTeam1,
+      playersTeam2,
+      team1Id,
+      team2Id,
       events: [],
     })
   },
@@ -170,7 +227,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
     const { timer } = get()
     const currentMinute = Math.max(1, Math.floor(timer / 60))
 
-    set({ isHalfTime: false, isRunning: true })
+    set({ isHalfTime: false, isRunning: true, hasUsedHalfTime: true })
 
     // Agregar evento de Resume
     get().addEvent({
@@ -263,7 +320,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
 
   // Agregar gol del equipo (jugadores no registrados)
   addTeamGoal: (team: 'team1' | 'team2', teamId: string, teamName: string) => {
-    const { timer, team1Goals, team2Goals } = get()
+    const { timer, team1Goals, team2Goals, playersTeam1, playersTeam2 } = get()
     const currentMinute = Math.max(1, Math.floor(timer / 60))
 
     // Actualizar marcador del equipo
@@ -275,7 +332,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       team2Goals: newTeam2Goals,
     })
 
-    // Agregar evento
+    // Agregar evento del gol
     get().addEvent({
       minute: currentMinute,
       eventType: 'goal',
@@ -284,7 +341,45 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       description: `${teamName} scored a goal`,
     })
 
+    // Buscar automáticamente el portero del equipo contrario y marcar goal_allowed
+    const opposingTeam = team === 'team1' ? playersTeam2 : playersTeam1
+    const goalkeeper = opposingTeam.find(
+      (player) => player.position === 'goalkeeper'
+    )
+
+    if (goalkeeper) {
+      // Marcar goal_allowed para el portero
+      const updatedPlayerStats = { ...get().playerStats }
+      if (updatedPlayerStats[goalkeeper.id]) {
+        updatedPlayerStats[goalkeeper.id] = {
+          ...updatedPlayerStats[goalkeeper.id],
+          goalsAllowed:
+            (updatedPlayerStats[goalkeeper.id].goalsAllowed || 0) + 1,
+        }
+
+        set({ playerStats: updatedPlayerStats })
+
+        // Agregar evento de goal_allowed
+        get().addEvent({
+          minute: currentMinute,
+          eventType: 'goal_allowed',
+          playerId: goalkeeper.id,
+          teamId: team === 'team1' ? get().team2Id : get().team1Id,
+          teamName: team === 'team1' ? 'Team 2' : 'Team 1',
+          playerName: `${goalkeeper.name} ${goalkeeper.lastName}`,
+          description: `${goalkeeper.name} ${goalkeeper.lastName} allowed a goal`,
+        })
+      }
+    }
+
     toast.success(`Team Goal! ${newTeam1Goals}-${newTeam2Goals}`)
+  },
+
+  // Verificar si un equipo tiene jugadores registrados
+  hasRegisteredPlayers: (team: 'team1' | 'team2') => {
+    const { playersTeam1, playersTeam2 } = get()
+    const teamPlayers = team === 'team1' ? playersTeam1 : playersTeam2
+    return teamPlayers.length > 0
   },
 
   // Agregar asistencia
@@ -512,12 +607,20 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
   saveToDatabase: async () => {
     const { matchId, playerStats, events, team1Goals, team2Goals } = get()
 
+    console.log('🔄 Iniciando saveToDatabase...')
+    console.log('📊 MatchId:', matchId)
+    console.log('📊 PlayerStats:', Object.keys(playerStats).length, 'players')
+    console.log('📊 Events:', events.length, 'events')
+    console.log('📊 Score:', team1Goals, '-', team2Goals)
+
     if (!matchId) {
+      console.log('❌ No matchId found')
       toast.error('No match to save')
       return
     }
 
     try {
+      console.log('📦 Importando funciones de BD...')
       // Importar las funciones de la BD
       const {
         updateLivePlayerStats,
@@ -527,7 +630,9 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       } = await import('@/lib/actions/matches.action')
 
       // Guardar stats de jugadores
+      console.log('👥 Guardando stats de jugadores...')
       for (const [playerId, stats] of Object.entries(playerStats)) {
+        console.log('📊 Guardando stats para jugador:', playerId)
         await updateLivePlayerStats({
           matchId,
           playerId,
@@ -544,6 +649,7 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       }
 
       // Guardar marcador
+      console.log('⚽ Guardando marcador:', team1Goals, '-', team2Goals)
       await updateLiveMatchScore({
         matchId,
         team1Goals,
@@ -551,11 +657,18 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       })
 
       // Guardar eventos
+      console.log('📝 Guardando eventos...')
       for (const event of events) {
         if (
           event.eventType !== 'half_time' &&
           event.eventType !== 'resume_match'
         ) {
+          console.log(
+            '📊 Guardando evento:',
+            event.eventType,
+            'min',
+            event.minute
+          )
           await createMatchEvent({
             matchId,
             playerId: event.playerId,
@@ -568,11 +681,13 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       }
 
       // Terminar partido en BD
+      console.log('🏁 Terminando partido en BD...')
       await endLiveMatch(matchId)
 
+      console.log('✅ Match guardado exitosamente!')
       toast.success('Match saved successfully!')
     } catch (error) {
-      console.error('Error saving match:', error)
+      console.error('❌ Error saving match:', error)
       toast.error('Failed to save match')
     }
   },
@@ -585,9 +700,14 @@ export const useLiveMatchStore = create<LiveMatchStore>((set, get) => ({
       isRunning: false,
       isHalfTime: false,
       isMatchEnded: false,
+      hasUsedHalfTime: false,
       team1Goals: 0,
       team2Goals: 0,
       playerStats: {},
+      playersTeam1: [],
+      playersTeam2: [],
+      team1Id: '',
+      team2Id: '',
       events: [],
     })
   },
