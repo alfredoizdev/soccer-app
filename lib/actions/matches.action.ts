@@ -193,8 +193,23 @@ export async function getAllMatchesWithTeams() {
   })
 }
 
+export type MatchWithTeams = {
+  id: string
+  date: Date
+  team1: string
+  team2: string
+  team1Id: string
+  team2Id: string
+  team1Goals: number
+  team2Goals: number
+  team1Avatar: string
+  team2Avatar: string
+  duration: number | null
+  status: 'active' | 'inactive'
+}
+
 // Obtener solo matches activos
-export async function getActiveMatchesWithTeams() {
+export async function getActiveMatchesWithTeams(): Promise<MatchWithTeams[]> {
   const db = await dbPromise
   // 1. Obtener solo partidos activos
   const matches = await db
@@ -632,15 +647,11 @@ export async function updateLiveMatchScore({
 export async function endLiveMatch(matchId: string) {
   const db = await dbPromise
 
-  console.log(`🏁 Iniciando endLiveMatch para matchId: ${matchId}`)
-
   // Obtener datos en vivo para este partido específico
   const liveData = await db
     .select()
     .from(liveMatchDataTable)
     .where(eq(liveMatchDataTable.matchId, matchId))
-
-  console.log(`📊 Datos en vivo encontrados: ${liveData.length} registros`)
 
   const liveScore = await db
     .select()
@@ -778,10 +789,6 @@ export async function endLiveMatch(matchId: string) {
           updatedAt: new Date(),
         })
         .where(eq(playersTable.id, liveStat.playerId))
-
-      console.log(
-        `✅ Stats acumulativas actualizadas para jugador ${liveStat.playerId}`
-      )
     } catch (error) {
       console.error(
         `❌ Error actualizando stats acumulativas para jugador ${liveStat.playerId}:`,
@@ -805,7 +812,6 @@ export async function endLiveMatch(matchId: string) {
 
   await Promise.all(cleanupPromises)
 
-  console.log('✅ endLiveMatch completado exitosamente')
   return { success: true }
 }
 
@@ -840,15 +846,6 @@ export async function createMatchEvent({
 }) {
   const db = await dbPromise
 
-  console.log('📝 createMatchEvent:', {
-    matchId,
-    playerId,
-    eventType,
-    minute,
-    teamId,
-    description,
-  })
-
   const [event] = await db
     .insert(matchEventsTable)
     .values({
@@ -861,15 +858,12 @@ export async function createMatchEvent({
     })
     .returning()
 
-  console.log('✅ Evento creado:', event)
   return event
 }
 
 // Obtener eventos de un partido
 export async function getMatchEvents(matchId: string) {
   const db = await dbPromise
-
-  console.log('🔍 getMatchEvents: Buscando eventos para matchId:', matchId)
 
   const events = await db
     .select({
@@ -894,17 +888,7 @@ export async function getMatchEvents(matchId: string) {
     .where(eq(matchEventsTable.matchId, matchId))
     .orderBy(matchEventsTable.minute)
 
-  console.log('📊 Eventos encontrados:', events.length)
-  events.forEach((event, index) => {
-    console.log(`📊 Evento ${index + 1}:`, {
-      playerId: event.playerId,
-      playerName: event.playerName,
-      playerAvatar: event.playerAvatar,
-      eventType: event.eventType,
-    })
-  })
-
-  const mappedEvents = events.map((event) => {
+  return events.map((event) => {
     // Asegurar que playerId no sea undefined en la serialización
     const playerId = event.playerId || null
 
@@ -929,26 +913,29 @@ export async function getMatchEvents(matchId: string) {
       teamId: event.teamId, // Agregar teamId para posicionamiento
     }
 
-    console.log('🔄 Mapeando evento:', {
-      original: {
-        playerId: event.playerId,
-        playerName: event.playerName,
-        playerLastName: event.playerLastName,
-        playerAvatar: event.playerAvatar,
-        teamId: event.teamId,
-      },
-      mapped: {
-        playerId: mappedEvent.playerId,
-        playerName: mappedEvent.playerName,
-        playerAvatar: mappedEvent.playerAvatar,
-        teamId: mappedEvent.teamId,
-      },
-    })
-
     return mappedEvent
   })
+}
 
-  console.log('✅ Eventos mapeados:', mappedEvents.length)
-  console.log('🔍 Primer evento mapeado:', mappedEvents[0])
-  return mappedEvents
+// Verificar si un partido ya terminó
+export async function checkMatchStatus(matchId: string) {
+  const db = await dbPromise
+
+  const [match] = await db
+    .select({ status: matchesTable.status })
+    .from(matchesTable)
+    .where(eq(matchesTable.id, matchId))
+    .limit(1)
+
+  return match?.status === 'inactive'
+}
+
+// Resetear el estado de un partido a activo
+export async function resetMatchStatus(matchId: string) {
+  const db = await dbPromise
+
+  await db
+    .update(matchesTable)
+    .set({ status: 'active' })
+    .where(eq(matchesTable.id, matchId))
 }

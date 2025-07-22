@@ -8,6 +8,8 @@ import { useLiveMatchStore } from '@/lib/stores/liveMatchStore'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import { socket } from '@/app/socket'
+
 type Player = {
   id: string
   name: string
@@ -62,10 +64,23 @@ export default function LiveMatchPageClient({
   >
 }) {
   const [selectedTeam, setSelectedTeam] = useState<'team1' | 'team2'>('team1')
+  const [isLoading, setIsLoading] = useState(true)
+  const [matchAlreadyEnded, setMatchAlreadyEnded] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      // Socket connected
+    })
+
+    socket.on('disconnect', () => {
+      // Socket disconnected
+    })
+  }, [])
 
   // Usar el store Zustand
   const {
-    matchId,
     timer,
     isRunning,
     isHalfTime,
@@ -75,6 +90,7 @@ export default function LiveMatchPageClient({
     team2Goals,
     playerStats,
     initializeMatch,
+    checkMatchEnded,
     startMatch,
     pauseMatch,
     resumeMatch,
@@ -89,12 +105,30 @@ export default function LiveMatchPageClient({
     togglePlayer,
     saveToDatabase,
     hasRegisteredPlayers,
+    reset,
   } = useLiveMatchStore()
 
-  // Inicializar el partido cuando se carga el componente
+  // Inicializar el partido cuando se carga el componente (solo una vez)
   useEffect(() => {
-    // Siempre inicializar si no hay matchId o si playerStats está vacío
-    if (!matchId || Object.keys(playerStats).length === 0) {
+    if (isInitialized) return
+
+    const initializeMatchData = async () => {
+      // Siempre resetear para limpiar datos del partido anterior
+      reset()
+
+      setIsLoading(true)
+
+      // Verificar si el partido ya terminó en la BD
+      const isEnded = await checkMatchEnded(match.id)
+
+      if (isEnded) {
+        setMatchAlreadyEnded(true)
+        setIsLoading(false)
+        setIsInitialized(true)
+        return
+      }
+
+      // Inicializar el partido con los datos correctos
       initializeMatch(
         match.id,
         initialPlayerStats,
@@ -103,17 +137,14 @@ export default function LiveMatchPageClient({
         match.team1Id,
         match.team2Id
       )
+
+      setIsLoading(false)
+      setIsInitialized(true)
     }
+
+    initializeMatchData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    match.id,
-    initialPlayerStats,
-    matchId,
-    playerStats,
-    initializeMatch,
-    playersTeam1,
-    playersTeam2,
-  ])
+  }, [match.id, isInitialized])
 
   // Timer effect
   useEffect(() => {
@@ -126,6 +157,43 @@ export default function LiveMatchPageClient({
     return () => clearInterval(interval)
   }, [isRunning, isHalfTime, updateTimer])
 
+  const [isEndingMatch, setIsEndingMatch] = useState(false)
+
+  // Si el partido ya terminó, mostrar mensaje
+  if (matchAlreadyEnded) {
+    return (
+      <div className='w-full mx-auto py-4 px-2 sm:py-6 sm:px-4 md:py-8 md:px-6'>
+        <div className='text-center'>
+          <h1 className='text-lg sm:text-xl md:text-2xl font-bold mb-4'>
+            {match.team1} vs {match.team2}
+          </h1>
+          <div className='bg-yellow-100 text-yellow-800 px-4 py-3 rounded-lg'>
+            <p className='font-semibold'>This match has already ended</p>
+            <p className='text-sm mt-1'>
+              You cannot restart a match that has already finished.
+            </p>
+          </div>
+          <div className='mt-4'>
+            <Link href='/admin/matches/history'>
+              <Button variant='outline'>View Match History</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Si está cargando, mostrar loading
+  if (isLoading) {
+    return (
+      <div className='w-full mx-auto py-4 px-2 sm:py-6 sm:px-4 md:py-8 md:px-6'>
+        <div className='text-center'>
+          <p>Loading match...</p>
+        </div>
+      </div>
+    )
+  }
+
   // Obtener jugadores del equipo seleccionado
   const players = selectedTeam === 'team1' ? playersTeam1 : playersTeam2
   const currentTeamId = selectedTeam === 'team1' ? match.team1Id : match.team2Id
@@ -133,6 +201,7 @@ export default function LiveMatchPageClient({
   // Handlers
   const handleStart = () => {
     startMatch()
+    socket.emit('match:start', { matchId: match.id })
   }
 
   const handleHalfTime = () => {
@@ -143,15 +212,13 @@ export default function LiveMatchPageClient({
     }
   }
 
-  const [isEndingMatch, setIsEndingMatch] = useState(false)
-  const router = useRouter()
-
   const handleEndMatch = async () => {
     if (isEndingMatch || isMatchEnded) return // Prevenir múltiples ejecuciones
 
     setIsEndingMatch(true)
     try {
       endMatch()
+      socket.emit('match:end', { matchId: match.id })
       await saveToDatabase()
 
       // Refresh the page to update player stats
@@ -170,7 +237,103 @@ export default function LiveMatchPageClient({
   const handleTeamGoal = (team: 'team1' | 'team2') => {
     const teamId = team === 'team1' ? match.team1Id : match.team2Id
     const teamName = team === 'team1' ? match.team1 : match.team2
+
     addTeamGoal(team, teamId, teamName)
+
+    socket.emit('match:goal', { matchId: match.id, teamId, teamName })
+  }
+
+  // NUEVOS HANDLERS PARA EMITIR EVENTOS DE JUGADOR
+  const handleAddGoal = (
+    playerId: string,
+    team: 'team1' | 'team2',
+    teamId: string,
+    playerName: string
+  ) => {
+    addGoal(playerId, team, teamId, playerName)
+    socket.emit('match:goal', {
+      matchId: match.id,
+      teamId,
+      playerId,
+      playerName,
+    })
+  }
+
+  const handleAddAssist = (
+    playerId: string,
+    team: 'team1' | 'team2',
+    teamId: string,
+    playerName: string
+  ) => {
+    addAssist(playerId, team, teamId, playerName)
+    socket.emit('match:assist', {
+      matchId: match.id,
+      teamId,
+      playerId,
+      playerName,
+    })
+  }
+
+  const handleAddPass = (
+    playerId: string,
+    team: 'team1' | 'team2',
+    teamId: string,
+    playerName: string
+  ) => {
+    addPass(playerId, team, teamId, playerName)
+    socket.emit('match:pass', {
+      matchId: match.id,
+      teamId,
+      playerId,
+      playerName,
+    })
+  }
+
+  const handleAddGoalSaved = (
+    playerId: string,
+    team: 'team1' | 'team2',
+    teamId: string,
+    playerName: string
+  ) => {
+    addGoalSaved(playerId, team, teamId, playerName)
+    socket.emit('match:goal_saved', {
+      matchId: match.id,
+      teamId,
+      playerId,
+      playerName,
+    })
+  }
+
+  const handleAddGoalAllowed = (
+    playerId: string,
+    team: 'team1' | 'team2',
+    teamId: string,
+    playerName: string
+  ) => {
+    addGoalAllowed(playerId, team, teamId, playerName)
+    socket.emit('match:goal_allowed', {
+      matchId: match.id,
+      teamId,
+      playerId,
+      playerName,
+    })
+  }
+
+  const handleTogglePlayer = (
+    playerId: string,
+    team: 'team1' | 'team2',
+    teamId: string,
+    playerName: string
+  ) => {
+    togglePlayer(playerId, team, teamId, playerName)
+    // eventType puede ser 'up' o 'down', pero aquí solo notificamos el toggle
+    socket.emit('match:player_toggle', {
+      matchId: match.id,
+      teamId,
+      playerId,
+      playerName,
+      eventType: 'toggle',
+    })
   }
 
   return (
@@ -315,6 +478,7 @@ export default function LiveMatchPageClient({
               Start
             </Button>
           )}
+
           {!isMatchEnded && (
             <>
               {/* Solo mostrar Half Time si no se ha usado después del Resume */}
@@ -424,8 +588,9 @@ export default function LiveMatchPageClient({
                       const team = selectedTeam
                       const teamId = currentTeamId
                       const playerName = `${p.name} ${p.lastName}`
-                      togglePlayer(p.id, team, teamId, playerName)
+                      handleTogglePlayer(p.id, team, teamId, playerName)
                     }}
+                    disabled={!isRunning}
                     className='w-full max-w-[120px] text-xs sm:text-sm'
                   >
                     {playerStat.isPlaying ? 'Down' : 'Up'}
@@ -440,12 +605,12 @@ export default function LiveMatchPageClient({
                           variant='outline'
                           size='icon'
                           className='h-6 w-6 sm:h-8 sm:w-8'
-                          disabled={!playerStat.isPlaying}
+                          disabled={!playerStat.isPlaying || !isRunning}
                           onClick={() => {
                             const team = selectedTeam
                             const teamId = currentTeamId
                             const playerName = `${p.name} ${p.lastName}`
-                            addGoalSaved(p.id, team, teamId, playerName)
+                            handleAddGoalSaved(p.id, team, teamId, playerName)
                           }}
                         >
                           <span className='text-xs'>
@@ -461,12 +626,12 @@ export default function LiveMatchPageClient({
                           variant='outline'
                           size='icon'
                           className='h-6 w-6 sm:h-8 sm:w-8'
-                          disabled={!playerStat.isPlaying}
+                          disabled={!playerStat.isPlaying || !isRunning}
                           onClick={() => {
                             const team = selectedTeam
                             const teamId = currentTeamId
                             const playerName = `${p.name} ${p.lastName}`
-                            addGoalAllowed(p.id, team, teamId, playerName)
+                            handleAddGoalAllowed(p.id, team, teamId, playerName)
                           }}
                         >
                           <span className='text-xs'>
@@ -478,17 +643,17 @@ export default function LiveMatchPageClient({
                   ) : (
                     <>
                       <div className='flex flex-col justify-center items-center gap-1 sm:gap-2 w-1/3 bg-gray-100 rounded-md p-1 sm:p-2'>
-                        <span className='text-xs text-center'>Goles</span>
+                        <span className='text-xs text-center'>Goals</span>
                         <Button
                           variant='outline'
                           size='icon'
                           className='h-6 w-6 sm:h-8 sm:w-8'
-                          disabled={!playerStat.isPlaying}
+                          disabled={!playerStat.isPlaying || !isRunning}
                           onClick={() => {
                             const team = selectedTeam
                             const teamId = currentTeamId
                             const playerName = `${p.name} ${p.lastName}`
-                            addGoal(p.id, team, teamId, playerName)
+                            handleAddGoal(p.id, team, teamId, playerName)
                           }}
                         >
                           <span className='text-xs'>{playerStat.goals}</span>
@@ -500,12 +665,12 @@ export default function LiveMatchPageClient({
                           variant='outline'
                           size='icon'
                           className='h-6 w-6 sm:h-8 sm:w-8'
-                          disabled={!playerStat.isPlaying}
+                          disabled={!playerStat.isPlaying || !isRunning}
                           onClick={() => {
                             const team = selectedTeam
                             const teamId = currentTeamId
                             const playerName = `${p.name} ${p.lastName}`
-                            addAssist(p.id, team, teamId, playerName)
+                            handleAddAssist(p.id, team, teamId, playerName)
                           }}
                         >
                           <span className='text-xs'>{playerStat.assists}</span>
@@ -517,12 +682,12 @@ export default function LiveMatchPageClient({
                           variant='outline'
                           size='icon'
                           className='h-6 w-6 sm:h-8 sm:w-8'
-                          disabled={!playerStat.isPlaying}
+                          disabled={!playerStat.isPlaying || !isRunning}
                           onClick={() => {
                             const team = selectedTeam
                             const teamId = currentTeamId
                             const playerName = `${p.name} ${p.lastName}`
-                            addPass(p.id, team, teamId, playerName)
+                            handleAddPass(p.id, team, teamId, playerName)
                           }}
                         >
                           <span className='text-xs'>

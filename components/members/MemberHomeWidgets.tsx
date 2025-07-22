@@ -4,7 +4,6 @@ import { getPlayersAction } from '@/lib/actions/player.action'
 import { getOrganizationAction } from '@/lib/actions/organization.action'
 import { BadgeCheck, Ban } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
-import { Button } from '../ui/button'
 import Link from 'next/link'
 import { PlayerType } from '@/types/PlayerType'
 import Image from 'next/image'
@@ -34,13 +33,9 @@ export default async function MemberHomeWidgets() {
 
   return (
     <div className='w-full max-w-6xl flex flex-col gap-8'>
-      {/* Players Widget */}
       <div>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='text-lg font-semibold'>My Players</h3>
-          <Link href='/members/players/add'>
-            <Button>Add Player</Button>
-          </Link>
         </div>
         {myPlayers.length === 0 ? (
           <div className='text-gray-500'>You have no players yet.</div>

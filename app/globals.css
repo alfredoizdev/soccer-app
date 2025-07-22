@@ -123,6 +123,10 @@
   button {
     @apply cursor-pointer;
   }
+
+  .root-container {
+    @apply flex min-h-screen flex-1 flex-col bg-cover bg-top;
+  }
 }
 
 @theme {

@@ -14,25 +14,27 @@ export default function MemberClubWidget({
   // Aquí puedes agregar lógica de join/leave club con useTransition o useState
   // Por ahora solo muestra la UI
   return (
-    <Card className='p-6 flex flex-col gap-4 items-center w-full'>
+    <Card className='p-6 flex w-full'>
       <CardContent className='flex flex-col gap-4 items-center w-full'>
         {club && (
           <>
-            <div className='flex items-center gap-4'>
-              {club.avatar && (
-                <Image
-                  width={64}
-                  height={64}
-                  src={club.avatar}
-                  alt={club.name}
-                  className='w-16 h-16 rounded-full object-cover border'
-                />
-              )}
-              <div>
-                <h2 className='text-xl font-bold'>{club.name}</h2>
-                <p className='text-gray-600'>{club.description}</p>
-              </div>
+            {club.avatar && (
+              <Image
+                width={128}
+                height={128}
+                src={club.avatar}
+                alt={club.name}
+                className='w-[70px] h-[70px] rounded-full object-cover'
+              />
+            )}
+            <div>
+              <h2 className='text-xl font-bold'>{club.name.toUpperCase()}</h2>
             </div>
+            <div className='flex flex-col gap-2 items-center justify-center'>
+              <h3 className='text-sm text-gray-500'>Score</h3>
+              <p className='text-sm text-gray-500'>V - 10 / D - 3 / L - 5</p>
+            </div>
+
             <form action='/members/join-club' method='POST'>
               <Button type='submit' variant='destructive'>
                 Leave Club

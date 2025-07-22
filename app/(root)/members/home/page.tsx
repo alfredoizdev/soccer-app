@@ -1,5 +1,7 @@
 import MemberClubWidget from '@/components/members/MemberClubWidget'
 import MemberHomeWidgets from '@/components/members/MemberHomeWidgets'
+import PreviewMatches from '@/components/members/PreviewMatches'
+import { getActiveMatchesWithTeams } from '@/lib/actions/matches.action'
 import { userAuth } from '@/lib/actions/auth.action'
 import { getOrganizationByUserId } from '@/lib/actions/organization.action'
 import { UserType } from '@/types/UserType'
@@ -11,10 +13,14 @@ export default async function Home() {
   }
   const clubsRes = await getOrganizationByUserId(user.id)
   const club = clubsRes.data
+  const matches = await getActiveMatchesWithTeams()
 
   return (
-    <div className='flex flex-col items-center w-full max-w-6xl mx-auto p-6 sm:p-10 gap-8'>
-      <MemberClubWidget club={club} user={user as UserType} />
+    <div className='flex flex-col items-center w-full max-w-6xl mx-auto p-6 sm:px-4 sm:py-1 gap-8'>
+      <div className='flex gap-4 w-full flex-col md:flex-row'>
+        <MemberClubWidget club={club} user={user as UserType} />
+        <PreviewMatches matches={matches} />
+      </div>
       <MemberHomeWidgets />
     </div>
   )

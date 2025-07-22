@@ -2,11 +2,12 @@
   "name": "soccer-app",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "ts-node server.ts --turbopack",
     "dev:full": "docker compose up -d && next dev --turbopack",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production ts-node server.ts",
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -38,6 +39,7 @@
     "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@tanstack/react-table": "^8.21.3",
+    "@types/socket.io-client": "^1.4.36",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.7.0",
@@ -56,6 +58,8 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.60.0",
     "recharts": "^2.15.4",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
     "vaul": "^1.1.2",
@@ -78,9 +82,10 @@
     "eslint-config-next": "15.3.5",
     "jsdom": "^26.1.0",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
     "tw-animate-css": "^1.3.5",
-    "typescript": "^5",
+    "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }
 }

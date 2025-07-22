@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { logoutAction, userAuth } from '@/lib/actions/auth.action'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { LayoutDashboard, ShieldPlus, UserPlus, Users } from 'lucide-react'
+import { LayoutDashboard } from 'lucide-react'
 
 export default async function Navbar() {
   const user = await userAuth()
 
   return (
-    <nav className='bg-white shadow-sm'>
+    <nav className='bg-white'>
       <div
         className={`w-full flex flex-col sm:flex-row items-center max-w-6xl mx-auto
                     justify-between px-4 sm:px-6 py-3 sm:py-4  gap-2 
@@ -31,20 +31,6 @@ export default async function Navbar() {
                 </Link>
               )}
               {/* Links de iconos antes del avatar */}
-              <Link
-                href='/members/join-club'
-                className='flex items-center text-gray-700 hover:underline gap-1'
-              >
-                <ShieldPlus className='w-5 h-5' />
-                <span className='hidden sm:inline'>Join Club</span>
-              </Link>
-              <Link
-                href='/members/players/add'
-                className='flex items-center text-gray-700 hover:underline gap-1'
-              >
-                <UserPlus className='w-5 h-5' />
-                <span className='hidden sm:inline'>Add Player</span>
-              </Link>
               {/* Avatar: centrado en mobile, al final en desktop */}
               <span className='flex justify-center items-center order-2 sm:order-last'>
                 <Avatar className='w-14 h-14 border-2 border-gray-300 shadow'>
@@ -57,13 +43,7 @@ export default async function Navbar() {
                 </Avatar>
               </span>
               {/* Links de iconos después del avatar: order-last en mobile, order-2 en desktop */}
-              <Link
-                href='/members/players'
-                className='flex items-center text-gray-700 hover:underline gap-1 order-last sm:order-2'
-              >
-                <Users className='w-5 h-5' />
-                <span className='hidden sm:inline'>My Players</span>
-              </Link>
+
               <form action={logoutAction} className='order-last sm:order-2'>
                 <button
                   type='submit'
