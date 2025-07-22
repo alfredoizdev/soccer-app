@@ -9,7 +9,7 @@ export default async function Navbar() {
   return (
     <nav className='bg-white'>
       <div
-        className={`w-full flex flex-col sm:flex-row items-center max-w-6xl mx-auto
+        className={`w-full flex flex-col sm:flex-row items-center max-w-screen-xl mx-auto
                     justify-between px-4 sm:px-6 py-3 sm:py-4  gap-2 
                     sm:gap-0 `}
       >

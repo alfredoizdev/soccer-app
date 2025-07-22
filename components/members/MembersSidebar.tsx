@@ -5,7 +5,6 @@ import Link from 'next/link'
 
 export default function MembersSidebar() {
   const pathname = usePathname()
-  console.log(pathname)
   return (
     <div className='bg-gray-100 p-4 rounded-lg w-full'>
       <div className='flex flex-row justify-center items-center lg:items-start md:flex-col gap-5 overflow-hidden '>

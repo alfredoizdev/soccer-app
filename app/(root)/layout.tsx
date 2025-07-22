@@ -19,15 +19,15 @@ export default async function RootLayout({
   return (
     <>
       <Navbar />
-      <main className='flex-1 flex max-w-6xl mx-auto px-2 sm:px-5 py-5'>
-        <div className='w-1/6 min-w-[80px] hidden md:block'>
+      <main className='flex max-w-screen-xl mx-auto w-full min-h-[80vh]'>
+        <div className='w-56 pl-2 hidden md:block'>
           <MembersSidebar />
         </div>
-        <div className='flex-1'>{children}</div>
-        <div className='fixed bottom-0 left-0 right-0 w-full md:hidden'>
-          <MembersSidebar />
-        </div>
+        <div className='flex-1 w-full px-2 md:px-4'>{children}</div>
       </main>
+      <div className='fixed bottom-0 left-0 right-0 w-full md:hidden'>
+        <MembersSidebar />
+      </div>
       <Footer />
     </>
   )

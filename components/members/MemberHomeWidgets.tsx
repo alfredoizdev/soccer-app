@@ -32,7 +32,7 @@ export default async function MemberHomeWidgets() {
   }
 
   return (
-    <div className='w-full max-w-6xl flex flex-col gap-8'>
+    <div className='w-full flex flex-col gap-8'>
       <div>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='text-lg font-semibold'>My Players</h3>

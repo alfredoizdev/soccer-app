@@ -52,14 +52,14 @@ export default function LiveMatchViewer({
     })
 
   return (
-    <div className='max-w-6xl mx-auto px-2 md:px-4 py-4'>
+    <div className='max-w-screen-xl mx-auto px-2 lg:px-4 py-4'>
       <LiveMatchHeader match={match} matchStatus={matchStatus} />
-      <div className='flex flex-col md:flex-row gap-6'>
-        <div className='block md:hidden'>
+      <div className='flex flex-col lg:flex-row gap-6'>
+        <div className='block lg:hidden'>
           <LiveMatchScoreCard match={match} liveScore={liveScore} />
         </div>
         {/* Field a la izquierda, full image y más alto */}
-        <div className='w-full md:w-2/3 flex-shrink-0 flex items-start justify-center'>
+        <div className='w-full lg:w-2/3 flex-shrink-0 flex items-start justify-center'>
           <div className='w-full'>
             <SoccerField
               livePlayersTeam1={livePlayersTeam1}
@@ -70,8 +70,8 @@ export default function LiveMatchViewer({
           </div>
         </div>
         {/* Panel derecho: Score y Lineup uno debajo del otro */}
-        <div className='w-full md:w-1/3 flex flex-col gap-4 max-h-[900px] md:max-h-[calc(100vh-120px)]'>
-          <div className='hidden md:block'>
+        <div className='w-full lg:w-1/3 flex flex-col gap-4 max-h-[900px] lg:max-h-[calc(100vh-120px)]'>
+          <div className='hidden lg:block'>
             <LiveMatchScoreCard match={match} liveScore={liveScore} />
           </div>
           <div className='flex-1 flex flex-col gap-4 overflow-y-auto'>

@@ -17,7 +17,7 @@ export default async function LiveMatchPage({ params }: PageProps) {
   }
 
   return (
-    <div className='container mx-auto py-6 px-4'>
+    <div className='mx-auto w-full'>
       <LiveMatchViewer
         match={matchData.match}
         playersTeam1={matchData.playersTeam1}

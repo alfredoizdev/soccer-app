@@ -27,7 +27,7 @@ export default function JoinClub({
   // Si el usuario ya está registrado en un club, mostrarlo destacado
   if (joinedClubId && currentClub) {
     return (
-      <div className='flex flex-col items-center w-full max-w-6xl mx-auto p-6 sm:p-4 gap-8'>
+      <div className='w-full flex flex-col gap-8 p-6 sm:p-4'>
         <div className='mb-6 text-center'>
           <h2 className='text-2xl font-bold mb-2'>Your Club</h2>
           <p className='text-gray-600'>
@@ -78,7 +78,7 @@ export default function JoinClub({
 
   // Mostrar lista de clubs para unirse
   return (
-    <div className='max-w-2xl mx-auto py-8 px-4'>
+    <div className='w-full flex flex-col gap-8 py-8 px-4'>
       <div className='mb-6 text-center'>
         <h2 className='text-2xl font-bold mb-2'>Join a Club</h2>
         <p className='text-gray-600'>

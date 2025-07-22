@@ -16,7 +16,7 @@ export default async function Home() {
   const matches = await getActiveMatchesWithTeams()
 
   return (
-    <div className='flex flex-col items-center w-full max-w-6xl mx-auto p-6 sm:px-4 sm:py-1 gap-8'>
+    <div className='w-full flex flex-col gap-8'>
       <div className='flex gap-4 w-full flex-col md:flex-row'>
         <MemberClubWidget club={club} user={user as UserType} />
         <PreviewMatches matches={matches} />
