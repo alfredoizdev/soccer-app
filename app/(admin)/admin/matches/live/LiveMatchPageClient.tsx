@@ -325,14 +325,16 @@ export default function LiveMatchPageClient({
     teamId: string,
     playerName: string
   ) => {
+    // Obtener el nuevo estado antes de llamar a togglePlayer
+    const current = playerStats[playerId]
+    const newStatus = current && current.isPlaying ? 'down' : 'up'
     togglePlayer(playerId, team, teamId, playerName)
-    // eventType puede ser 'up' o 'down', pero aquí solo notificamos el toggle
     socket.emit('match:player_toggle', {
       matchId: match.id,
       teamId,
       playerId,
       playerName,
-      eventType: 'toggle',
+      eventType: newStatus,
     })
   }
 
