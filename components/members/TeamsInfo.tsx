@@ -63,6 +63,32 @@ export default function TeamsInfo({
                 <div className='text-xs text-gray-500'>
                   #{player.jerseyNumber} • {player.position}
                 </div>
+                {/* Mostrar estadísticas del jugador */}
+                <div className='flex gap-2 mt-1 text-xs'>
+                  {player.goals !== undefined && player.goals > 0 && (
+                    <span className='bg-green-100 text-green-800 px-1 rounded'>
+                      ⚽ {player.goals}
+                    </span>
+                  )}
+                  {player.assists !== undefined && player.assists > 0 && (
+                    <span className='bg-blue-100 text-blue-800 px-1 rounded'>
+                      🎯 {player.assists}
+                    </span>
+                  )}
+                  {player.position === 'goalkeeper' &&
+                    player.goalsAllowed !== undefined && (
+                      <span className='bg-red-100 text-red-800 px-1 rounded'>
+                        🥅 {player.goalsAllowed}
+                      </span>
+                    )}
+                  {player.position === 'goalkeeper' &&
+                    player.saves !== undefined &&
+                    player.saves > 0 && (
+                      <span className='bg-yellow-100 text-yellow-800 px-1 rounded'>
+                        🛡️ {player.saves}
+                      </span>
+                    )}
+                </div>
               </div>
             </div>
           ))}

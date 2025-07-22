@@ -192,11 +192,10 @@ export function useLiveMatchSocket({
       playerId: string
       playerName: string
     }) => {
-      // Cuando un portero permite un gol, el equipo contrario marca
+      // Solo actualizar estadísticas de gol permitido del portero, NO el marcador
+      // El marcador ya se actualizó con el evento de gol anterior
       if (data.teamId === match.team1Id) {
-        setLiveScore((prev) => ({ ...prev, team2Goals: prev.team2Goals + 1 }))
-
-        // Actualizar estadísticas de gol permitido del portero
+        // Actualizar estadísticas de gol permitido del portero del equipo 1
         setLivePlayersTeam1((prev) =>
           prev.map((player) =>
             player.id === data.playerId
@@ -205,9 +204,7 @@ export function useLiveMatchSocket({
           )
         )
       } else if (data.teamId === match.team2Id) {
-        setLiveScore((prev) => ({ ...prev, team1Goals: prev.team1Goals + 1 }))
-
-        // Actualizar estadísticas de gol permitido del portero
+        // Actualizar estadísticas de gol permitido del portero del equipo 2
         setLivePlayersTeam2((prev) =>
           prev.map((player) =>
             player.id === data.playerId

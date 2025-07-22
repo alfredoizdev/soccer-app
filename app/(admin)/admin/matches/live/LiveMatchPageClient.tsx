@@ -238,9 +238,26 @@ export default function LiveMatchPageClient({
     const teamId = team === 'team1' ? match.team1Id : match.team2Id
     const teamName = team === 'team1' ? match.team1 : match.team2
 
+    // Obtener el equipo contrario para buscar el portero
+    const opposingTeam = team === 'team1' ? playersTeam2 : playersTeam1
+    const goalkeeper = opposingTeam.find(
+      (player) => player.position === 'goalkeeper'
+    )
+
     addTeamGoal(team, teamId, teamName)
 
     socket.emit('match:goal', { matchId: match.id, teamId, teamName })
+
+    // Si hay un portero en el equipo contrario, emitir evento de goal_allowed
+    if (goalkeeper) {
+      const opposingTeamId = team === 'team1' ? match.team2Id : match.team1Id
+      socket.emit('match:goal_allowed', {
+        matchId: match.id,
+        teamId: opposingTeamId,
+        playerId: goalkeeper.id,
+        playerName: `${goalkeeper.name} ${goalkeeper.lastName}`,
+      })
+    }
   }
 
   // NUEVOS HANDLERS PARA EMITIR EVENTOS DE JUGADOR
