@@ -1,7 +1,6 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
-import { Play, Square } from 'lucide-react'
 
 interface Match {
   id: string
@@ -18,13 +17,11 @@ interface Match {
 
 interface LiveMatchHeaderProps {
   match: Match
-  isConnected: boolean
   matchStatus: 'not-started' | 'live' | 'ended'
 }
 
 export default function LiveMatchHeader({
   match,
-  isConnected,
   matchStatus,
 }: LiveMatchHeaderProps) {
   return (
@@ -35,17 +32,13 @@ export default function LiveMatchHeader({
         </h1>
         <div className='flex items-center gap-2'>
           <Badge
-            variant={isConnected ? 'default' : 'secondary'}
-            className='flex items-center gap-1'
+            variant={matchStatus === 'live' ? 'default' : 'secondary'}
+            className={
+              matchStatus === 'live'
+                ? 'animate-pulse bg-red-600 text-white border-none'
+                : ''
+            }
           >
-            {isConnected ? (
-              <Play className='w-3 h-3' />
-            ) : (
-              <Square className='w-3 h-3' />
-            )}
-            {isConnected ? 'Live' : 'Disconnected'}
-          </Badge>
-          <Badge variant={matchStatus === 'live' ? 'default' : 'secondary'}>
             {matchStatus === 'live'
               ? 'Live'
               : matchStatus === 'ended'

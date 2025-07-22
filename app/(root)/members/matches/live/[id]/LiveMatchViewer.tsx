@@ -44,25 +44,16 @@ export default function LiveMatchViewer({
   playersTeam1,
   playersTeam2,
 }: LiveMatchViewerProps) {
-  const {
-    isConnected,
-    liveScore,
-    matchStatus,
-    livePlayersTeam1,
-    livePlayersTeam2,
-  } = useLiveMatchSocket({
-    match,
-    playersTeam1,
-    playersTeam2,
-  })
+  const { liveScore, matchStatus, livePlayersTeam1, livePlayersTeam2 } =
+    useLiveMatchSocket({
+      match,
+      playersTeam1,
+      playersTeam2,
+    })
 
   return (
     <div className='max-w-6xl mx-auto px-2 md:px-4 py-4'>
-      <LiveMatchHeader
-        match={match}
-        isConnected={isConnected}
-        matchStatus={matchStatus}
-      />
+      <LiveMatchHeader match={match} matchStatus={matchStatus} />
       <div className='flex flex-col md:flex-row gap-6'>
         <div className='block md:hidden'>
           <LiveMatchScoreCard match={match} liveScore={liveScore} />
