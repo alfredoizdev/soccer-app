@@ -34,13 +34,15 @@ export default async function LiveMatchesPage() {
                   <CardTitle className='text-lg'>
                     {match.team1} vs {match.team2}
                   </CardTitle>
-                  <Badge
-                    variant='secondary'
-                    className='flex items-center gap-1'
-                  >
-                    <Play className='w-3 h-3' />
-                    Live
-                  </Badge>
+                  {match.isLive && (
+                    <Badge
+                      variant='secondary'
+                      className='flex items-center gap-1'
+                    >
+                      <Play className='w-3 h-3' />
+                      Live
+                    </Badge>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>

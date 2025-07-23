@@ -26,6 +26,7 @@ interface Match {
   team2Goals: number
   team1Avatar: string
   team2Avatar: string
+  status?: string | null
 }
 
 interface UseLiveMatchSocketProps {
@@ -51,13 +52,17 @@ export function useLiveMatchSocket({
   const [livePlayersTeam2, setLivePlayersTeam2] = useState(playersTeam2)
 
   useEffect(() => {
+    // Si el partido ya está en estado 'live' (por ejemplo, si hay un campo status en match)
+    // o si hay goles, marcar como live
     if (
-      (match.team1Goals > 0 || match.team2Goals > 0) &&
-      matchStatus === 'not-started'
+      match.status === 'live' ||
+      matchStatus === 'live' ||
+      match.team1Goals > 0 ||
+      match.team2Goals > 0
     ) {
       setMatchStatus('live')
     }
-  }, [match.team1Goals, match.team2Goals, matchStatus])
+  }, [match.status, match.team1Goals, match.team2Goals, matchStatus])
 
   // Inicializar jugadores con estado 'up' por defecto
   useEffect(() => {
@@ -192,10 +197,8 @@ export function useLiveMatchSocket({
       playerId: string
       playerName: string
     }) => {
-      // Solo actualizar estadísticas de gol permitido del portero, NO el marcador
-      // El marcador ya se actualizó con el evento de gol anterior
+      // Solo actualizar estadísticas de gol permitido del portero
       if (data.teamId === match.team1Id) {
-        // Actualizar estadísticas de gol permitido del portero del equipo 1
         setLivePlayersTeam1((prev) =>
           prev.map((player) =>
             player.id === data.playerId
@@ -203,8 +206,13 @@ export function useLiveMatchSocket({
               : player
           )
         )
+        // Workaround: Si el marcador NO subió por 'match:goal', súbelo aquí
+        setLiveScore((prev) => {
+          // Si el marcador ya subió, no hacer nada
+          if (prev.team2Goals > match.team2Goals) return prev
+          return { ...prev, team2Goals: prev.team2Goals + 1 }
+        })
       } else if (data.teamId === match.team2Id) {
-        // Actualizar estadísticas de gol permitido del portero del equipo 2
         setLivePlayersTeam2((prev) =>
           prev.map((player) =>
             player.id === data.playerId
@@ -212,6 +220,10 @@ export function useLiveMatchSocket({
               : player
           )
         )
+        setLiveScore((prev) => {
+          if (prev.team1Goals > match.team1Goals) return prev
+          return { ...prev, team1Goals: prev.team1Goals + 1 }
+        })
       }
     }
 
@@ -287,6 +299,46 @@ export function useLiveMatchSocket({
       socket.off('connect_error', handleConnectError)
     }
   }, [match.id, match.team1Id, match.team2Id])
+
+  // Forzar estado 'live' si recibimos cualquier evento de partido relevante
+  useEffect(() => {
+    if (matchStatus === 'ended') return
+    // Si el socket está conectado y recibimos cualquier evento, forzar 'live'
+    const forceLive = () => {
+      setMatchStatus((prev) => (prev !== 'ended' ? 'live' : prev))
+    }
+    socket.on('match:start', forceLive)
+    socket.on('match:goal', forceLive)
+    socket.on('match:assist', forceLive)
+    socket.on('match:goal_saved', forceLive)
+    socket.on('match:goal_allowed', forceLive)
+    socket.on('match:player_toggle', forceLive)
+    // Limpieza
+    return () => {
+      socket.off('match:start', forceLive)
+      socket.off('match:goal', forceLive)
+      socket.off('match:assist', forceLive)
+      socket.off('match:goal_saved', forceLive)
+      socket.off('match:goal_allowed', forceLive)
+      socket.off('match:player_toggle', forceLive)
+    }
+  }, [matchStatus])
+
+  // Forzar 'live' si el socket está conectado, el partido no está terminado y el marcador está 0-0
+  useEffect(() => {
+    if (
+      isConnected &&
+      matchStatus !== 'ended' &&
+      liveScore.team1Goals === 0 &&
+      liveScore.team2Goals === 0
+    ) {
+      // Pequeño delay para dar tiempo a la conexión y evitar parpadeos
+      const timeout = setTimeout(() => {
+        setMatchStatus((prev) => (prev !== 'ended' ? 'live' : prev))
+      }, 500)
+      return () => clearTimeout(timeout)
+    }
+  }, [isConnected, matchStatus, liveScore.team1Goals, liveScore.team2Goals])
 
   return {
     isConnected,

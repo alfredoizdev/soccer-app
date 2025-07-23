@@ -206,6 +206,7 @@ export type MatchWithTeams = {
   team2Avatar: string
   duration: number | null
   status: 'active' | 'inactive'
+  isLive: boolean // Nuevo campo para indicar si está realmente en vivo
 }
 
 // Obtener solo matches activos
@@ -225,10 +226,25 @@ export async function getActiveMatchesWithTeams(): Promise<MatchWithTeams[]> {
     .from(organizationsTable)
     .where(inArray(organizationsTable.id, teamIds))
 
-  // 3. Mapear los nombres y avatares de los equipos
+  // 3. Obtener datos en vivo para cada partido
+  const liveScores = await db
+    .select()
+    .from(liveMatchScoreTable)
+    .where(
+      inArray(
+        liveMatchScoreTable.matchId,
+        matches.map((m) => m.id)
+      )
+    )
+
+  // 4. Mapear los nombres y avatares de los equipos, usando datos en vivo si están disponibles
   return matches.map((match) => {
     const team1 = teams.find((t) => t.id === match.team1Id)
     const team2 = teams.find((t) => t.id === match.team2Id)
+
+    // Buscar datos en vivo para este partido
+    const liveScore = liveScores.find((ls) => ls.matchId === match.id)
+
     return {
       id: match.id,
       date: match.date,
@@ -236,12 +252,15 @@ export async function getActiveMatchesWithTeams(): Promise<MatchWithTeams[]> {
       team2: team2?.name || 'Unknown',
       team1Id: match.team1Id,
       team2Id: match.team2Id,
-      team1Goals: match.team1Goals,
-      team2Goals: match.team2Goals,
+      // Usar datos en vivo si están disponibles, sino usar datos del partido
+      team1Goals: liveScore?.team1Goals ?? match.team1Goals,
+      team2Goals: liveScore?.team2Goals ?? match.team2Goals,
       team1Avatar: team1?.avatar || '',
       team2Avatar: team2?.avatar || '',
       duration: match.duration,
       status: match.status,
+      // Un partido está en vivo si tiene datos en liveMatchScoreTable
+      isLive: !!liveScore,
     }
   })
 }
@@ -253,7 +272,15 @@ export async function getMatchWithPlayers(matchId: string) {
   const matches = await getAllMatchesWithTeams()
   const match = matches.find((m) => m.id === matchId)
   if (!match) return null
-  // 2. Obtener jugadores de ambos equipos
+
+  // 2. Obtener datos en vivo para este partido específico
+  const liveScore = await db
+    .select()
+    .from(liveMatchScoreTable)
+    .where(eq(liveMatchScoreTable.matchId, matchId))
+    .limit(1)
+
+  // 3. Obtener jugadores de ambos equipos
   const playersTeam1 = await db
     .select()
     .from(playersTable)
@@ -262,8 +289,16 @@ export async function getMatchWithPlayers(matchId: string) {
     .select()
     .from(playersTable)
     .where(eq(playersTable.organizationId, match.team2Id))
+
+  // 4. Crear el match con datos en vivo si están disponibles
+  const matchWithLiveData = {
+    ...match,
+    team1Goals: liveScore[0]?.team1Goals ?? match.team1Goals,
+    team2Goals: liveScore[0]?.team2Goals ?? match.team2Goals,
+  }
+
   return {
-    match,
+    match: matchWithLiveData,
     playersTeam1,
     playersTeam2,
   }
