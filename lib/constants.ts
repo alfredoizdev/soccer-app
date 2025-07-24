@@ -50,7 +50,7 @@ export const MENUS_DASHBOARD = [
     value: 'posts',
     label: 'Posts',
     href: '/admin/posts',
-    icon: 'LayoutDashboard',
+    icon: 'FileText',
   },
 ]
 

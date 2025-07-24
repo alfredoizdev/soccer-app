@@ -8,6 +8,7 @@ import {
   ShieldUser,
   Volleyball,
   TestTube,
+  FileText,
 } from 'lucide-react'
 import { MENUS_DASHBOARD } from '@/lib/constants'
 
@@ -18,6 +19,7 @@ const icons = {
   House,
   ShieldUser,
   Volleyball,
+  FileText,
 }
 
 const Sidebar = () => {
