@@ -46,6 +46,12 @@ export const MENUS_DASHBOARD = [
     href: '/admin/matches/history',
     icon: 'Volleyball',
   },
+  {
+    value: 'posts',
+    label: 'Posts',
+    href: '/admin/posts',
+    icon: 'LayoutDashboard',
+  },
 ]
 
 export const RANGE_AGE = Array.from({ length: 41 }, (_, i) => i + 5)
