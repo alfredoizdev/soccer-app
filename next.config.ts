@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 
+/** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   async redirects() {
     return [
@@ -20,7 +21,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '1mb',
+      bodySizeLimit: '10mb',
     },
   },
 }

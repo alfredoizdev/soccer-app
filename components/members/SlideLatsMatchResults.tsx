@@ -48,6 +48,17 @@ export default function SlideLatsMatchResults({
     })
   }, [])
 
+  if (matches.length === 0) {
+    return (
+      <div className='flex flex-col items-center justify-center h-full mx-auto pt-9'>
+        <h2 className='text-2xl font-bold'>No matches found</h2>
+        <p className='text-gray-500'>
+          There are no matches scheduled for the moment.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className='block md:hidden text-center text-xs text-gray-500 py-5 font-semibold'>

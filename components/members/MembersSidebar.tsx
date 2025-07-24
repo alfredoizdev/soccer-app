@@ -1,5 +1,12 @@
 'use client'
-import { Calendar, Home, ShieldPlus, UserPlus, Users } from 'lucide-react'
+import {
+  Calendar,
+  Home,
+  ShieldPlus,
+  UserPlus,
+  Users,
+  FileText,
+} from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
@@ -70,6 +77,22 @@ export default function MembersSidebar() {
             <>
               <UserPlus className='w-5 h-5' />
               <span className='hidden lg:inline'>Add Player</span>
+            </>
+          )}
+        </Link>
+        <Link
+          href='/members/posts'
+          className={`flex items-center text-gray-700 hover:underline gap-1`}
+        >
+          {pathname === '/members/posts' ? (
+            <div className='flex items-center p-2 rounded-md bg-gray-300 text-gray-700 gap-1'>
+              <FileText className='w-5 h-5' />
+              <span className='hidden lg:inline'>Posts</span>
+            </div>
+          ) : (
+            <>
+              <FileText className='w-5 h-5' />
+              <span className='hidden lg:inline'>Posts</span>
             </>
           )}
         </Link>

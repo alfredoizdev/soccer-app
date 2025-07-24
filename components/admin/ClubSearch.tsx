@@ -43,7 +43,12 @@ export default function ClubSearch({
       )}
       <div className='max-h-60 overflow-y-auto border rounded-md bg-white'>
         {filteredClubs.length === 0 && !organizationsLoaded && (
-          <div className='p-2 text-gray-500 text-sm'>No clubs found</div>
+          <div className='p-2 text-gray-500 text-sm'>
+            <h2 className='text-2xl font-bold'>No clubs found</h2>
+            <p className='text-gray-500'>
+              There are no clubs registered for the moment.
+            </p>
+          </div>
         )}
         {filteredClubs.map((club) => (
           <button

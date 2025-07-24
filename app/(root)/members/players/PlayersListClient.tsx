@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Trash2, BadgeCheck, Ban } from 'lucide-react'
 import { deletePlayerAction } from '@/lib/actions/player.action'
-import { toast, Toaster } from 'sonner'
+import { toast } from 'sonner'
 import type { PlayerType } from '@/types/PlayerType'
 import Link from 'next/link'
 
@@ -32,15 +32,20 @@ export default function PlayersListClient({
 
   if (players.length === 0) {
     return (
-      <p className='text-gray-500 text-center'>
-        You have not registered any players yet.
-      </p>
+      <div className='flex flex-col items-center justify-center h-full mx-auto pt-9'>
+        <h2 className='text-2xl font-bold'>No players found</h2>
+        <p className='text-gray-500'>
+          There are no players registered for the moment.
+        </p>
+        <Button asChild className='mt-4 rounded-none'>
+          <Link href='/members/players/add'>Create player</Link>
+        </Button>
+      </div>
     )
   }
 
   return (
     <>
-      <Toaster position='top-right' richColors />
       <ul className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
         {players.map((player) => (
           <li

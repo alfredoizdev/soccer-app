@@ -13,7 +13,7 @@ function LatestNews({ posts }: LatestNewsProps) {
         <h2 className='text-3xl font-bold'>Latest News</h2>
         <Link
           href='/members/posts'
-          className='text-white p-2 bg-gray-700 rounded-null'
+          className='text-white p-2 bg-gray-900 rounded-null'
         >
           Latest News
           <span aria-hidden>→</span>

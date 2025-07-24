@@ -1,10 +1,22 @@
-export interface PostType {
+export type PostInput = {
+  title: string
+  content: string
+  mediaUrl?: string
+  mediaType?: string
+  userId: string
+  mediaFile?: File | Buffer
+}
+
+export type PostType = {
   id: string
   title: string
-  summary: string
   content: string
-  imageUrl: string
-  createdAt: string
-  author: string
-  tag?: string
+  mediaUrl?: string
+  mediaType?: string
+  userId: string
+  slug: string
+  createdAt?: Date
+  updatedAt?: Date
+  userName?: string
+  userAvatar?: string
 }

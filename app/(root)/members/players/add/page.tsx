@@ -12,16 +12,14 @@ export default async function AddPlayerPage() {
 
   if (!user?.organizationId) {
     return (
-      <div className='w-full mx-auto py-12 px-4 sm:px-8'>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-8'>
-          <h2 className='text-2xl font-bold'>Register a Player</h2>
-          <Link href='/members/players'>
-            <Button className='w-full sm:w-auto'>Back to My Players</Button>
-          </Link>
-        </div>
+      <div className='w-full mx-auto py-12 px-4 sm:px-8 flex flex-col items-center justify-center h-full'>
+        <h2 className='text-2xl font-bold'>Register a Player</h2>
         <p className='text-gray-600 text-center'>
           You must join a club before you can register your players.
         </p>
+        <Button asChild className='mt-4 rounded-none'>
+          <Link href='/members/join-club'>Join a club</Link>
+        </Button>
       </div>
     )
   }

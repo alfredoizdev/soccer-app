@@ -4,9 +4,10 @@ import MeinActionDashboardSkeleton from '@/components/members/MeinActionDashboar
 import SlideLatsMatchResults from '@/components/members/SlideLatsMatchResults'
 import SlideLatsMatchResultsSkeleton from '@/components/members/SlideLatsMatchResultsSkeleton'
 import LatestNews from '@/components/members/LatestNews'
-import { fakePosts } from '@/lib/utils/fakePosts'
-import { userAuth } from '@/lib/actions/auth.action'
+import LatestNewsSkeleton from '@/components/members/LatestNewsSkeleton'
 import { getAllMatchesWithTeams } from '@/lib/actions/matches.action'
+import { getPostsAction } from '@/lib/actions/posts.action'
+import { userAuth } from '@/lib/actions/auth.action'
 
 export default async function Home() {
   const user = await userAuth()
@@ -14,6 +15,8 @@ export default async function Home() {
     return <div>Please log in.</div>
   }
   const matches = await getAllMatchesWithTeams()
+  const postsRes = await getPostsAction()
+  const posts = postsRes.data || []
 
   return (
     <div className='w-full flex flex-col gap-8'>
@@ -21,7 +24,9 @@ export default async function Home() {
         <MainActionDashboard />
       </Suspense>
       <div className='w-full mx-auto bg-gray-300/20 pb-[100px] pt-[100px] px-2'>
-        <LatestNews posts={fakePosts} />
+        <Suspense fallback={<LatestNewsSkeleton />}>
+          <LatestNews posts={posts} />
+        </Suspense>
       </div>
 
       <div className='container mx-auto w-full overflow-hidden'>

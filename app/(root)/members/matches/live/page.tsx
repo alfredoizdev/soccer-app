@@ -9,7 +9,7 @@ export default async function LiveMatchesPage() {
   const matches = await getActiveMatchesWithTeams()
 
   return (
-    <div className='w-full'>
+    <div className='w-full mx-auto px-4'>
       <div className='mb-6'>
         <h1 className='text-2xl font-bold mb-2'>Live Matches</h1>
         <p className='text-gray-600'>Watch matches in real-time</p>

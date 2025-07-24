@@ -8,6 +8,20 @@
       "when": 1752945561926,
       "tag": "0000_married_daredevil",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1753365242405,
+      "tag": "0001_groovy_valeria_richards",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1753380487648,
+      "tag": "0002_unusual_smasher",
+      "breakpoints": true
     }
   ]
 }

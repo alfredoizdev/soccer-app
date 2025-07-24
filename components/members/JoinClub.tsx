@@ -71,8 +71,11 @@ export default function JoinClub({
   // Si no hay clubs disponibles
   if (!clubs || clubs.length === 0)
     return (
-      <div className='flex justify-center items-center h-screen'>
-        <p className='text-gray-500'>No clubs found</p>
+      <div className='flex flex-col items-center justify-center h-full mx-auto pt-9'>
+        <h2 className='text-2xl font-bold'>No clubs found</h2>
+        <p className='text-gray-500'>
+          There are no clubs registered for the moment.
+        </p>
       </div>
     )
 

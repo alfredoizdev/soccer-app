@@ -28,6 +28,34 @@ function uploadImageToCloudinary(
 }
 
 /**
+ * Sube una imagen o video a Cloudinary y retorna la URL segura
+ * @param buffer Buffer del archivo
+ * @param type 'image' o 'video'
+ * @param folder Carpeta opcional en Cloudinary
+ */
+function uploadMediaToCloudinary(
+  buffer: Buffer,
+  type: 'image' | 'video',
+  folder?: string
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload(
+      `data:${
+        type === 'video' ? 'video/mp4' : 'image/jpeg'
+      };base64,${buffer.toString('base64')}`,
+      {
+        folder,
+        resource_type: type,
+      },
+      (error, result) => {
+        if (error) return reject(error)
+        resolve(result?.secure_url || '')
+      }
+    )
+  })
+}
+
+/**
  * Elimina una imagen de Cloudinary usando su public_id
  * @param publicId El public_id de la imagen en Cloudinary
  */
@@ -52,6 +80,7 @@ function getPublicIdFromUrl(url: string): string | null {
 
 export const cloudinaryHandles = {
   uploadImageToCloudinary,
+  uploadMediaToCloudinary,
   deleteImageFromCloudinary,
   getPublicIdFromUrl,
 }

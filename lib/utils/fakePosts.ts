@@ -68,7 +68,7 @@ export const fakePosts: PostType[] = [
     tag: 'Feature',
   },
   {
-    id: '1',
+    id: '7',
     title: 'Stonewall praises Tranmere’s Ryan Allsop for reporting abuse',
     summary:
       'LGBT equality charity Stonewall has praised Tranmere goalkeeper Ryan Allsop for reporting abuse during a recent match.',

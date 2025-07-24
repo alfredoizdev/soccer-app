@@ -141,6 +141,20 @@ export const matchEventsTable = pgTable('match_events', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 })
 
+export const postsTable = pgTable('posts', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  content: text('content').notNull(),
+  mediaUrl: text('media_url'),
+  mediaType: text('media_type'), // 'image' o 'video'
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => usersTable.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
+
 export type InsertUser = typeof usersTable.$inferInsert
 export type SelectUser = typeof usersTable.$inferSelect
 
