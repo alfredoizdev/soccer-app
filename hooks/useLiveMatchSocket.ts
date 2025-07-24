@@ -298,6 +298,7 @@ export function useLiveMatchSocket({
       socket.off('disconnect', handleDisconnect)
       socket.off('connect_error', handleConnectError)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match.id, match.team1Id, match.team2Id])
 
   // Forzar estado 'live' si recibimos cualquier evento de partido relevante

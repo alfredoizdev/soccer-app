@@ -12,7 +12,7 @@ export default async function AddPlayerPage() {
 
   if (!user?.organizationId) {
     return (
-      <div className='max-w-6xl mx-auto py-12 px-4 sm:px-8'>
+      <div className='w-full mx-auto py-12 px-4 sm:px-8'>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-8'>
           <h2 className='text-2xl font-bold'>Register a Player</h2>
           <Link href='/members/players'>
@@ -27,24 +27,22 @@ export default async function AddPlayerPage() {
   }
 
   return (
-    <div className='max-w-6xl mx-auto py-12 px-4 sm:px-8'>
+    <div className='w-full mx-auto py-12 px-4 sm:px-8'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-8'>
         <h2 className='text-2xl font-bold'>Add a Player</h2>
         <Link href='/members/players'>
           <Button variant='default'>Back to Players</Button>
         </Link>
       </div>
-      <div className='flex justify-center'>
-        <div className='w-full min-w-[300px]'>
-          <PlayerForm
-            action='create'
-            fixedUserId={user.id}
-            fixedUserName={user.name}
-            fixedUserLastName={user.lastName}
-            fixedOrganizationId={user.organizationId}
-            redirectPath='/members/players'
-          />
-        </div>
+      <div className='flex justify-center w-full items-center mx-auto'>
+        <PlayerForm
+          action='create'
+          fixedUserId={user.id}
+          fixedUserName={user.name}
+          fixedUserLastName={user.lastName}
+          fixedOrganizationId={user.organizationId}
+          redirectPath='/members/players'
+        />
       </div>
     </div>
   )

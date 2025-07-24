@@ -7,9 +7,9 @@ export default async function Navbar() {
   const user = await userAuth()
 
   return (
-    <nav className='bg-white'>
+    <nav className='bg-white fixed top-0 left-0 w-full z-50 shadow border-b'>
       <div
-        className={`w-full flex flex-col sm:flex-row items-center max-w-screen-xl mx-auto
+        className={`w-full flex flex-col sm:flex-row items-center mx-auto
                     justify-between px-4 sm:px-6 py-3 sm:py-4  gap-2 
                     sm:gap-0 `}
       >

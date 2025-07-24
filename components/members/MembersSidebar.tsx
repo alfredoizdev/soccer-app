@@ -6,7 +6,7 @@ import Link from 'next/link'
 export default function MembersSidebar() {
   const pathname = usePathname()
   return (
-    <div className='bg-gray-100 p-4 rounded-lg w-full'>
+    <div className='bg-gray-100 p-4 h-full flex flex-col w-full'>
       <div className='flex flex-row justify-center items-center lg:items-start md:flex-col gap-5 overflow-hidden '>
         <Link
           href='/members/home'

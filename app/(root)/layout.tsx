@@ -19,13 +19,18 @@ export default async function RootLayout({
   return (
     <>
       <Navbar />
-      <main className='flex max-w-screen-xl mx-auto w-full min-h-[80vh]'>
-        <div className='w-56 pl-2 hidden md:block'>
+      <div className='flex flex-row min-h-screen w-full pt-10'>
+        {/* Sidebar fijo a la izquierda en desktop */}
+        <aside className='hidden md:block fixed left-0 top-0 h-screen w-20 lg:w-40 z-40 mt-[90px]'>
           <MembersSidebar />
-        </div>
-        <div className='flex-1 w-full px-2 md:px-4'>{children}</div>
-      </main>
-      <div className='fixed bottom-0 left-0 right-0 w-full md:hidden'>
+        </aside>
+        {/* Espacio para el sidebar en desktop */}
+        <main className='flex-1 w-full ml-0 md:ml-20 lg:ml-40 pt-[70px]'>
+          {children}
+        </main>
+      </div>
+      {/* Sidebar móvil fijo abajo */}
+      <div className='fixed bottom-0 left-0 right-0 w-full md:hidden z-50'>
         <MembersSidebar />
       </div>
       <Footer />
