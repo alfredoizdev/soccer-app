@@ -10,6 +10,11 @@ import {
 
 export const STATUS_ENUM = pgEnum('status', ['active', 'inactive'])
 export const ROLE_ENUM = pgEnum('role', ['admin', 'user'])
+export const POST_STATUS_ENUM = pgEnum('post_status', [
+  'pending',
+  'approved',
+  'rejected',
+])
 
 export const usersTable = pgTable('users', {
   id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
@@ -153,6 +158,7 @@ export const postsTable = pgTable('posts', {
     .references(() => usersTable.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  status: POST_STATUS_ENUM('status').notNull().default('pending'),
 })
 
 export type InsertUser = typeof usersTable.$inferInsert
