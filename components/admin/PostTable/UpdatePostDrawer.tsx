@@ -16,29 +16,33 @@ interface Props {
   open: boolean
   setOpen: (open: boolean) => void
   post: PostType
+  onSuccess?: () => void
 }
 
-export function UpdatePostDrawer({ open, setOpen, post }: Props) {
+export function UpdatePostDrawer({ open, setOpen, post, onSuccess }: Props) {
   if (!open) return null
 
   return (
     <Drawer open={open} onOpenChange={setOpen} direction='right'>
       <DrawerContent>
-        <div className='mx-auto w-full max-w-sm'>
+        <div className='mx-auto w-full max-w-sm p-4'>
           <DrawerHeader>
             <DrawerTitle>Edit Post</DrawerTitle>
             <DrawerDescription>Edit the post details.</DrawerDescription>
           </DrawerHeader>
           <PostForm
+            key={post.id}
             mode='update'
             initialData={{
               title: post.title,
               content: post.content,
-              mediaUrl: post.mediaUrl,
-              mediaType: post.mediaType,
+              mediaUrl: post.mediaUrl || '',
+              mediaType: post.mediaType || '',
             }}
             postId={post.id}
             userId={post.userId}
+            redirectPath='/admin/posts'
+            onSuccess={onSuccess}
           />
           <DrawerFooter>
             <DrawerClose asChild>

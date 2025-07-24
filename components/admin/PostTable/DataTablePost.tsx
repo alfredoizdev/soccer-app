@@ -18,11 +18,17 @@ import {
 } from '@/components/ui/table'
 import { useState, useCallback } from 'react'
 import { UpdatePostDrawer } from './UpdatePostDrawer'
+import { getPostsPaginatedAdminAction } from '@/lib/actions/posts.action'
 
-export default function DataTablePost({ posts }: { posts: PostType[] }) {
-  const [data, setData] = useState(posts)
+export default function DataTablePost({
+  posts: initialPosts,
+}: {
+  posts: PostType[]
+}) {
+  const [data, setData] = useState(initialPosts)
   const [editOpen, setEditOpen] = useState(false)
   const [editPost, setEditPost] = useState<PostType | null>(null)
+  const [loading, setLoading] = useState(false)
 
   // Actualizar status localmente tras aprobar/rechazar
   const handleStatusChange = useCallback(
@@ -36,6 +42,14 @@ export default function DataTablePost({ posts }: { posts: PostType[] }) {
     setEditPost(post)
     setEditOpen(true)
   }, [])
+
+  // Recargar los posts desde el backend tras update
+  const reloadPosts = async () => {
+    setLoading(true)
+    const res = await getPostsPaginatedAdminAction(1, 10)
+    if (res.success) setData(res.data)
+    setLoading(false)
+  }
 
   const table = useReactTable<PostType>({
     data,
@@ -79,7 +93,16 @@ export default function DataTablePost({ posts }: { posts: PostType[] }) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={table.getAllColumns().length}
+                  className='h-24 text-center'
+                >
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -114,6 +137,10 @@ export default function DataTablePost({ posts }: { posts: PostType[] }) {
           open={editOpen}
           setOpen={setEditOpen}
           post={editPost}
+          onSuccess={async () => {
+            setEditOpen(false)
+            await reloadPosts()
+          }}
         />
       )}
     </div>

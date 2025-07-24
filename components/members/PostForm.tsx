@@ -18,6 +18,7 @@ interface PostFormProps {
   }
   postId?: string
   userId: string
+  onSuccess?: () => void
 }
 
 type PostFormInputs = {
@@ -33,7 +34,9 @@ export default function PostForm({
   initialData,
   postId,
   userId,
-}: PostFormProps) {
+  redirectPath = '/members/posts',
+  onSuccess,
+}: PostFormProps & { redirectPath?: string }) {
   const defaultValues: PostFormInputs = {
     title: initialData?.title || '',
     content: initialData?.content || '',
@@ -65,7 +68,7 @@ export default function PostForm({
       }
     },
     defaultValues,
-    redirectPath: '/members/posts',
+    redirectPath,
   })
 
   // Eliminado uploadProgress, solo usamos uploading
@@ -78,11 +81,12 @@ export default function PostForm({
   useEffect(() => {
     if (actionResult?.success) {
       toast.success('Post saved!')
+      if (onSuccess) onSuccess()
     }
     if (actionResult?.error) {
       toast.error(actionResult.error)
     }
-  }, [actionResult])
+  }, [actionResult, onSuccess])
 
   return (
     <form
@@ -132,9 +136,15 @@ export default function PostForm({
             const file = e.target.files?.[0]
             setValue('mediaFile', file)
           }}
-          onClearMedia={() => setValue('mediaFile', undefined)}
+          onClearMedia={() => {
+            setValue('mediaFile', undefined)
+            toast.info(
+              'Media removed. The previous image or video will be deleted when you save the post.'
+            )
+          }}
           onUploadProgress={handleUploadProgress}
           disabled={isSubmitting || uploading}
+          previewUrl={initialData?.mediaUrl}
         />
       </div>
       <Button

@@ -2,9 +2,10 @@
 import { postsTable, usersTable } from '@/database/schema'
 import { dbPromise } from '@/database/drizzle'
 import slugify from 'slugify'
-import { eq, ne, desc } from 'drizzle-orm'
+import { eq, ne, desc, and } from 'drizzle-orm'
 import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { PostType, PostInput } from '@/types/PostType'
+import { revalidatePath } from 'next/cache'
 
 export async function createPost(input: PostInput) {
   try {
@@ -57,14 +58,25 @@ export async function createPost(input: PostInput) {
   }
 }
 
-export type PostUpdateInput = Partial<PostInput> & { id: string }
+export type PostUpdateInput = Partial<PostInput> & {
+  id: string
+  status?: 'pending' | 'approved' | 'rejected'
+}
 
 export async function updatePost(input: PostUpdateInput) {
   try {
     const { id, ...rest } = input
     if (!id) return { success: false, data: null, error: 'Missing post id' }
+    const db = await dbPromise
     let mediaUrl = rest.mediaUrl
     let mediaType = rest.mediaType
+    // Obtener el post actual para saber si hay media previa
+    const [current] = await db
+      .select()
+      .from(postsTable)
+      .where(eq(postsTable.id, id))
+    const prevMediaUrl = current?.mediaUrl
+
     if (rest.mediaFile) {
       let buffer: Buffer
       if (Buffer.isBuffer(rest.mediaFile)) {
@@ -79,7 +91,6 @@ export async function updatePost(input: PostUpdateInput) {
         ? 'video'
         : 'image'
       // Obtener username
-      const db = await dbPromise
       const user = await db.query.usersTable.findFirst({
         where: (u, { eq }) => eq(u.id, String(rest.userId)),
       })
@@ -87,8 +98,8 @@ export async function updatePost(input: PostUpdateInput) {
         ? `${user.name}-${user.lastName}`.replace(/\s+/g, '').toLowerCase()
         : 'unknown'
       // Borrar media anterior si existe
-      if (rest.mediaUrl) {
-        const publicId = cloudinaryHandles.getPublicIdFromUrl(rest.mediaUrl)
+      if (prevMediaUrl) {
+        const publicId = cloudinaryHandles.getPublicIdFromUrl(prevMediaUrl)
         if (publicId) {
           await cloudinaryHandles.deleteImageFromCloudinary(publicId)
         }
@@ -99,7 +110,12 @@ export async function updatePost(input: PostUpdateInput) {
         `soccer-app/posts/${username}`
       )
       mediaType = type
-    } else if (!rest.mediaUrl) {
+    } else if (!rest.mediaUrl && prevMediaUrl) {
+      // Si el admin borra la media (mediaUrl vacío o undefined), borrar la anterior
+      const publicId = cloudinaryHandles.getPublicIdFromUrl(prevMediaUrl)
+      if (publicId) {
+        await cloudinaryHandles.deleteImageFromCloudinary(publicId)
+      }
       mediaUrl = undefined
       mediaType = 'text'
     }
@@ -108,12 +124,14 @@ export async function updatePost(input: PostUpdateInput) {
     if (rest.title) {
       updateData.slug = slugify(rest.title, { lower: true, strict: true })
     }
-    const db = await dbPromise
     const [post] = await db
       .update(postsTable)
       .set(updateData)
       .where(eq(postsTable.id, id))
       .returning()
+
+    revalidatePath('/admin/posts', 'page')
+
     return { success: true, data: post, error: null }
   } catch (error) {
     console.error('Error updating post:', error)
@@ -142,6 +160,7 @@ export async function getPostsAction() {
       })
       .from(postsTable)
       .leftJoin(usersTable, eq(postsTable.userId, usersTable.id))
+      .where(eq(postsTable.status, 'approved'))
     const data: PostType[] = posts.map((row) => ({
       ...row.post,
       mediaUrl: row.post.mediaUrl ?? undefined,
@@ -203,7 +222,12 @@ export async function getRecentPosts(
       })
       .from(postsTable)
       .leftJoin(usersTable, eq(postsTable.userId, usersTable.id))
-      .where(excludePostId ? ne(postsTable.id, excludePostId) : undefined)
+      .where(
+        and(
+          eq(postsTable.status, 'approved'),
+          excludePostId ? ne(postsTable.id, excludePostId) : undefined
+        )
+      )
       .orderBy(desc(postsTable.createdAt))
       .limit(limit)
 
@@ -220,5 +244,39 @@ export async function getRecentPosts(
   } catch (error) {
     console.error('Error getting recent posts:', error)
     return { success: false, data: [], error: 'Failed to get recent posts' }
+  }
+}
+
+export async function getPostsPaginatedAdminAction(
+  page: number = 1,
+  perPage: number = 10
+) {
+  try {
+    const db = await dbPromise
+    const offset = (page - 1) * perPage
+    const posts = await db
+      .select({
+        post: postsTable,
+        user: usersTable,
+      })
+      .from(postsTable)
+      .leftJoin(usersTable, eq(postsTable.userId, usersTable.id))
+      .orderBy(desc(postsTable.createdAt))
+      .limit(perPage)
+      .offset(offset)
+    const total = await db.select().from(postsTable)
+    const data: PostType[] = posts.map((row) => ({
+      ...row.post,
+      mediaUrl: row.post.mediaUrl ?? undefined,
+      mediaType: row.post.mediaType ?? undefined,
+      createdAt: row.post.createdAt ?? undefined,
+      updatedAt: row.post.updatedAt ?? undefined,
+      userName: row.user ? `${row.user.name} ${row.user.lastName}` : undefined,
+      userAvatar: row.user?.avatar ?? undefined,
+    }))
+    return { success: true, data, total: total.length, error: null }
+  } catch (error) {
+    console.error('Error getting paginated posts:', error)
+    return { success: false, data: [], total: 0, error: 'Failed to get posts' }
   }
 }

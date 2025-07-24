@@ -19,4 +19,5 @@ export type PostType = {
   updatedAt?: Date
   userName?: string
   userAvatar?: string
+  status: 'pending' | 'approved' | 'rejected'
 }

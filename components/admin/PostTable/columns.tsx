@@ -45,6 +45,13 @@ export function getPostColumns(
       ),
     },
     {
+      accessorKey: 'mediaType',
+      header: 'Type',
+      cell: ({ row }) => (
+        <span className='capitalize'>{row.original.mediaType || 'text'}</span>
+      ),
+    },
+    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
