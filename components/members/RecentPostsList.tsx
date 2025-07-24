@@ -1,3 +1,4 @@
+import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Avatar, AvatarImage } from '@/components/ui/avatar'
@@ -61,6 +62,7 @@ export default function RecentPostsList({
                       className='w-full h-full object-cover'
                       muted
                       preload='metadata'
+                      data-testid='post-video'
                     />
                   ) : (
                     <Image

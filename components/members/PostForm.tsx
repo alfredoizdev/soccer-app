@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useState, useEffect } from 'react'
 import useSubmitForm from '@/hooks/useSubmitForm'
 import { createPost, updatePost } from '@/lib/actions/posts.action'
@@ -89,8 +90,11 @@ export default function PostForm({
       className='space-y-4 w-full max-w-xl mx-auto'
     >
       <div>
-        <label className='block font-semibold mb-1'>Title</label>
+        <label htmlFor='post-title' className='block font-semibold mb-1'>
+          Title
+        </label>
         <input
+          id='post-title'
           type='text'
           className='border-2 border-gray-300 rounded-md p-2 w-full'
           {...register('title', {
@@ -104,8 +108,11 @@ export default function PostForm({
         )}
       </div>
       <div>
-        <label className='block font-semibold mb-1'>Content</label>
+        <label htmlFor='post-content' className='block font-semibold mb-1'>
+          Content
+        </label>
         <textarea
+          id='post-content'
           className='border-2 border-gray-300 rounded-md p-2 w-full'
           rows={5}
           {...register('content', {

@@ -1,3 +1,4 @@
+import React from 'react'
 import { PostType } from '@/types/PostType'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -36,6 +37,7 @@ function PostCard({ post }: PostCardProps) {
             controls
             className='w-full h-full object-cover rounded-none'
             style={{ maxHeight: '160px' }}
+            data-testid='post-video'
           />
         ) : post.mediaUrl ? (
           <Image
