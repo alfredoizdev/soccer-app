@@ -65,6 +65,8 @@ export function getPostColumns(
               const res = await updatePost({
                 id: row.original.id,
                 status: 'approved',
+                mediaUrl: row.original.mediaUrl,
+                mediaType: row.original.mediaType,
               })
               if (res.success) {
                 toast.success('Post approved')
@@ -85,6 +87,8 @@ export function getPostColumns(
               const res = await updatePost({
                 id: row.original.id,
                 status: 'rejected',
+                mediaUrl: row.original.mediaUrl,
+                mediaType: row.original.mediaType,
               })
               if (res.success) {
                 toast.success('Post rejected')

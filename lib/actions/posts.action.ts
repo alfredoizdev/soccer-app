@@ -13,7 +13,7 @@ export async function createPost(input: PostInput) {
       return { success: false, data: null, error: 'Missing required fields' }
     }
     let mediaUrl = input.mediaUrl
-    let mediaType = input.mediaType
+    let mediaType: 'image' | 'video' | 'text' = 'text'
     if (input.mediaFile) {
       let buffer: Buffer
       if (Buffer.isBuffer(input.mediaFile)) {
@@ -69,7 +69,8 @@ export async function updatePost(input: PostUpdateInput) {
     if (!id) return { success: false, data: null, error: 'Missing post id' }
     const db = await dbPromise
     let mediaUrl = rest.mediaUrl
-    let mediaType = rest.mediaType
+    let mediaType: 'image' | 'video' | 'text' =
+      (rest.mediaType as 'image' | 'video' | 'text') || 'text'
     // Obtener el post actual para saber si hay media previa
     const [current] = await db
       .select()

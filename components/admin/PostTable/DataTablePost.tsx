@@ -32,8 +32,14 @@ export default function DataTablePost({
 
   // Actualizar status localmente tras aprobar/rechazar
   const handleStatusChange = useCallback(
-    (id: string, status: 'approved' | 'rejected') => {
+    async (id: string, status: 'approved' | 'rejected') => {
+      // Actualizar localmente primero para UI inmediata
       setData((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)))
+
+      // Recargar desde backend para asegurar sincronización completa
+      setTimeout(async () => {
+        await reloadPosts()
+      }, 100)
     },
     []
   )

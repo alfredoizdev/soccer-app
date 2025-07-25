@@ -1,4 +1,5 @@
 import cloudinary from '@/lib/config/cloudinary'
+import { Readable } from 'stream'
 
 /**
  * Sube una imagen a Cloudinary y retorna la URL segura
@@ -27,6 +28,25 @@ function uploadImageToCloudinary(
   })
 }
 
+function uploadVideoBufferToCloudinary(
+  buffer: Buffer,
+  folder?: string
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'video',
+      },
+      (error, result) => {
+        if (error) return reject(error)
+        resolve(result?.secure_url || '')
+      }
+    )
+    Readable.from(buffer).pipe(stream)
+  })
+}
+
 /**
  * Sube una imagen o video a Cloudinary y retorna la URL segura
  * @param buffer Buffer del archivo
@@ -38,14 +58,16 @@ function uploadMediaToCloudinary(
   type: 'image' | 'video',
   folder?: string
 ): Promise<string> {
+  if (type === 'video') {
+    return uploadVideoBufferToCloudinary(buffer, folder)
+  }
+  // Para imágenes, sigue usando base64
   return new Promise((resolve, reject) => {
     cloudinary.uploader.upload(
-      `data:${
-        type === 'video' ? 'video/mp4' : 'image/jpeg'
-      };base64,${buffer.toString('base64')}`,
+      `data:image/jpeg;base64,${buffer.toString('base64')}`,
       {
         folder,
-        resource_type: type,
+        resource_type: 'image',
       },
       (error, result) => {
         if (error) return reject(error)

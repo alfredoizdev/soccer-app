@@ -66,7 +66,7 @@ function useSubmitForm<T extends Record<string, unknown>>({
     try {
       const result = await actionFn({
         ...data,
-        avatar: imageFile || '',
+        mediaFile: data.mediaFile || imageFile || '',
       })
       setActionResult(result)
       // Adaptar error null a undefined aquí
