@@ -80,7 +80,6 @@ export default function PostForm({
 
   useEffect(() => {
     if (actionResult?.success) {
-      toast.success('Post saved!')
       if (onSuccess) onSuccess()
     }
     if (actionResult?.error) {
