@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { MatchEvent } from './MatchCalendarEvent'
@@ -32,6 +33,16 @@ export default function MatchCalendarEventModal({
       <DialogContent className='max-w-[calc(100vw-2rem)] sm:max-w-md px-4 sm:px-8 rounded-none'>
         <DialogHeader>
           <DialogTitle>Match Details</DialogTitle>
+          {status === 'inactive' && (
+            <div className='flex justify-center mt-2'>
+              <Badge
+                variant='secondary'
+                className='bg-yellow-100 text-yellow-800 border-yellow-200'
+              >
+                🏁 Match Completed
+              </Badge>
+            </div>
+          )}
         </DialogHeader>
         <div className='flex items-center justify-center gap-4 my-2'>
           <div className='flex flex-col items-center'>
