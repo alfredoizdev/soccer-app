@@ -82,7 +82,6 @@ export default function OrganizationForm({
       <div>
         <ImageInput
           name='avatar'
-          register={register}
           onChange={handleImageChange}
           className='border-2 border-gray-300 rounded-md p-2 w-full'
           previewUrl={imagePreview ?? team?.avatar ?? undefined}

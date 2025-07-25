@@ -64,9 +64,22 @@ function useSubmitForm<T extends Record<string, unknown>>({
 
   const handleFormSubmit: SubmitHandler<T> = async (data) => {
     try {
+      // Detectar si el formulario usa 'avatar' o 'mediaFile'
+      const extra: Record<string, unknown> = {}
+      if ('avatar' in data) {
+        extra.avatar =
+          (data as unknown as { avatar?: File | string }).avatar ||
+          imageFile ||
+          ''
+      } else if ('mediaFile' in data) {
+        extra.mediaFile =
+          (data as unknown as { mediaFile?: File | string }).mediaFile ||
+          imageFile ||
+          ''
+      }
       const result = await actionFn({
         ...data,
-        mediaFile: data.mediaFile || imageFile || '',
+        ...extra,
       })
       setActionResult(result)
       // Adaptar error null a undefined aquí
@@ -79,6 +92,7 @@ function useSubmitForm<T extends Record<string, unknown>>({
       }
 
       if (success) {
+        toast.success('Operation completed successfully')
         if (redirectPath) router.push(redirectPath)
       }
     } catch (error) {
