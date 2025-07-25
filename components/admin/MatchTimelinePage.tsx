@@ -190,7 +190,12 @@ export default function MatchTimelinePage({
       {/* Header con botón de regreso */}
       <div className='mb-4 sm:mb-6 flex justify-between items-center w-full mx-auto'>
         <Link
-          href={`/admin/matches/history/${matchId}`}
+          href={
+            typeof window !== 'undefined' &&
+            window.location.pathname.includes('/admin/')
+              ? `/admin/matches/history/${matchId}`
+              : `/members/matches/history`
+          }
           className='inline-flex bg-gray-800 rounded-md p-2 items-center text-white mb-2 sm:mb-4 text-sm'
         >
           <FontAwesomeIcon icon={faArrowLeft} className='w-4 h-4 mr-2' />
@@ -202,7 +207,7 @@ export default function MatchTimelinePage({
 
       {/* Score Section con Card blanca */}
       <div className='p-4'>
-        <Card className='border-2 border-gray-200 shadow-sm'>
+        <Card className='border-2 border-gray-200 shadow-sm rounded-none'>
           <CardHeader className='text-center pb-3'>
             <CardTitle className='text-lg text-gray-700'>Match Score</CardTitle>
           </CardHeader>

@@ -146,7 +146,7 @@ export default function MatchForm({ teams }: Props) {
             <span className='text-red-500'>{errors.location.message}</span>
           )}
         </div>
-        <Button type='submit' className='w-full'>
+        <Button type='submit' className='w-full rounded-none'>
           Create Match
         </Button>
       </form>

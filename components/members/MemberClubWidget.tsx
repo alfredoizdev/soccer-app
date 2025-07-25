@@ -14,7 +14,7 @@ export default function MemberClubWidget({
   // Aquí puedes agregar lógica de join/leave club con useTransition o useState
   // Por ahora solo muestra la UI
   return (
-    <Card className='p-6 flex w-full'>
+    <Card className='p-6 flex w-full rounded-none'>
       <CardContent className='flex flex-col gap-4 items-center w-full'>
         {club && (
           <>
@@ -36,7 +36,11 @@ export default function MemberClubWidget({
             </div>
 
             <form action='/members/join-club' method='POST'>
-              <Button type='submit' variant='destructive'>
+              <Button
+                type='submit'
+                variant='destructive'
+                className='rounded-none'
+              >
                 Leave Club
               </Button>
             </form>

@@ -59,7 +59,7 @@ export default function JoinClub({
               setLoadingId(null)
             }}
             disabled={loadingId === currentClub.id}
-            className='w-full flex items-center gap-2'
+            className='w-full flex items-center gap-2 rounded-none'
           >
             {loadingId === currentClub.id ? 'Unregistering...' : 'Unregister'}
           </Button>
@@ -124,7 +124,7 @@ export default function JoinClub({
                 setLoadingId(null)
               }}
               disabled={joinedClubId === club.id || loadingId === club.id}
-              className='w-full flex items-center gap-2'
+              className='w-full flex items-center gap-2 rounded-none'
             >
               {joinedClubId === club.id
                 ? 'Joined'

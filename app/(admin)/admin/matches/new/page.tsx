@@ -18,7 +18,7 @@ export default async function NewMatchPage() {
       <div className='flex items-center justify-between mb-6'>
         <h1 className='text-2xl font-bold'>New Match</h1>
         <Link href='/admin/matches'>
-          <Button>
+          <Button className='rounded-none'>
             <ArrowLeft className='w-4 h-4' />
             Back to matches
           </Button>

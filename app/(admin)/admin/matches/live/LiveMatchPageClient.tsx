@@ -565,7 +565,7 @@ export default function LiveMatchPageClient({
             return (
               <Card
                 key={p.id}
-                className='p-3 sm:p-4 mt-3 sm:mt-5 flex flex-col gap-2 relative justify-center items-center'
+                className='p-3 sm:p-4 mt-3 sm:mt-5 flex flex-col gap-2 relative justify-center items-center rounded-none'
               >
                 <div className='absolute top-[-15px] sm:top-[-20px] left-[50%] -translate-x-1/2'>
                   <Avatar className='w-12 h-12 sm:w-16 sm:h-16'>

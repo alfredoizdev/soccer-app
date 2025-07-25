@@ -45,7 +45,7 @@ export function UpdatePlayerDrawer({
 
   return (
     <Drawer open={open} onOpenChange={setOpen} direction='right'>
-      <DrawerContent>
+      <DrawerContent className='rounded-none'>
         <div className='mx-auto w-full max-w-sm'>
           <DrawerHeader>
             <DrawerTitle>Update Player</DrawerTitle>
@@ -58,7 +58,9 @@ export function UpdatePlayerDrawer({
           />
           <DrawerFooter>
             <DrawerClose asChild>
-              <Button variant='outline'>Cancel</Button>
+              <Button variant='outline' className='rounded-none'>
+                Cancel
+              </Button>
             </DrawerClose>
           </DrawerFooter>
         </div>

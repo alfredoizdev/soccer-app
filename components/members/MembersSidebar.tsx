@@ -6,6 +6,7 @@ import {
   UserPlus,
   Users,
   FileText,
+  History,
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -109,6 +110,22 @@ export default function MembersSidebar() {
             <>
               <Calendar className='w-5 h-5' />
               <span className='hidden lg:inline'>Matches</span>
+            </>
+          )}
+        </Link>
+        <Link
+          href='/members/matches/history'
+          className={`flex items-center text-gray-700 hover:underline gap-1 order-last sm:order-2`}
+        >
+          {pathname === '/members/matches/history' ? (
+            <div className='flex items-center p-2 rounded-md bg-gray-300 text-gray-700 gap-1'>
+              <History className='w-5 h-5' />
+              <span className='hidden lg:inline'>History</span>
+            </div>
+          ) : (
+            <>
+              <History className='w-5 h-5' />
+              <span className='hidden lg:inline'>History</span>
             </>
           )}
         </Link>

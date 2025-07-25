@@ -28,11 +28,11 @@ export function UpdateTeamDrawer({ team }: Props) {
   return (
     <Drawer open={open} onOpenChange={setOpen} direction='right'>
       <DrawerTrigger asChild>
-        <Button variant='outline' size='icon'>
+        <Button variant='outline' size='icon' className='rounded-none'>
           <PencilIcon className='w-4 h-4' />
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
+      <DrawerContent className='rounded-none'>
         <div className='mx-auto w-full max-w-sm'>
           <DrawerHeader>
             <DrawerTitle>Update Team</DrawerTitle>
@@ -45,7 +45,9 @@ export function UpdateTeamDrawer({ team }: Props) {
           />
           <DrawerFooter>
             <DrawerClose asChild>
-              <Button variant='outline'>Cancel</Button>
+              <Button variant='outline' className='rounded-none'>
+                Cancel
+              </Button>
             </DrawerClose>
           </DrawerFooter>
         </div>

@@ -29,7 +29,9 @@ export default async function AddPlayerPage() {
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-8'>
         <h2 className='text-2xl font-bold'>Add a Player</h2>
         <Link href='/members/players'>
-          <Button variant='default'>Back to Players</Button>
+          <Button variant='default' className='rounded-none'>
+            Back to Players
+          </Button>
         </Link>
       </div>
       <div className='flex justify-center w-full items-center mx-auto'>

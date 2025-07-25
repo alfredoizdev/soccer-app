@@ -198,7 +198,7 @@ export default function JerseyNumberSelector({
           {value ? `Jersey #${value}` : 'Select Jersey Number'}
         </Button>
       </DialogTrigger>
-      <DialogContent className='max-w-2xl max-h-[80vh] overflow-y-auto'>
+      <DialogContent className='max-w-2xl max-h-[80vh] overflow-y-auto rounded-none'>
         <DialogHeader>
           <DialogTitle>Select Jersey Number</DialogTitle>
           <div className='flex items-center gap-2 text-sm text-gray-600'>

@@ -32,7 +32,7 @@ export default function TeamsInfo({
   players,
 }: TeamsInfoProps) {
   return (
-    <Card>
+    <Card className='rounded-none'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2'>
           <Avatar className='w-6 h-6'>

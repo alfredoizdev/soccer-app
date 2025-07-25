@@ -31,7 +31,7 @@ export default async function DebugTeamsPage() {
       <h1 className='text-2xl font-bold mb-4'>Debug Teams & Players</h1>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-6'>
-        <Card>
+        <Card className='rounded-none'>
           <CardHeader>
             <CardTitle>Total Teams</CardTitle>
           </CardHeader>
@@ -42,7 +42,7 @@ export default async function DebugTeamsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='rounded-none'>
           <CardHeader>
             <CardTitle>Total Players</CardTitle>
           </CardHeader>
@@ -53,7 +53,7 @@ export default async function DebugTeamsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='rounded-none'>
           <CardHeader>
             <CardTitle>Teams with Players</CardTitle>
           </CardHeader>
@@ -66,7 +66,7 @@ export default async function DebugTeamsPage() {
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        <Card>
+        <Card className='rounded-none'>
           <CardHeader>
             <CardTitle>Teams</CardTitle>
           </CardHeader>
@@ -99,7 +99,7 @@ export default async function DebugTeamsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='rounded-none'>
           <CardHeader>
             <CardTitle>Players</CardTitle>
           </CardHeader>

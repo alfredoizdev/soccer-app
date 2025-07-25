@@ -153,7 +153,7 @@ export default function MatchTimeline({
   const progress = Math.min((currentMinute / 90) * 100, 100)
 
   return (
-    <Card className='shadow-sm'>
+    <Card className='shadow-sm rounded-none'>
       <CardHeader>
         <CardTitle className='text-lg sm:text-xl'>Match Timeline</CardTitle>
       </CardHeader>

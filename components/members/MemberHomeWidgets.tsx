@@ -47,7 +47,7 @@ export default async function MemberHomeWidgets() {
                 href={`/members/players/${player.id}`}
                 className='block'
               >
-                <Card className='p-4 flex flex-col items-center gap-2'>
+                <Card className='p-4 flex flex-col items-center gap-2 rounded-none'>
                   <CardContent className='flex flex-col items-center gap-2'>
                     <Image
                       width={100}

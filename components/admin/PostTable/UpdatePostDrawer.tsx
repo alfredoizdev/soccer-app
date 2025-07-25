@@ -24,7 +24,7 @@ export function UpdatePostDrawer({ open, setOpen, post, onSuccess }: Props) {
 
   return (
     <Drawer open={open} onOpenChange={setOpen} direction='right'>
-      <DrawerContent>
+      <DrawerContent className='rounded-none'>
         <div className='mx-auto w-full max-w-sm p-4'>
           <DrawerHeader>
             <DrawerTitle>Edit Post</DrawerTitle>
@@ -46,7 +46,9 @@ export function UpdatePostDrawer({ open, setOpen, post, onSuccess }: Props) {
           />
           <DrawerFooter>
             <DrawerClose asChild>
-              <Button variant='outline'>Cancel</Button>
+              <Button variant='outline' className='rounded-none'>
+                Cancel
+              </Button>
             </DrawerClose>
           </DrawerFooter>
         </div>

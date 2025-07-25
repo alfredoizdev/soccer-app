@@ -26,10 +26,12 @@ export default async function MatchesPage() {
         <h1 className='text-2xl font-bold'>Active Matches</h1>
         <div className='flex gap-2'>
           <Link href='/admin/matches/history'>
-            <Button variant='outline'>View History</Button>
+            <Button variant='outline' className='rounded-none'>
+              View History
+            </Button>
           </Link>
           <Link href='/admin/matches/new'>
-            <Button>New match</Button>
+            <Button className='rounded-none'>New match</Button>
           </Link>
         </div>
       </div>

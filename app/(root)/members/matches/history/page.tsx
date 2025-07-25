@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import Image from 'next/image'
+import { abbreviateTeam } from '@/lib/utils/abbreviateTeam'
 
 interface MatchListItem {
   id: string
@@ -32,20 +33,15 @@ export default async function MatchHistoryPage() {
       match.duration
   )
 
-  console.log('All matches:', allMatches)
-
   return (
     <div className='w-full px-4 mx-auto mt-5 animate-fade-in duration-500'>
       <div className='flex items-center justify-between mb-6'>
         <h1 className='text-2xl font-bold'>Match History</h1>
         <div className='flex gap-2'>
-          <Link href='/admin/matches'>
+          <Link href='/members/matches/calendar'>
             <Button variant='outline' className='rounded-none'>
-              Active Matches
+              Back to Calendar
             </Button>
-          </Link>
-          <Link href='/admin/matches/new'>
-            <Button className='rounded-none'>New match</Button>
           </Link>
         </div>
       </div>
@@ -65,65 +61,60 @@ export default async function MatchHistoryPage() {
               className='hover:shadow-lg transition-shadow rounded-none'
             >
               <CardHeader>
-                <CardTitle className='text-lg'>
-                  {format(new Date(match.date), 'MMM dd, yyyy')}
+                <CardTitle className='text-center'>
+                  {format(new Date(match.date), 'PPP')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='flex items-center justify-between mb-4'>
-                  <div className='flex items-center gap-2'>
-                    <div className='w-8 h-8'>
-                      <Image
-                        src={match.team1Avatar || '/no-club.jpg'}
-                        alt={match.team1}
-                        width={32}
-                        height={32}
-                        className='w-full h-full object-cover rounded-full'
-                      />
+                <div className='flex items-center justify-center gap-4 mb-4'>
+                  <div className='text-center'>
+                    <Image
+                      src={match.team1Avatar || '/no-club.jpg'}
+                      alt={match.team1}
+                      width={48}
+                      height={48}
+                      className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                    />
+                    <div className='font-semibold text-sm'>
+                      {abbreviateTeam(match.team1)}
                     </div>
-                    <span className='font-medium text-sm'>{match.team1}</span>
+                    <div className='text-2xl font-bold text-green-600'>
+                      {match.team1Goals || 0}
+                    </div>
                   </div>
-                  <div className='text-lg font-bold'>
-                    {match.team1Goals} - {match.team2Goals}
+
+                  <div className='text-center'>
+                    <div className='text-2xl font-bold text-gray-400'>VS</div>
+                    <div className='text-xs text-gray-500 mt-1'>
+                      {match.duration ? 'Completed' : 'Scheduled'}
+                    </div>
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-medium text-sm'>{match.team2}</span>
-                    <div className='w-8 h-8'>
-                      <Image
-                        src={match.team2Avatar || '/no-club.jpg'}
-                        alt={match.team2}
-                        width={32}
-                        height={32}
-                        className='w-full h-full object-cover rounded-full'
-                      />
+
+                  <div className='text-center'>
+                    <Image
+                      src={match.team2Avatar || '/no-club.jpg'}
+                      alt={match.team2}
+                      width={48}
+                      height={48}
+                      className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                    />
+                    <div className='font-semibold text-sm'>
+                      {abbreviateTeam(match.team2)}
+                    </div>
+                    <div className='text-2xl font-bold text-green-600'>
+                      {match.team2Goals || 0}
                     </div>
                   </div>
                 </div>
 
-                {match.duration && (
-                  <div className='text-sm text-gray-500 mb-3'>
-                    Duration: {Math.floor(match.duration / 60)}:
-                    {(match.duration % 60).toString().padStart(2, '0')}
-                  </div>
-                )}
-
-                <div className='flex gap-2'>
-                  <Link href={`/admin/matches/history/${match.id}`}>
+                <div className='flex gap-2 justify-center'>
+                  <Link href={`/members/matches/history/${match.id}/timeline`}>
                     <Button
-                      variant='outline'
+                      variant='default'
                       size='sm'
                       className='rounded-none'
                     >
-                      View Details
-                    </Button>
-                  </Link>
-                  <Link href={`/admin/matches/history/${match.id}/timeline`}>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      className='rounded-none'
-                    >
-                      Timeline
+                      See Timeline
                     </Button>
                   </Link>
                 </div>

@@ -157,7 +157,7 @@ export default async function PlayerDetailPage({
             <PlayerMatchesDrawer
               matches={sortedMatches}
               trigger={
-                <Button variant='default' size='sm'>
+                <Button variant='default' size='sm' className='rounded-none'>
                   See all
                 </Button>
               }

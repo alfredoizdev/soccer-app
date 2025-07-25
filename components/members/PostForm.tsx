@@ -149,7 +149,7 @@ export default function PostForm({
       <Button
         type='submit'
         disabled={isSubmitting || uploading}
-        className='w-full'
+        className='w-full rounded-none'
       >
         {mode === 'create' ? 'Create Post' : 'Update Post'}
       </Button>

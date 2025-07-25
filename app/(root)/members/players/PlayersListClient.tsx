@@ -85,7 +85,7 @@ export default function PlayersListClient({
             </Link>
             <Button
               variant='ghost'
-              className='bg-destructive/20 text-destructive p-2 hover:bg-destructive/30 ml-auto'
+              className='bg-destructive/20 text-destructive p-2 hover:bg-destructive/30 ml-auto rounded-none'
               size='icon'
               onClick={() => handleDelete(player.id)}
               aria-label='Delete player'

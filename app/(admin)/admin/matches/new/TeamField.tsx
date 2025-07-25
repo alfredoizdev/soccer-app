@@ -48,7 +48,7 @@ export default function TeamField({
             <ChevronsUpDown className='opacity-50' />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className='w-full p-0'>
+        <PopoverContent className='w-full p-0 rounded-none'>
           <Command>
             <CommandInput placeholder='Search team...' className='h-9' />
             <CommandList>

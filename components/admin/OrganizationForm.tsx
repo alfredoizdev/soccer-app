@@ -109,7 +109,11 @@ export default function OrganizationForm({
           <p className='text-red-500'>{errors.description.message}</p>
         )}
       </div>
-      <Button type='submit' className='w-full' disabled={isSubmitting}>
+      <Button
+        type='submit'
+        className='w-full rounded-none'
+        disabled={isSubmitting}
+      >
         {isSubmitting
           ? `Updating Team...`
           : action === 'create'

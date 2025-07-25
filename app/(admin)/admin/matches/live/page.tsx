@@ -155,7 +155,7 @@ const LiveMatchPage = () => {
         {players.map((p) => (
           <Card
             key={p.id}
-            className='p-4 flex flex-col gap-2 relative justify-center items-center'
+            className='p-4 flex flex-col gap-2 relative justify-center items-center rounded-none'
           >
             <div className='absolute top-[-20px] left-[50%] -translate-x-1/2'>
               <Avatar className='w-16 h-16'>

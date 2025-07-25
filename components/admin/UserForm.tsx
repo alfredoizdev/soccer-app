@@ -173,7 +173,11 @@ export default function UserForm({
           <p className='text-red-500'>{errors.status.message}</p>
         )}
       </div>
-      <Button type='submit' className='w-full' disabled={isSubmitting}>
+      <Button
+        type='submit'
+        className='w-full rounded-none'
+        disabled={isSubmitting}
+      >
         {isSubmitting
           ? action === 'create'
             ? 'Adding User...'

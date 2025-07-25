@@ -37,7 +37,7 @@ export default function PlayerStatsPerformance({
   ]
 
   return (
-    <Card>
+    <Card className='rounded-none'>
       <CardHeader>
         <CardTitle>Performance Averages</CardTitle>
       </CardHeader>

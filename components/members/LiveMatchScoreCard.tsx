@@ -30,7 +30,7 @@ export default function LiveMatchScoreCard({
   liveScore,
 }: LiveMatchScoreCardProps) {
   return (
-    <Card className='mb-2'>
+    <Card className='mb-2 rounded-none'>
       <CardHeader>
         <CardTitle className='text-center'>Live Score</CardTitle>
       </CardHeader>

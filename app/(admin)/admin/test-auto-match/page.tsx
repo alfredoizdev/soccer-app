@@ -90,7 +90,7 @@ export default function AutoMatchTestPage() {
     <div className='w-full mx-auto p-4 max-w-4xl'>
       <h1 className='text-3xl font-bold mb-6'>🧪 Automatic Match Test</h1>
 
-      <Card className='mb-6'>
+      <Card className='mb-6 rounded-none'>
         <CardHeader>
           <CardTitle>Test Configuration</CardTitle>
         </CardHeader>
@@ -131,7 +131,7 @@ export default function AutoMatchTestPage() {
 
       {/* Progress bar */}
       {isRunning && (
-        <Card className='mb-6'>
+        <Card className='mb-6 rounded-none'>
           <CardHeader>
             <CardTitle>🔄 Running Test...</CardTitle>
           </CardHeader>
@@ -177,7 +177,7 @@ export default function AutoMatchTestPage() {
 
       {/* Real-time logs */}
       {logs.length > 0 && (
-        <Card>
+        <Card className='rounded-none'>
           <CardHeader>
             <CardTitle>📝 Execution Logs</CardTitle>
           </CardHeader>

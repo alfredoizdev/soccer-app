@@ -334,7 +334,11 @@ export default function PlayerFormAdmin({
           <p className='text-red-500'>{errors.organizationId.message}</p>
         )}
       </div>
-      <Button type='submit' className='w-full' disabled={isSubmitting}>
+      <Button
+        type='submit'
+        className='w-full rounded-none'
+        disabled={isSubmitting}
+      >
         {isSubmitting
           ? action === 'create'
             ? 'Adding Player...'

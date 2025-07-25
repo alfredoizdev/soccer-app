@@ -264,7 +264,11 @@ export default function PlayerForm({
           })}
         />
       )}
-      <Button type='submit' className='w-full' disabled={isSubmitting}>
+      <Button
+        type='submit'
+        className='w-full rounded-none'
+        disabled={isSubmitting}
+      >
         {isSubmitting
           ? action === 'create'
             ? 'Adding Player...'

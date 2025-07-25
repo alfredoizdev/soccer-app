@@ -131,7 +131,7 @@ export default function SlideLatsMatchResults({
                     </div>
                   </CardContent>
                   <CardFooter className='flex justify-center items-center'>
-                    <Button className='w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded transition-colors'>
+                    <Button className='w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-none transition-colors'>
                       See details
                     </Button>
                   </CardFooter>

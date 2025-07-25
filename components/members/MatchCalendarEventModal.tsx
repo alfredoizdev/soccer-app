@@ -25,11 +25,11 @@ export default function MatchCalendarEventModal({
 }: MatchCalendarEventModalProps) {
   const router = useRouter()
   if (!event) return null
-  const { team1, team2, team1Avatar, team2Avatar, id, location } =
+  const { team1, team2, team1Avatar, team2Avatar, id, location, status } =
     event.resource || {}
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-[calc(100vw-2rem)] sm:max-w-md px-4 sm:px-8'>
+      <DialogContent className='max-w-[calc(100vw-2rem)] sm:max-w-md px-4 sm:px-8 rounded-none'>
         <DialogHeader>
           <DialogTitle>Match Details</DialogTitle>
         </DialogHeader>
@@ -78,10 +78,16 @@ export default function MatchCalendarEventModal({
         )}
         <DialogFooter>
           <button
-            className='bg-black text-white px-4 py-2 rounded hover:bg-gray-900 transition'
-            onClick={() => router.push(`/members/matches/live/${id}`)}
+            className='bg-black text-white px-4 py-2 rounded-none hover:bg-gray-900 transition'
+            onClick={() => {
+              if (status === 'inactive') {
+                router.push(`/members/matches/history/${id}/timeline`)
+              } else {
+                router.push(`/members/matches/live/${id}`)
+              }
+            }}
           >
-            View match
+            {status === 'inactive' ? 'See History' : 'View Match'}
           </button>
         </DialogFooter>
       </DialogContent>
