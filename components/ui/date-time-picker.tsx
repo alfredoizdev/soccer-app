@@ -87,6 +87,7 @@ export function DateTimePicker({
               selected={date}
               captionLayout='dropdown'
               onSelect={handleDateSelect}
+              disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
             />
           </PopoverContent>
         </Popover>
