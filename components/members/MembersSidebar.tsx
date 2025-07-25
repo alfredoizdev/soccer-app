@@ -97,10 +97,10 @@ export default function MembersSidebar() {
           )}
         </Link>
         <Link
-          href={`/members/matches/live`}
+          href='/members/matches/calendar'
           className={`flex items-center text-gray-700 hover:underline gap-1 order-last sm:order-2`}
         >
-          {pathname === '/members/matches/live' ? (
+          {pathname === '/members/matches/calendar' ? (
             <div className='flex items-center p-2 rounded-md bg-gray-300 text-gray-700 gap-1'>
               <Calendar className='w-5 h-5' />
               <span className='hidden lg:inline'>Matches</span>

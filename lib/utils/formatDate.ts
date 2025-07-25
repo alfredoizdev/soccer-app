@@ -27,3 +27,23 @@ export function formatDate(date: string | Date | null | undefined) {
     timeZone: 'UTC',
   })
 }
+
+export function formatTime(date: Date | string) {
+  const d = typeof date === 'string' ? new Date(date) : date
+  if (isNaN(d.getTime())) return 'N/A'
+  return d.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+export function formatShortDate(date: Date | string) {
+  const d = typeof date === 'string' ? new Date(date) : date
+  if (isNaN(d.getTime())) return 'N/A'
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}

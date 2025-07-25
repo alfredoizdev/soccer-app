@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { ReactNode } from 'react'
+import { User } from 'lucide-react'
 
 interface PlayerMatchCardProps {
   team1: { name: string; avatar: string; goals?: number }
@@ -23,6 +24,15 @@ export default function PlayerMatchCard({
   date,
   drawerButton,
 }: PlayerMatchCardProps) {
+  const hasLineup = stats && typeof stats.jerseyNumber === 'number'
+  if (!hasLineup) {
+    return (
+      <div className='flex flex-col items-center justify-center h-32 text-gray-500'>
+        <User className='w-8 h-8 mb-2' />
+        <span className='text-sm'>No lineup available</span>
+      </div>
+    )
+  }
   return (
     <div className='border-b pb-4 bg-blue-100/50 p-4 rounded-lg relative mt-5'>
       {/* Drawer button en la esquina superior derecha */}

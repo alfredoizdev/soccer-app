@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { abbreviateTeam } from '@/lib/utils/abbreviateTeam'
 
 interface Match {
   id: string
@@ -45,10 +46,10 @@ export default function LiveMatchScoreCard({
               <AvatarFallback>{match.team1.charAt(0)}</AvatarFallback>
             </Avatar>
             <h3 className='text-lg font-semibold text-center mb-2'>
-              {match.team1}
+              {abbreviateTeam(match.team1)}
             </h3>
             <div className='text-4xl font-bold text-blue-600'>
-              {liveScore.team1Goals}
+              <span style={{ color: '#6B7280' }}>{liveScore.team1Goals}</span>
             </div>
           </div>
 
@@ -65,10 +66,10 @@ export default function LiveMatchScoreCard({
               <AvatarFallback>{match.team2.charAt(0)}</AvatarFallback>
             </Avatar>
             <h3 className='text-lg font-semibold text-center mb-2'>
-              {match.team2}
+              {abbreviateTeam(match.team2)}
             </h3>
             <div className='text-4xl font-bold text-blue-600'>
-              {liveScore.team2Goals}
+              <span style={{ color: '#6B7280' }}>{liveScore.team2Goals}</span>
             </div>
           </div>
         </div>
