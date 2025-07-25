@@ -67,44 +67,73 @@ export default async function MatchHistoryPage() {
               </CardHeader>
               <CardContent>
                 <div className='flex items-center justify-center gap-4 mb-4'>
-                  <div className='text-center'>
-                    <Image
-                      src={match.team1Avatar || '/no-club.jpg'}
-                      alt={match.team1}
-                      width={48}
-                      height={48}
-                      className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
-                    />
-                    <div className='font-semibold text-sm'>
-                      {abbreviateTeam(match.team1)}
-                    </div>
-                    <div className='text-2xl font-bold text-green-600'>
-                      {match.team1Goals || 0}
-                    </div>
-                  </div>
+                  {(() => {
+                    const team1Goals = match.team1Goals || 0
+                    const team2Goals = match.team2Goals || 0
+                    const team1Wins = team1Goals > team2Goals
+                    const team2Wins = team2Goals > team1Goals
 
-                  <div className='text-center'>
-                    <div className='text-2xl font-bold text-gray-400'>VS</div>
-                    <div className='text-xs text-gray-500 mt-1'>
-                      {match.duration ? 'Completed' : 'Scheduled'}
-                    </div>
-                  </div>
+                    return (
+                      <>
+                        <div className='text-center'>
+                          <Image
+                            src={match.team1Avatar || '/no-club.jpg'}
+                            alt={match.team1}
+                            width={48}
+                            height={48}
+                            className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                          />
+                          <div className='font-semibold text-sm'>
+                            {abbreviateTeam(match.team1)}
+                          </div>
+                          <div
+                            className={`text-2xl font-bold ${
+                              team1Wins
+                                ? 'text-green-600'
+                                : team2Wins
+                                ? 'text-gray-500'
+                                : 'text-blue-600'
+                            }`}
+                          >
+                            {team1Goals}
+                          </div>
+                        </div>
 
-                  <div className='text-center'>
-                    <Image
-                      src={match.team2Avatar || '/no-club.jpg'}
-                      alt={match.team2}
-                      width={48}
-                      height={48}
-                      className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
-                    />
-                    <div className='font-semibold text-sm'>
-                      {abbreviateTeam(match.team2)}
-                    </div>
-                    <div className='text-2xl font-bold text-green-600'>
-                      {match.team2Goals || 0}
-                    </div>
-                  </div>
+                        <div className='text-center'>
+                          <div className='text-2xl font-bold text-gray-400'>
+                            VS
+                          </div>
+                          <div className='text-xs text-gray-500 mt-1'>
+                            {match.duration ? 'Completed' : 'Scheduled'}
+                          </div>
+                        </div>
+
+                        <div className='text-center'>
+                          <Image
+                            src={match.team2Avatar || '/no-club.jpg'}
+                            alt={match.team2}
+                            width={48}
+                            height={48}
+                            className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                          />
+                          <div className='font-semibold text-sm'>
+                            {abbreviateTeam(match.team2)}
+                          </div>
+                          <div
+                            className={`text-2xl font-bold ${
+                              team2Wins
+                                ? 'text-green-600'
+                                : team1Wins
+                                ? 'text-gray-500'
+                                : 'text-blue-600'
+                            }`}
+                          >
+                            {team2Goals}
+                          </div>
+                        </div>
+                      </>
+                    )
+                  })()}
                 </div>
 
                 <div className='flex gap-2 justify-center'>
