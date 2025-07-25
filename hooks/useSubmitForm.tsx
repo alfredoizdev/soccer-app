@@ -83,6 +83,7 @@ function useSubmitForm<T extends Record<string, unknown>>({
         if (redirectPath) router.push(redirectPath)
       }
     } catch (error) {
+      toast.error('Error submitting form')
       console.error('Error:', error)
     }
   }
