@@ -27,7 +27,7 @@ export default function MatchCalendarEventModal({
   const { team1, team2, team1Avatar, team2Avatar, id } = event.resource || {}
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-md'>
+      <DialogContent className='max-w-[calc(100vw-2rem)] sm:max-w-md px-4 sm:px-8'>
         <DialogHeader>
           <DialogTitle>Match Details</DialogTitle>
         </DialogHeader>
