@@ -13,6 +13,7 @@ export type MatchEvent = {
     team2: string
     team1Avatar?: string
     team2Avatar?: string
+    location?: string
   }
 }
 

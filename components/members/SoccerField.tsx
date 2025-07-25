@@ -30,21 +30,21 @@ export default function SoccerField({
   livePlayersTeam1,
   livePlayersTeam2,
   fullImage = false,
-  heightClass = 'h-[750px]',
+  heightClass = 'h-[1200px]',
 }: SoccerFieldProps) {
   // Helpers para posiciones (ajustar según el alto del field)
   const positions = {
     team2: {
-      attackers: 'top-[30px]',
-      mids: 'top-[140px]',
-      defs: 'top-[220px]',
-      gk: 'top-[300px]',
+      attackers: 'top-[120px]',
+      mids: 'top-[280px]',
+      defs: 'top-[420px]',
+      gk: 'top-[580px]',
     },
     team1: {
-      attackers: 'bottom-[250px]',
-      mids: 'bottom-[140px]',
-      defs: 'bottom-[60px]',
-      gk: 'bottom-4',
+      attackers: 'bottom-[480px]',
+      mids: 'bottom-[320px]',
+      defs: 'bottom-[180px]',
+      gk: 'bottom-[30px]',
     },
   }
 
@@ -75,19 +75,20 @@ export default function SoccerField({
       className={
         fullImage
           ? `relative w-full ${heightClass} bg-green-600 rounded-lg mb-6 shadow-lg`
-          : `relative w-full ${heightClass} bg-green-600 rounded-lg overflow-hidden mb-6 shadow-lg`
+          : `relative w-full ${heightClass} bg-green-600 rounded-lg mb-6 shadow-lg`
       }
     >
       <Image
         width={1000}
-        height={1000}
+        height={1400}
         src='/field.png'
         alt='Soccer Field'
         className={
           fullImage
             ? 'w-full h-full object-cover'
-            : 'w-full h-full object-cover object-bottom'
+            : 'w-full h-full object-contain bg-green-600'
         }
+        priority
       />
 
       {/* Team 2 (arriba) */}

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import { MatchEvent } from './MatchCalendarEvent'
 import { formatTime, formatShortDate } from '@/lib/utils/formatDate'
 import { abbreviateTeam } from '@/lib/utils/abbreviateTeam'
+import GoogleMap from './GoogleMap'
 
 interface MatchCalendarEventModalProps {
   open: boolean
@@ -24,7 +25,8 @@ export default function MatchCalendarEventModal({
 }: MatchCalendarEventModalProps) {
   const router = useRouter()
   if (!event) return null
-  const { team1, team2, team1Avatar, team2Avatar, id } = event.resource || {}
+  const { team1, team2, team1Avatar, team2Avatar, id, location } =
+    event.resource || {}
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-[calc(100vw-2rem)] sm:max-w-md px-4 sm:px-8'>
@@ -69,6 +71,11 @@ export default function MatchCalendarEventModal({
             {formatShortDate(event.start)} · {formatTime(event.start)}
           </span>
         </div>
+        {location && (
+          <div className='mb-4'>
+            <GoogleMap location={location} height='250px' />
+          </div>
+        )}
         <DialogFooter>
           <button
             className='bg-black text-white px-4 py-2 rounded hover:bg-gray-900 transition'

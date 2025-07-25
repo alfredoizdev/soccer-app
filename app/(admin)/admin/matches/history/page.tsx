@@ -1,8 +1,7 @@
-import React from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getAllMatchesWithTeams } from '@/lib/actions/matches.action'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { format } from 'date-fns'
 import Image from 'next/image'
 
@@ -32,6 +31,8 @@ export default async function MatchHistoryPage() {
       match.team2Goals > 0 ||
       match.duration
   )
+
+  console.log('All matches:', allMatches)
 
   return (
     <div className='w-full px-4 mx-auto mt-5 animate-fade-in duration-500'>

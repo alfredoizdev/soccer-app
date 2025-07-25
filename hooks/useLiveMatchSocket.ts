@@ -67,10 +67,24 @@ export function useLiveMatchSocket({
   // Inicializar jugadores con estado 'up' por defecto
   useEffect(() => {
     setLivePlayersTeam1(
-      playersTeam1.map((player) => ({ ...player, status: 'up' }))
+      playersTeam1.map((player) => ({
+        ...player,
+        status: 'up',
+        goals: player.goals || undefined,
+        assists: player.assists || undefined,
+        saves: player.saves || undefined,
+        goalsAllowed: player.goalsAllowed || undefined,
+      }))
     )
     setLivePlayersTeam2(
-      playersTeam2.map((player) => ({ ...player, status: 'up' }))
+      playersTeam2.map((player) => ({
+        ...player,
+        status: 'up',
+        goals: player.goals || undefined,
+        assists: player.assists || undefined,
+        saves: player.saves || undefined,
+        goalsAllowed: player.goalsAllowed || undefined,
+      }))
     )
   }, [playersTeam1, playersTeam2])
 
@@ -105,6 +119,11 @@ export function useLiveMatchSocket({
       playerId?: string
       playerName?: string
     }) => {
+      // Verificar que el evento es para este partido
+      if (data.matchId !== match.id) {
+        return
+      }
+
       // Actualizar el score en tiempo real
       if (data.teamId === match.team1Id) {
         setLiveScore((prev) => ({ ...prev, team1Goals: prev.team1Goals + 1 }))
@@ -141,6 +160,11 @@ export function useLiveMatchSocket({
       playerId: string
       playerName: string
     }) => {
+      // Verificar que el evento es para este partido
+      if (data.matchId !== match.id) {
+        return
+      }
+
       // Actualizar estadísticas de asistencia del jugador
       if (data.teamId === match.team1Id) {
         setLivePlayersTeam1((prev) =>
@@ -171,6 +195,11 @@ export function useLiveMatchSocket({
       playerId: string
       playerName: string
     }) => {
+      // Verificar que el evento es para este partido
+      if (data.matchId !== match.id) {
+        return
+      }
+
       // Actualizar estadísticas de parada del portero
       if (data.teamId === match.team1Id) {
         setLivePlayersTeam1((prev) =>
@@ -197,6 +226,11 @@ export function useLiveMatchSocket({
       playerId: string
       playerName: string
     }) => {
+      // Verificar que el evento es para este partido
+      if (data.matchId !== match.id) {
+        return
+      }
+
       // Solo actualizar estadísticas de gol permitido del portero
       if (data.teamId === match.team1Id) {
         setLivePlayersTeam1((prev) =>
@@ -234,6 +268,11 @@ export function useLiveMatchSocket({
       playerName: string
       eventType: string
     }) => {
+      // Verificar que el evento es para este partido
+      if (data.matchId !== match.id) {
+        return
+      }
+
       // Evento de toggle de jugador recibido
       if (data.teamId === match.team1Id) {
         setLivePlayersTeam1((prev) =>

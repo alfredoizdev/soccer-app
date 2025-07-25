@@ -14,6 +14,7 @@ export default async function MembersMatchesCalendarPage() {
       ...match,
       team1Avatar: match.team1Avatar,
       team2Avatar: match.team2Avatar,
+      location: match.location || undefined,
     },
   }))
 

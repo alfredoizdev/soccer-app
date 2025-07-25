@@ -41,16 +41,16 @@ export default async function MatchTimelinePageRoute({
   return (
     <MatchTimelinePage
       events={timelineEvents}
-      team1Name={match.match.team1}
-      team2Name={match.match.team2}
-      team1Avatar={match.match.team1Avatar}
-      team2Avatar={match.match.team2Avatar}
-      team1Id={match.match.team1Id}
-      team2Id={match.match.team2Id}
+      team1Name={match.team1}
+      team2Name={match.team2}
+      team1Avatar={match.team1Avatar}
+      team2Avatar={match.team2Avatar}
+      team1Id={match.team1Id}
+      team2Id={match.team2Id}
       matchId={id}
-      team1Goals={match.match.team1Goals || 0}
-      team2Goals={match.match.team2Goals || 0}
-      duration={match.match.duration || undefined}
+      team1Goals={match.team1Goals || 0}
+      team2Goals={match.team2Goals || 0}
+      duration={match.duration || undefined}
     />
   )
 }

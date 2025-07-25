@@ -65,7 +65,7 @@ export default function LiveMatchViewer({
               livePlayersTeam1={livePlayersTeam1}
               livePlayersTeam2={livePlayersTeam2}
               fullImage
-              heightClass='h-[750px]'
+              heightClass='h-[1200px]'
             />
           </div>
         </div>

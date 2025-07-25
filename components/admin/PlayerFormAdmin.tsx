@@ -143,6 +143,7 @@ export default function PlayerFormAdmin({
       }
     },
     defaultValues,
+    redirectPath: redirectPath ?? '/admin/players',
   })
 
   // Manejar el éxito del formulario
@@ -155,13 +156,11 @@ export default function PlayerFormAdmin({
       )
       if (onSuccess) {
         onSuccess()
-      } else if (redirectPath) {
-        window.location.href = redirectPath
       }
     } else if (actionResult?.error) {
       toast.error(actionResult.error)
     }
-  }, [actionResult, action, onSuccess, redirectPath])
+  }, [actionResult, action, onSuccess])
 
   const selectedClub = watch('organizationId')
   const { organizationsLoaded, loadOrganizations } = useGlobalStore()

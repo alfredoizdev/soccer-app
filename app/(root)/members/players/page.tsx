@@ -28,5 +28,9 @@ export default async function PlayersListPage() {
     }
   }
 
-  return <PlayersListClient players={players} orgMap={orgMap} />
+  return (
+    <div className='px-4'>
+      <PlayersListClient players={players} orgMap={orgMap} />
+    </div>
+  )
 }

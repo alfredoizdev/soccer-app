@@ -12,7 +12,21 @@ const handler = app.getRequestHandler()
 app.prepare().then(() => {
   const httpServer = createServer(handler)
 
-  const io = new Server(httpServer)
+  const io = new Server(httpServer, {
+    cors: {
+      origin: [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3001',
+      ],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      credentials: true,
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    },
+    allowEIO3: true,
+    transports: ['websocket', 'polling'],
+  })
 
   io.on('connection', (socket) => {
     console.log('a user connected')

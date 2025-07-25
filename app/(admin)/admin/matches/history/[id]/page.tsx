@@ -45,7 +45,7 @@ export default async function MatchDetailPage({
     goals:
       team1Stats.length > 0
         ? team1Stats.reduce((sum, stat) => sum + stat.goals, 0)
-        : match.match.team1Goals || 0,
+        : match.team1Goals || 0,
     assists: team1Stats.reduce((sum, stat) => sum + stat.assists, 0),
     passesCompleted: team1Stats.reduce(
       (sum, stat) => sum + stat.passesCompleted,
@@ -57,7 +57,7 @@ export default async function MatchDetailPage({
     goals:
       team2Stats.length > 0
         ? team2Stats.reduce((sum, stat) => sum + stat.goals, 0)
-        : match.match.team2Goals || 0,
+        : match.team2Goals || 0,
     assists: team2Stats.reduce((sum, stat) => sum + stat.assists, 0),
     passesCompleted: team2Stats.reduce(
       (sum, stat) => sum + stat.passesCompleted,
@@ -69,14 +69,14 @@ export default async function MatchDetailPage({
   const allPlayersWithStats = [
     ...match.playersTeam1.map((player) => ({
       ...player,
-      team: match.match.team1,
-      teamAvatar: match.match.team1Avatar,
+      team: match.team1,
+      teamAvatar: match.team1Avatar,
       stats: team1Stats.find((stat) => stat.playerId === player.id),
     })),
     ...match.playersTeam2.map((player) => ({
       ...player,
-      team: match.match.team2,
-      teamAvatar: match.match.team2Avatar,
+      team: match.team2,
+      teamAvatar: match.team2Avatar,
       stats: team2Stats.find((stat) => stat.playerId === player.id),
     })),
   ]
@@ -94,7 +94,7 @@ export default async function MatchDetailPage({
         </Link>
         <h1 className='text-2xl sm:text-3xl font-bold mb-2'>Match Details</h1>
         <p className='text-sm sm:text-base text-gray-600'>
-          {formatDate(new Date(match.match.date))}
+          {formatDate(new Date(match.date))}
         </p>
       </div>
 
@@ -108,7 +108,7 @@ export default async function MatchDetailPage({
             variant='secondary'
             className='w-fit mx-auto text-xs sm:text-sm'
           >
-            {formatDate(new Date(match.match.date))}
+            {formatDate(new Date(match.date))}
           </Badge>
         </CardHeader>
         <CardContent className='pb-6 sm:pb-8'>
@@ -117,30 +117,30 @@ export default async function MatchDetailPage({
             <div className='text-center flex-1 order-1 md:order-1'>
               <div className='w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 mb-3 sm:mb-4 mx-auto'>
                 <Image
-                  src={match.match.team1Avatar || '/no-club.jpg'}
-                  alt={match.match.team1}
+                  src={match.team1Avatar || '/no-club.jpg'}
+                  alt={match.team1}
                   width={96}
                   height={96}
                   className='w-full h-full object-cover rounded-full border-4 border-white shadow-sm'
                 />
               </div>
               <h3 className='font-bold text-sm sm:text-base md:text-lg text-gray-800'>
-                {match.match.team1}
+                {match.team1}
               </h3>
             </div>
 
             {/* Marcador central */}
             <div className='flex flex-col items-center order-2 md:order-2'>
               <div className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-2'>
-                {match.match.team1Goals} : {match.match.team2Goals}
+                {match.team1Goals} : {match.team2Goals}
               </div>
               <div className='text-xs sm:text-sm text-gray-500 bg-white px-3 sm:px-4 py-1 sm:py-2 rounded-full shadow-xs mb-3'>
                 Final Result
               </div>
-              {match.match.duration && (
+              {match.duration && (
                 <div className='text-xs sm:text-sm text-gray-500 bg-blue-100 px-3 sm:px-4 py-1 sm:py-2 rounded-full shadow-xs mb-3'>
-                  Duration: {Math.floor(match.match.duration / 60)}:
-                  {(match.match.duration % 60).toString().padStart(2, '0')}
+                  Duration: {Math.floor(match.duration / 60)}:
+                  {(match.duration % 60).toString().padStart(2, '0')}
                 </div>
               )}
               <Link
@@ -156,15 +156,15 @@ export default async function MatchDetailPage({
             <div className='text-center flex-1 order-3 md:order-3'>
               <div className='w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 mb-3 sm:mb-4 mx-auto'>
                 <Image
-                  src={match.match.team2Avatar || '/no-club.jpg'}
-                  alt={match.match.team2}
+                  src={match.team2Avatar || '/no-club.jpg'}
+                  alt={match.team2}
                   width={96}
                   height={96}
                   className='w-full h-full object-cover rounded-full border-4 border-white shadow-sm'
                 />
               </div>
               <h3 className='font-bold text-sm sm:text-base md:text-lg text-gray-800'>
-                {match.match.team2}
+                {match.team2}
               </h3>
             </div>
           </div>
@@ -179,15 +179,15 @@ export default async function MatchDetailPage({
             <CardTitle className='flex items-center space-x-2 sm:space-x-3'>
               <div className='w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10'>
                 <Image
-                  src={match.match.team1Avatar || '/no-club.jpg'}
-                  alt={match.match.team1}
+                  src={match.team1Avatar || '/no-club.jpg'}
+                  alt={match.team1}
                   width={40}
                   height={40}
                   className='w-full h-full object-cover rounded-full'
                 />
               </div>
               <span className='text-sm sm:text-base md:text-lg'>
-                {match.match.team1} Statistics
+                {match.team1} Statistics
               </span>
             </CardTitle>
           </CardHeader>
@@ -236,15 +236,15 @@ export default async function MatchDetailPage({
             <CardTitle className='flex items-center space-x-2 sm:space-x-3'>
               <div className='w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10'>
                 <Image
-                  src={match.match.team2Avatar || '/no-club.jpg'}
-                  alt={match.match.team2}
+                  src={match.team2Avatar || '/no-club.jpg'}
+                  alt={match.team2}
                   width={40}
                   height={40}
                   className='w-full h-full object-cover rounded-full'
                 />
               </div>
               <span className='text-sm sm:text-base md:text-lg'>
-                {match.match.team2} Statistics
+                {match.team2} Statistics
               </span>
             </CardTitle>
           </CardHeader>

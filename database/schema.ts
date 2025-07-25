@@ -73,6 +73,7 @@ export const matchesTable = pgTable('matches', {
   team2Goals: integer('team2_goals').default(0).notNull(), // Goles equipo 2
   duration: integer('duration'), // Duración del partido en segundos
   status: STATUS_ENUM('status').notNull().default('active'), // Estado del partido
+  location: text('location'), // Dirección del partido
   // Puedes agregar más campos según necesidad
 })
 

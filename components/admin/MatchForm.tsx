@@ -2,6 +2,7 @@
 import { Button } from '../ui/button'
 import { DateTimePicker } from '../ui/date-time-picker'
 import TeamField from '@/app/(admin)/admin/matches/new/TeamField'
+import LocationAutocomplete from './LocationAutocomplete'
 import { useForm, Controller } from 'react-hook-form'
 import { createMatchWithPlayers } from '@/lib/actions/matches.action'
 import { toast } from 'sonner'
@@ -15,6 +16,7 @@ type MatchFormValues = {
   team1: string
   team2: string
   date: Date | undefined
+  location: string
 }
 
 export default function MatchForm({ teams }: Props) {
@@ -29,6 +31,7 @@ export default function MatchForm({ teams }: Props) {
       team1: '',
       team2: '',
       date: new Date(),
+      location: '',
     },
   })
 
@@ -43,11 +46,18 @@ export default function MatchForm({ teams }: Props) {
       return
     }
 
+    // Validar que la ubicación esté presente
+    if (!data.location || data.location.trim() === '') {
+      toast.error('Location is required')
+      return
+    }
+
     try {
       await createMatchWithPlayers({
         date: data.date!,
         team1Id: data.team1,
         team2Id: data.team2,
+        location: data.location,
       })
       toast.success('Match created successfully!')
       router.push('/admin/matches')
@@ -115,6 +125,25 @@ export default function MatchForm({ teams }: Props) {
           />
           {errors.date && (
             <span className='text-red-500'>{errors.date.message}</span>
+          )}
+        </div>
+        <div>
+          <label className='block mb-1 font-medium'>Location *</label>
+          <Controller
+            name='location'
+            control={control}
+            rules={{ required: 'Location is required' }}
+            render={({ field }) => (
+              <LocationAutocomplete
+                value={field.value}
+                onChange={field.onChange}
+                placeholder='Search for match location...'
+                className='w-full'
+              />
+            )}
+          />
+          {errors.location && (
+            <span className='text-red-500'>{errors.location.message}</span>
           )}
         </div>
         <Button type='submit' className='w-full'>

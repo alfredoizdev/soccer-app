@@ -24,6 +24,18 @@ interface PlayerStatsProps {
 export default function PlayerStats({ player }: PlayerStatsProps) {
   const isGoalkeeper = player.position?.toLowerCase().includes('goal')
 
+  // Solo mostrar estadísticas si hay valores mayores a 0
+  const hasStats =
+    (player.goals && player.goals > 0) ||
+    (player.assists && player.assists > 0) ||
+    (isGoalkeeper && player.saves && player.saves > 0) ||
+    (isGoalkeeper && player.goalsAllowed && player.goalsAllowed > 0)
+
+  // Si no hay estadísticas, no mostrar nada
+  if (!hasStats) {
+    return null
+  }
+
   return (
     <div className='flex items-center gap-1 mt-1'>
       {/* Goles - mismo icono y color que timeline */}
