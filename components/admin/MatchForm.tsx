@@ -1,6 +1,6 @@
 'use client'
 import { Button } from '../ui/button'
-import { Calendar } from '../ui/calendar'
+import { DateTimePicker } from '../ui/date-time-picker'
 import TeamField from '@/app/(admin)/admin/matches/new/TeamField'
 import { useForm, Controller } from 'react-hook-form'
 import { createMatchWithPlayers } from '@/lib/actions/matches.action'
@@ -21,6 +21,7 @@ export default function MatchForm({ teams }: Props) {
   const {
     handleSubmit,
     control,
+    watch,
     formState: { errors },
     setValue,
   } = useForm<MatchFormValues>({
@@ -30,9 +31,18 @@ export default function MatchForm({ teams }: Props) {
       date: new Date(),
     },
   })
+
+  const team1Value = watch('team1')
+  const team2Value = watch('team2')
   const router = useRouter()
 
   const onSubmit = async (data: MatchFormValues) => {
+    // Validar que no sean el mismo equipo
+    if (data.team1 === data.team2) {
+      toast.error('Cannot create a match between the same team')
+      return
+    }
+
     try {
       await createMatchWithPlayers({
         date: data.date!,
@@ -61,6 +71,7 @@ export default function MatchForm({ teams }: Props) {
                 value={field.value}
                 setValue={field.onChange}
                 onTeamCreated={(team) => setValue('team1', team.value)}
+                disabledTeams={team2Value ? [team2Value] : []}
               />
             )}
           />
@@ -80,6 +91,7 @@ export default function MatchForm({ teams }: Props) {
                 value={field.value}
                 setValue={field.onChange}
                 onTeamCreated={(team) => setValue('team2', team.value)}
+                disabledTeams={team1Value ? [team1Value] : []}
               />
             )}
           />
@@ -88,19 +100,16 @@ export default function MatchForm({ teams }: Props) {
           )}
         </div>
         <div>
-          <label className='block mb-1 font-medium'>Date</label>
+          <label className='block mb-1 font-medium'>Date and Time</label>
           <Controller
             name='date'
             control={control}
-            rules={{ required: 'Date is required' }}
+            rules={{ required: 'Date and time is required' }}
             render={({ field }) => (
-              <Calendar
-                mode='single'
-                defaultMonth={field.value}
-                numberOfMonths={2}
-                selected={field.value}
-                onSelect={field.onChange}
-                className='rounded-lg border shadow-sm w-full'
+              <DateTimePicker
+                date={field.value}
+                setDate={field.onChange}
+                className='w-full'
               />
             )}
           />

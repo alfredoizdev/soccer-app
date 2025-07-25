@@ -21,11 +21,13 @@ export default function TeamField({
   value,
   setValue,
   onTeamCreated,
+  disabledTeams = [],
 }: {
   teams: { id: string; name: string; value: string; avatar: string }[]
   value: string
   setValue: (value: string) => void
   onTeamCreated: (team: { id: string; name: string; value: string }) => void
+  disabledTeams?: string[]
 }) {
   const [open, setOpen] = React.useState(false)
   const [drawerOpen, setDrawerOpen] = React.useState(false)
@@ -52,34 +54,43 @@ export default function TeamField({
             <CommandList>
               <CommandEmpty>No team found.</CommandEmpty>
               <CommandGroup>
-                {teams.map((team) => (
-                  <CommandItem
-                    key={team.value}
-                    value={team.value}
-                    onSelect={(currentValue) => {
-                      setValue(currentValue === value ? '' : currentValue)
-                      setOpen(false)
-                    }}
-                  >
-                    <span className='mr-2'>
-                      <Image
-                        src={team.avatar || '/no-club.jpg'}
-                        alt={team.name}
-                        width={20}
-                        height={20}
-                        className='w-6 h-6 rounded-full inline-block object-cover'
-                      />
-                    </span>
-
-                    {team.name}
-                    <Check
+                {teams.map((team) => {
+                  const isDisabled = disabledTeams.includes(team.value)
+                  return (
+                    <CommandItem
+                      key={team.value}
+                      value={team.value}
+                      disabled={isDisabled}
+                      onSelect={(currentValue) => {
+                        if (!isDisabled) {
+                          setValue(currentValue === value ? '' : currentValue)
+                          setOpen(false)
+                        }
+                      }}
                       className={cn(
-                        'ml-auto',
-                        value === team.value ? 'opacity-100' : 'opacity-0'
+                        isDisabled && 'opacity-50 cursor-not-allowed'
                       )}
-                    />
-                  </CommandItem>
-                ))}
+                    >
+                      <span className='mr-2'>
+                        <Image
+                          src={team.avatar || '/no-club.jpg'}
+                          alt={team.name}
+                          width={20}
+                          height={20}
+                          className='w-6 h-6 rounded-full inline-block object-cover'
+                        />
+                      </span>
+
+                      {team.name}
+                      <Check
+                        className={cn(
+                          'ml-auto',
+                          value === team.value ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                    </CommandItem>
+                  )
+                })}
               </CommandGroup>
               {/* Botón siempre visible al final */}
               <div className='p-2 border-t'>
