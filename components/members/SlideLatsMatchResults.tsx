@@ -11,7 +11,9 @@ import {
 } from '@/components/ui/carousel'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { Button } from '../ui/button'
+import { Badge } from '@/components/ui/badge'
 import { type CarouselApi } from '@/components/ui/carousel'
+import { useRouter } from 'next/navigation'
 
 export interface MatchListItem {
   id: string
@@ -37,6 +39,7 @@ export default function SlideLatsMatchResults({
 }: SlideLatsMatchResultsProps) {
   const [current, setCurrent] = React.useState(0)
   const emblaApiRef = React.useRef<CarouselApi | null>(null)
+  const router = useRouter()
 
   // Manejar el API de Embla para saber el slide actual
   const handleSetApi = React.useCallback((api: CarouselApi) => {
@@ -85,6 +88,19 @@ export default function SlideLatsMatchResults({
                         ? new Date(match.date).toLocaleDateString()
                         : match.date.toLocaleDateString()}
                     </span>
+
+                    {/* Badge para partidos inactivos */}
+                    {match.status === 'inactive' && (
+                      <div className='flex justify-center mt-2'>
+                        <Badge
+                          variant='secondary'
+                          className='bg-yellow-100 text-yellow-800 border-yellow-200'
+                        >
+                          🏁 Match Completed
+                        </Badge>
+                      </div>
+                    )}
+
                     {/* Fecha en la esquina superior derecha */}
                     <div className='flex justify-center items-center gap-4 relative w-full'>
                       <div className='flex flex-col justify-center items-center gap-2'>
@@ -131,8 +147,21 @@ export default function SlideLatsMatchResults({
                     </div>
                   </CardContent>
                   <CardFooter className='flex justify-center items-center'>
-                    <Button className='w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-none transition-colors'>
-                      See details
+                    <Button
+                      className='w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-none transition-colors'
+                      onClick={() => {
+                        if (match.status === 'inactive') {
+                          router.push(
+                            `/members/matches/history/${match.id}/timeline`
+                          )
+                        } else {
+                          router.push(`/members/matches/live/${match.id}`)
+                        }
+                      }}
+                    >
+                      {match.status === 'inactive'
+                        ? 'See History'
+                        : 'See Details'}
                     </Button>
                   </CardFooter>
                 </Card>
