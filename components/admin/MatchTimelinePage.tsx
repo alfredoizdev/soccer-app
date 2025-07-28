@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import Image from 'next/image'
 import Link from 'next/link'
+import MatchVideoSection from '@/components/members/MatchVideoSection'
 
 export type MatchEvent = {
   id: string
@@ -327,16 +328,23 @@ export default function MatchTimelinePage({
         </Card>
       </div>
 
+      {/* Video Section */}
+      <MatchVideoSection
+        matchId={matchId}
+        team1Name={team1Name}
+        team2Name={team2Name}
+      />
+
       {/* Timeline Section - Nuevo diseño */}
       <div className='bg-white p-6 sm:p-5 mb-5'>
         <div className='p-1 sm:p-4'>
           {sortedEvents.length > 0 ? (
-            <div className='relative'>
+            <div className='relative max-h-[500px] overflow-y-auto'>
               {/* Línea vertical del timeline */}
               <div className='absolute left-12 top-0 bottom-0 w-0.5 bg-gray-300'></div>
 
               {/* Events */}
-              <div className='space-y-6'>
+              <div className='space-y-6 pr-4 pt-8'>
                 {sortedEvents.map((event) => {
                   return (
                     <div key={event.id} className='relative'>

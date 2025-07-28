@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import MainActionDashboard from '@/components/members/MeinActionDashboard'
 import MeinActionDashboardSkeleton from '@/components/members/MeinActionDashboardSkeleton'
+import TeamPlayersSection from '@/components/members/TeamPlayersSection'
+import TeamPlayersSectionSkeleton from '@/components/members/TeamPlayersSectionSkeleton'
 import SlideLatsMatchResults from '@/components/members/SlideLatsMatchResults'
 import SlideLatsMatchResultsSkeleton from '@/components/members/SlideLatsMatchResultsSkeleton'
 import LatestNews from '@/components/members/LatestNews'
@@ -23,15 +25,22 @@ export default async function Home() {
       <Suspense fallback={<MeinActionDashboardSkeleton />}>
         <MainActionDashboard />
       </Suspense>
+
+      <div className='container mx-auto w-full overflow-hidden py-4 px-2'>
+        <Suspense fallback={<SlideLatsMatchResultsSkeleton />}>
+          <SlideLatsMatchResults matches={matches} />
+        </Suspense>
+      </div>
+
       <div className='w-full mx-auto bg-gray-300/20 pb-[100px] pt-[100px] px-2'>
         <Suspense fallback={<LatestNewsSkeleton />}>
           <LatestNews posts={posts} />
         </Suspense>
       </div>
 
-      <div className='container mx-auto w-full overflow-hidden'>
-        <Suspense fallback={<SlideLatsMatchResultsSkeleton />}>
-          <SlideLatsMatchResults matches={matches} />
+      <div className='container mx-auto w-full py-4'>
+        <Suspense fallback={<TeamPlayersSectionSkeleton />}>
+          <TeamPlayersSection />
         </Suspense>
       </div>
     </div>

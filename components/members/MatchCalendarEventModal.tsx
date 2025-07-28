@@ -6,12 +6,10 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { MatchEvent } from './MatchCalendarEvent'
 import { formatTime, formatShortDate } from '@/lib/utils/formatDate'
 import { abbreviateTeam } from '@/lib/utils/abbreviateTeam'
-import GoogleMap from './GoogleMap'
 
 interface MatchCalendarEventModalProps {
   open: boolean
@@ -26,8 +24,7 @@ export default function MatchCalendarEventModal({
 }: MatchCalendarEventModalProps) {
   const router = useRouter()
   if (!event) return null
-  const { team1, team2, team1Avatar, team2Avatar, id, location, status } =
-    event.resource || {}
+  const { team1, team2, id, status } = event.resource || {}
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-[calc(100vw-2rem)] sm:max-w-md px-4 sm:px-8 rounded-none'>
@@ -46,15 +43,6 @@ export default function MatchCalendarEventModal({
         </DialogHeader>
         <div className='flex items-center justify-center gap-4 my-2'>
           <div className='flex flex-col items-center'>
-            {team1Avatar && (
-              <Image
-                src={team1Avatar}
-                alt={team1}
-                width={64}
-                height={64}
-                className='rounded-full object-cover border'
-              />
-            )}
             <span className='font-bold text-xs mt-1'>
               {abbreviateTeam(team1)}
             </span>
@@ -63,15 +51,6 @@ export default function MatchCalendarEventModal({
             <span className='text-xs text-muted-foreground'>vs</span>
           </div>
           <div className='flex flex-col items-center'>
-            {team2Avatar && (
-              <Image
-                src={team2Avatar}
-                alt={team2}
-                width={64}
-                height={64}
-                className='rounded-full object-cover border'
-              />
-            )}
             <span className='font-bold text-xs mt-1'>
               {abbreviateTeam(team2)}
             </span>
@@ -82,11 +61,6 @@ export default function MatchCalendarEventModal({
             {formatShortDate(event.start)} · {formatTime(event.start)}
           </span>
         </div>
-        {location && (
-          <div className='mb-4'>
-            <GoogleMap location={location} height='250px' />
-          </div>
-        )}
         <DialogFooter>
           <button
             className='bg-black text-white px-4 py-2 rounded-none hover:bg-gray-900 transition'

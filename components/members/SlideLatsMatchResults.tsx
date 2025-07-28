@@ -51,6 +51,15 @@ export default function SlideLatsMatchResults({
     })
   }, [])
 
+  // Organizar partidos: activos primero, luego inactivos
+  const sortedMatches = React.useMemo(() => {
+    const activeMatches = matches.filter((match) => match.status === 'active')
+    const inactiveMatches = matches.filter(
+      (match) => match.status === 'inactive'
+    )
+    return [...activeMatches, ...inactiveMatches]
+  }, [matches])
+
   if (matches.length === 0) {
     return (
       <div className='flex flex-col items-center justify-center h-full mx-auto pt-9'>
@@ -63,9 +72,9 @@ export default function SlideLatsMatchResults({
   }
 
   return (
-    <>
+    <div className='pb-8'>
       <div className='block md:hidden text-center text-xs text-gray-500 py-5 font-semibold'>
-        {current + 1} / {matches.length} matches
+        {current + 1} / {sortedMatches.length} matches
       </div>
       <Carousel
         opts={{
@@ -75,7 +84,7 @@ export default function SlideLatsMatchResults({
         className='max-w-screen-sm xl:max-w-screen-xl mx-auto'
       >
         <CarouselContent>
-          {matches.map((match) => (
+          {sortedMatches.map((match) => (
             <CarouselItem
               key={match.id}
               className='md:basis-1/2 lg:basis-1/2 xl:basis-1/4'
@@ -89,9 +98,21 @@ export default function SlideLatsMatchResults({
                         : match.date.toLocaleDateString()}
                     </span>
 
+                    {/* Badge para partidos activos */}
+                    {match.status === 'active' && (
+                      <div className='flex justify-center mt-2 mb-4'>
+                        <Badge
+                          variant='secondary'
+                          className='bg-green-100 text-green-800 border-green-200'
+                        >
+                          ⚽ Active
+                        </Badge>
+                      </div>
+                    )}
+
                     {/* Badge para partidos inactivos */}
                     {match.status === 'inactive' && (
-                      <div className='flex justify-center mt-2'>
+                      <div className='flex justify-center mt-2 mb-4'>
                         <Badge
                           variant='secondary'
                           className='bg-yellow-100 text-yellow-800 border-yellow-200'
@@ -148,7 +169,7 @@ export default function SlideLatsMatchResults({
                   </CardContent>
                   <CardFooter className='flex justify-center items-center'>
                     <Button
-                      className='w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-none transition-colors'
+                      className='w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 rounded-none transition-colors'
                       onClick={() => {
                         if (match.status === 'inactive') {
                           router.push(
@@ -161,7 +182,7 @@ export default function SlideLatsMatchResults({
                     >
                       {match.status === 'inactive'
                         ? 'See History'
-                        : 'See Details'}
+                        : 'Watch Live'}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -175,6 +196,6 @@ export default function SlideLatsMatchResults({
           <CarouselNext />
         </div>
       </Carousel>
-    </>
+    </div>
   )
 }
