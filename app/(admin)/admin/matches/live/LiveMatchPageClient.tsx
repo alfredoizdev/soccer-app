@@ -220,6 +220,10 @@ export default function LiveMatchPageClient({
     try {
       endMatch()
       socket.emit('match:end', { matchId: match.id })
+
+      // Emitir evento para finalizar cualquier stream activo para este match
+      socket.emit('streaming:stop_by_match', { matchId: match.id })
+
       await saveToDatabase()
 
       // Refresh the page to update player stats

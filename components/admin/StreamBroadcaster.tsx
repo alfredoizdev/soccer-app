@@ -80,14 +80,22 @@ export default function StreamBroadcaster({
       setViewerCount((prev) => Math.max(0, prev - 1))
     }
 
+    const handleStopByMatch = (data: { matchId: string }) => {
+      if (data.matchId === matchId && isStreaming && sessionId) {
+        handleStopStream()
+      }
+    }
+
     socket.on('streaming:viewer_joined', handleViewerJoined)
     socket.on('streaming:viewer_left', handleViewerLeft)
+    socket.on('streaming:stop_by_match', handleStopByMatch)
 
     return () => {
       socket.off('streaming:viewer_joined', handleViewerJoined)
       socket.off('streaming:viewer_left', handleViewerLeft)
+      socket.off('streaming:stop_by_match', handleStopByMatch)
     }
-  }, [socket])
+  }, [socket, matchId, isStreaming, sessionId])
 
   const handleStartStream = async () => {
     if (!user) {

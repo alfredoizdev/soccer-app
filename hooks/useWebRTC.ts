@@ -286,10 +286,14 @@ export function useWebRTC({
       if (data.to !== userId) return
 
       const peerConnection = peerConnections.current.get(data.from)
-      if (peerConnection) {
-        await peerConnection.addIceCandidate(
-          new RTCIceCandidate(data.candidate)
-        )
+      if (peerConnection && peerConnection.remoteDescription) {
+        try {
+          await peerConnection.addIceCandidate(
+            new RTCIceCandidate(data.candidate)
+          )
+        } catch (error) {
+          console.warn('Failed to add ICE candidate:', error)
+        }
       }
     }
 
