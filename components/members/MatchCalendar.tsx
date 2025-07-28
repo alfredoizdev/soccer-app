@@ -34,13 +34,13 @@ export default function MatchCalendar({ events }: MatchCalendarProps) {
   const [view, setView] = useState<CalendarView>('month')
 
   return (
-    <div className='h-[900px] bg-white rounded-none shadow p-4 flex flex-col'>
+    <div className='h-[1000px] bg-white rounded-none shadow p-4 flex flex-col'>
       <Calendar
         localizer={localizer}
         events={events}
         startAccessor='start'
         endAccessor='end'
-        style={{ height: 900 }}
+        style={{ height: 1000 }}
         popup
         views={VIEWS}
         view={view}

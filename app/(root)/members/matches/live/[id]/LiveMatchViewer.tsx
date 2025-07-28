@@ -2,7 +2,7 @@
 
 import LiveMatchHeader from '@/components/members/LiveMatchHeader'
 import LiveMatchScoreCard from '@/components/members/LiveMatchScoreCard'
-import SoccerField from '@/components/members/SoccerField'
+import LiveMatchTimeline from '@/components/members/LiveMatchTimeline'
 import TeamsInfo from '@/components/members/TeamsInfo'
 import { useLiveMatchSocket } from '@/hooks/useLiveMatchSocket'
 
@@ -55,17 +55,13 @@ export default function LiveMatchViewer({
     <div className='max-w-screen-xl mx-auto px-2 lg:px-4 py-4'>
       <LiveMatchHeader match={match} matchStatus={matchStatus} />
       <div className='flex flex-col lg:flex-row gap-6'>
-        <div className='block lg:hidden'>
-          <LiveMatchScoreCard match={match} liveScore={liveScore} />
-        </div>
-        {/* Field a la izquierda, full image y más alto */}
+        {/* Timeline a la izquierda */}
         <div className='w-full lg:w-2/3 flex-shrink-0 flex items-start justify-center'>
           <div className='w-full'>
-            <SoccerField
-              livePlayersTeam1={livePlayersTeam1}
-              livePlayersTeam2={livePlayersTeam2}
-              fullImage
-              heightClass='h-[1200px]'
+            <LiveMatchTimeline
+              match={match}
+              liveScore={liveScore}
+              matchStatus={matchStatus}
             />
           </div>
         </div>
