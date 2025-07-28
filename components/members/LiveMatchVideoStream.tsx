@@ -73,9 +73,11 @@ export default function LiveMatchVideoStream({
 
   // Mostrar stream remoto en el video element
   useEffect(() => {
+    console.log('Remote streams changed:', remoteStreams.size, 'streams')
     if (videoRef.current && remoteStreams.size > 0) {
       // Tomar el primer stream remoto disponible
       const firstStream = Array.from(remoteStreams.values())[0]
+      console.log('Setting video srcObject with stream:', firstStream)
       videoRef.current.srcObject = firstStream
       setIsWaitingForStream(false)
     }
@@ -128,7 +130,9 @@ export default function LiveMatchVideoStream({
 
     try {
       setIsWaitingForStream(true)
+      console.log('Joining stream with sessionId:', activeSessionId)
       await joinStream()
+      console.log('Join stream completed, waiting for remote streams...')
       toast.success('Joined stream successfully')
     } catch (error) {
       console.error('Error joining stream:', error)

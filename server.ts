@@ -140,6 +140,13 @@ app.prepare().then(() => {
       })
     })
 
+    socket.on('streaming:stop_by_match', (data) => {
+      // Buscar todas las sesiones activas para este match y terminarlas
+      io.emit('streaming:stop_by_match', {
+        matchId: data.matchId,
+      })
+    })
+
     socket.on('disconnect', () => {
       // User disconnected
     })

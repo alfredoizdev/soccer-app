@@ -60,15 +60,29 @@ export function useWebRTC({
 
       // Manejar cambios de conexión
       peerConnection.onconnectionstatechange = () => {
-        // Connection state changed
+        console.log(
+          `Connection state for ${peerId}:`,
+          peerConnection.connectionState
+        )
       }
 
       peerConnection.oniceconnectionstatechange = () => {
-        // ICE connection state changed
+        console.log(
+          `ICE connection state for ${peerId}:`,
+          peerConnection.iceConnectionState
+        )
+      }
+
+      peerConnection.onsignalingstatechange = () => {
+        console.log(
+          `Signaling state for ${peerId}:`,
+          peerConnection.signalingState
+        )
       }
 
       // Manejar streams remotos
       peerConnection.ontrack = (event) => {
+        console.log(`Received track from ${peerId}:`, event.streams[0])
         setRemoteStreams((prev) => {
           const newMap = new Map(prev)
           newMap.set(peerId, event.streams[0])
@@ -146,14 +160,12 @@ export function useWebRTC({
         viewerId: userId,
       })
 
-      // Si el broadcaster ya está transmitiendo, solicitar el stream inmediatamente
-      setTimeout(() => {
-        socket.emit('streaming:request_stream', {
-          sessionId,
-          viewerId: userId,
-          broadcasterId: 'any', // El servidor encontrará el broadcaster activo
-        })
-      }, 1000)
+      // Solicitar el stream inmediatamente
+      socket.emit('streaming:request_stream', {
+        sessionId,
+        viewerId: userId,
+        broadcasterId: 'any', // El servidor encontrará el broadcaster activo
+      })
 
       setIsConnected(true)
     } catch (err) {
@@ -232,35 +244,47 @@ export function useWebRTC({
     }) => {
       if (data.to !== userId) return
 
-      const peerConnection = createPeerConnection(data.from)
+      try {
+        const peerConnection = createPeerConnection(data.from)
 
-      // Si es espectador, obtener stream local para responder
-      if (!isBroadcaster) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: false,
-            audio: true,
-          })
-          setLocalStream(stream)
-          localStreamRef.current = stream
-        } catch {
-          console.warn('Could not access microphone for audio')
+        // Si es espectador, obtener stream local para responder
+        if (!isBroadcaster) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: false,
+              audio: true,
+            })
+            setLocalStream(stream)
+            localStreamRef.current = stream
+          } catch {
+            console.warn('Could not access microphone for audio')
+          }
         }
+
+        // Verificar que la conexión esté en estado correcto
+        if (peerConnection.signalingState === 'stable') {
+          await peerConnection.setRemoteDescription(
+            new RTCSessionDescription(data.offer)
+          )
+
+          const answer = await peerConnection.createAnswer()
+          await peerConnection.setLocalDescription(answer)
+
+          socket.emit('webrtc:answer', {
+            sessionId,
+            answer,
+            from: userId,
+            to: data.from,
+          })
+        } else {
+          console.warn(
+            'Cannot handle offer in current state:',
+            peerConnection.signalingState
+          )
+        }
+      } catch (error) {
+        console.error('Error handling offer:', error)
       }
-
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(data.offer)
-      )
-
-      const answer = await peerConnection.createAnswer()
-      await peerConnection.setLocalDescription(answer)
-
-      socket.emit('webrtc:answer', {
-        sessionId,
-        answer,
-        from: userId,
-        to: data.from,
-      })
     }
 
     const handleAnswer = async (data: {
@@ -272,9 +296,21 @@ export function useWebRTC({
 
       const peerConnection = peerConnections.current.get(data.from)
       if (peerConnection) {
-        await peerConnection.setRemoteDescription(
-          new RTCSessionDescription(data.answer)
-        )
+        try {
+          // Verificar el estado de la conexión antes de establecer remote description
+          if (peerConnection.signalingState === 'have-local-offer') {
+            await peerConnection.setRemoteDescription(
+              new RTCSessionDescription(data.answer)
+            )
+          } else {
+            console.warn(
+              'Cannot set remote description in current state:',
+              peerConnection.signalingState
+            )
+          }
+        } catch (error) {
+          console.error('Error setting remote description:', error)
+        }
       }
     }
 
