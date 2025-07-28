@@ -71,6 +71,14 @@ export default function LiveMatchVideoStream({
       isBroadcaster: false,
     })
 
+  // Debug logging
+  useEffect(() => {
+    console.log('Active session ID changed:', activeSessionId)
+    console.log('User ID:', user?.id)
+    console.log('Is connected:', isConnected)
+    console.log('Remote streams count:', remoteStreams.size)
+  }, [activeSessionId, user?.id, isConnected, remoteStreams.size])
+
   // Mostrar stream remoto en el video element
   useEffect(() => {
     console.log('Remote streams changed:', remoteStreams.size, 'streams')

@@ -153,6 +153,12 @@ export function useWebRTC({
   const joinStream = useCallback(async () => {
     try {
       setError(null)
+      console.log(
+        'Joining stream with sessionId:',
+        sessionId,
+        'userId:',
+        userId
+      )
 
       // Unirse a la sala de streaming
       socket.emit('streaming:join', {
@@ -167,6 +173,7 @@ export function useWebRTC({
         broadcasterId: 'any', // El servidor encontrará el broadcaster activo
       })
 
+      console.log('Stream join requests sent')
       setIsConnected(true)
     } catch (err) {
       setError('Failed to join stream')
@@ -357,6 +364,20 @@ export function useWebRTC({
       socket.off('streaming:stopped', handleStreamingStopped)
     }
   }, [sessionId, userId, isBroadcaster, createPeerConnection])
+
+  // Cleanup cuando cambia sessionId
+  useEffect(() => {
+    // Limpiar conexiones existentes cuando cambia el sessionId
+    if (sessionId) {
+      console.log('Session ID changed, cleaning up existing connections')
+      peerConnections.current.forEach((connection) => {
+        connection.close()
+      })
+      peerConnections.current.clear()
+      setRemoteStreams(new Map())
+      setIsConnected(false)
+    }
+  }, [sessionId])
 
   // Cleanup al desmontar
   useEffect(() => {
