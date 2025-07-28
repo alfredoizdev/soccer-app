@@ -162,6 +162,41 @@ export const postsTable = pgTable('posts', {
   status: POST_STATUS_ENUM('status').notNull().default('pending'),
 })
 
+// Tabla para sesiones de streaming
+export const streamingSessionsTable = pgTable('streaming_sessions', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  matchId: uuid('match_id')
+    .notNull()
+    .references(() => matchesTable.id, { onDelete: 'cascade' }),
+  broadcasterId: uuid('broadcaster_id')
+    .notNull()
+    .references(() => usersTable.id, { onDelete: 'cascade' }),
+  isActive: boolean('is_active').default(true).notNull(),
+  streamKey: text('stream_key').notNull().unique(),
+  title: text('title'),
+  description: text('description'),
+  startedAt: timestamp('started_at', { withTimezone: true }).defaultNow(),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
+
+// Tabla para conexiones WebRTC
+export const webrtcConnectionsTable = pgTable('webrtc_connections', {
+  id: uuid('id').notNull().primaryKey().defaultRandom().unique(),
+  sessionId: uuid('session_id')
+    .notNull()
+    .references(() => streamingSessionsTable.id, { onDelete: 'cascade' }),
+  viewerId: uuid('viewer_id')
+    .notNull()
+    .references(() => usersTable.id, { onDelete: 'cascade' }),
+  connectionId: text('connection_id').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow(),
+  leftAt: timestamp('left_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
 export type InsertUser = typeof usersTable.$inferInsert
 export type SelectUser = typeof usersTable.$inferSelect
 

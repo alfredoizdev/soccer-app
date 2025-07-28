@@ -29,8 +29,6 @@ app.prepare().then(() => {
   })
 
   io.on('connection', (socket) => {
-    console.log('a user connected')
-
     socket.on('match:start', (data) => {
       socket.join(`match:${data.matchId}`)
       io.to(`match:${data.matchId}`).emit('match:start', data)
@@ -79,8 +77,71 @@ app.prepare().then(() => {
       socket.leave(`match:${data.matchId}`)
     })
 
+    // WebRTC Events
+    socket.on('streaming:join', (data) => {
+      socket.join(`streaming:${data.sessionId}`)
+      io.to(`streaming:${data.sessionId}`).emit('streaming:viewer_joined', {
+        viewerId: data.viewerId,
+        sessionId: data.sessionId,
+      })
+    })
+
+    socket.on('streaming:leave', (data) => {
+      socket.leave(`streaming:${data.sessionId}`)
+      io.to(`streaming:${data.sessionId}`).emit('streaming:viewer_left', {
+        viewerId: data.viewerId,
+        sessionId: data.sessionId,
+      })
+    })
+
+    socket.on('webrtc:offer', (data) => {
+      socket.to(`streaming:${data.sessionId}`).emit('webrtc:offer', {
+        offer: data.offer,
+        from: data.from,
+        to: data.to,
+      })
+    })
+
+    socket.on('webrtc:answer', (data) => {
+      socket.to(`streaming:${data.sessionId}`).emit('webrtc:answer', {
+        answer: data.answer,
+        from: data.from,
+        to: data.to,
+      })
+    })
+
+    socket.on('webrtc:ice_candidate', (data) => {
+      socket.to(`streaming:${data.sessionId}`).emit('webrtc:ice_candidate', {
+        candidate: data.candidate,
+        from: data.from,
+        to: data.to,
+      })
+    })
+
+    socket.on('streaming:start', (data) => {
+      socket.join(`streaming:${data.sessionId}`)
+      io.to(`streaming:${data.sessionId}`).emit('streaming:started', {
+        sessionId: data.sessionId,
+        broadcasterId: data.broadcasterId,
+      })
+    })
+
+    socket.on('streaming:stop', (data) => {
+      io.to(`streaming:${data.sessionId}`).emit('streaming:stopped', {
+        sessionId: data.sessionId,
+      })
+      socket.leave(`streaming:${data.sessionId}`)
+    })
+
+    socket.on('streaming:request_stream', (data) => {
+      io.to(`streaming:${data.sessionId}`).emit('streaming:viewer_joined', {
+        viewerId: data.viewerId,
+        sessionId: data.sessionId,
+      })
+    })
+
     socket.on('disconnect', () => {
-      console.log('user disconnected')
+      // User disconnected
     })
   })
 

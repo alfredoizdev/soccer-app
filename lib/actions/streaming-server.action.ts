@@ -1,0 +1,96 @@
+'use server'
+
+import { dbPromise } from '@/database/drizzle'
+import { streamingSessionsTable } from '@/database/schema'
+import { eq } from 'drizzle-orm'
+import { randomBytes } from 'crypto'
+
+// Server Actions para el cliente
+export async function createStreamingSessionAction(formData: FormData) {
+  const matchId = formData.get('matchId') as string
+  const broadcasterId = formData.get('broadcasterId') as string
+  const title = formData.get('title') as string
+  const description = formData.get('description') as string
+
+  if (!matchId || !broadcasterId) {
+    return { success: false, error: 'Missing required fields' }
+  }
+
+  try {
+    const db = await dbPromise
+
+    // Generar una clave de stream única
+    const streamKey = randomBytes(16).toString('hex')
+
+    const [session] = await db
+      .insert(streamingSessionsTable)
+      .values({
+        matchId,
+        broadcasterId,
+        title: title || `Live Match Stream`,
+        description: description || `Live streaming of the match`,
+        streamKey,
+      })
+      .returning()
+
+    return { success: true, data: session, error: null }
+  } catch (error) {
+    console.error('Error creating streaming session:', error)
+    return { success: false, error: 'Failed to create streaming session' }
+  }
+}
+
+export async function endStreamingSessionAction(formData: FormData) {
+  const sessionId = formData.get('sessionId') as string
+
+  if (!sessionId) {
+    return { success: false, error: 'Missing session ID' }
+  }
+
+  try {
+    const db = await dbPromise
+
+    console.log('Ending streaming session:', sessionId)
+
+    const [session] = await db
+      .update(streamingSessionsTable)
+      .set({
+        isActive: false,
+        endedAt: new Date(),
+      })
+      .where(eq(streamingSessionsTable.id, sessionId))
+      .returning()
+
+    console.log('Session ended successfully:', session)
+
+    return { success: true, data: session, error: null }
+  } catch (error) {
+    console.error('Error ending streaming session:', error)
+    return { success: false, error: 'Failed to end streaming session' }
+  }
+}
+
+// Limpiar manualmente todas las sesiones activas (para debugging)
+export async function cleanupAllActiveSessionsAction() {
+  try {
+    const db = await dbPromise
+
+    console.log('Cleaning up all active sessions')
+
+    const result = await db
+      .update(streamingSessionsTable)
+      .set({
+        isActive: false,
+        endedAt: new Date(),
+      })
+      .where(eq(streamingSessionsTable.isActive, true))
+      .returning()
+
+    console.log(`Cleaned up ${result.length} active sessions`)
+
+    return { success: true, data: result, error: null }
+  } catch (error) {
+    console.error('Error cleaning up sessions:', error)
+    return { success: false, error: 'Failed to clean up sessions' }
+  }
+}

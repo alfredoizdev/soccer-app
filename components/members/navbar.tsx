@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { logoutAction, userAuth } from '@/lib/actions/auth.action'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { LayoutDashboard } from 'lucide-react'
+import { LayoutDashboard, Video } from 'lucide-react'
 
 export default async function Navbar() {
   const user = await userAuth()
@@ -25,6 +25,9 @@ export default async function Navbar() {
         <div className='sm:w-auto flex justify-center items-center mt-2 sm:mt-0'>
           {user ? (
             <div className='flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-end'>
+              <Link href='/members/streams' className='text-gray-700'>
+                <Video className='w-6 h-6' />
+              </Link>
               {user.role === 'admin' && (
                 <Link href='/admin/dashboard' className='text-gray-700'>
                   <LayoutDashboard className='w-6 h-6' />
