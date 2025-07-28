@@ -33,6 +33,7 @@ export default function MatchVideoSection({
               preload='metadata'
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
+              data-testid='video-element'
             >
               <source src='/g1.mp4' type='video/mp4' />
               Your browser does not support the video tag.
