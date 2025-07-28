@@ -33,6 +33,15 @@ export function useWebRTC({
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map())
   const localStreamRef = useRef<MediaStream | null>(null)
 
+  // Debug logging para inicialización
+  console.log('useWebRTC initialized with:', {
+    sessionId,
+    userId,
+    isBroadcaster,
+    hasSessionId: !!sessionId,
+    sessionIdLength: sessionId?.length || 0,
+  })
+
   // Configuración de WebRTC
   const createPeerConnection = useCallback(
     (peerId: string) => {

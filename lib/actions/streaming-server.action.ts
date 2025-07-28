@@ -73,6 +73,7 @@ export async function endStreamingSessionAction(formData: FormData) {
 // Obtener sesión activa por matchId
 export async function getActiveSessionByMatchIdAction(matchId: string) {
   try {
+    console.log('Searching for active session for matchId:', matchId)
     const db = await dbPromise
 
     const [session] = await db
@@ -86,6 +87,7 @@ export async function getActiveSessionByMatchIdAction(matchId: string) {
       )
       .limit(1)
 
+    console.log('Found session:', session ? 'YES' : 'NO', session?.id || 'none')
     return { success: true, data: session, error: null }
   } catch (error) {
     console.error('Error getting active session by matchId:', error)
