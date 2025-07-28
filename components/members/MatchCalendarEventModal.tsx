@@ -10,6 +10,10 @@ import { useRouter } from 'next/navigation'
 import { MatchEvent } from './MatchCalendarEvent'
 import { formatTime, formatShortDate } from '@/lib/utils/formatDate'
 import { abbreviateTeam } from '@/lib/utils/abbreviateTeam'
+import { Avatar } from '@/components/ui/avatar'
+import { MapPin, Calendar, Clock } from 'lucide-react'
+import GoogleMap from './GoogleMap'
+import Image from 'next/image'
 
 interface MatchCalendarEventModalProps {
   open: boolean
@@ -24,7 +28,8 @@ export default function MatchCalendarEventModal({
 }: MatchCalendarEventModalProps) {
   const router = useRouter()
   if (!event) return null
-  const { team1, team2, id, status } = event.resource || {}
+  const { team1, team2, team1Avatar, team2Avatar, id, status, location } =
+    event.resource || {}
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-[calc(100vw-2rem)] sm:max-w-md px-4 sm:px-8 rounded-none'>
@@ -41,26 +46,66 @@ export default function MatchCalendarEventModal({
             </div>
           )}
         </DialogHeader>
-        <div className='flex items-center justify-center gap-4 my-2'>
+
+        {/* Teams with Avatars */}
+        <div className='flex items-center justify-center gap-6 my-4'>
           <div className='flex flex-col items-center'>
-            <span className='font-bold text-xs mt-1'>
+            <Avatar className='w-12 h-12 mb-2'>
+              <Image
+                width={48}
+                height={48}
+                src={team1Avatar || '/no-profile.webp'}
+                alt={team1}
+                className='w-full h-full object-cover'
+              />
+            </Avatar>
+            <span className='font-bold text-sm text-center'>
               {abbreviateTeam(team1)}
             </span>
           </div>
           <div className='flex flex-col items-center justify-center'>
-            <span className='text-xs text-muted-foreground'>vs</span>
+            <span className='text-lg font-bold text-muted-foreground'>VS</span>
           </div>
           <div className='flex flex-col items-center'>
-            <span className='font-bold text-xs mt-1'>
+            <Avatar className='w-12 h-12 mb-2'>
+              <Image
+                width={48}
+                height={48}
+                src={team2Avatar || '/no-profile.webp'}
+                alt={team2}
+                className='w-full h-full object-cover'
+              />
+            </Avatar>
+            <span className='font-bold text-sm text-center'>
               {abbreviateTeam(team2)}
             </span>
           </div>
         </div>
-        <div className='text-center text-sm mb-2'>
-          <span>
-            {formatShortDate(event.start)} · {formatTime(event.start)}
-          </span>
+
+        {/* Date and Time */}
+        <div className='flex items-center justify-center gap-2 text-sm text-gray-600 mb-3'>
+          <Calendar className='w-4 h-4' />
+          <span>{formatShortDate(event.start)}</span>
+          <Clock className='w-4 h-4' />
+          <span>{formatTime(event.start)}</span>
         </div>
+
+        {/* Location */}
+        {location && (
+          <div className='mb-4'>
+            <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
+              <MapPin className='w-4 h-4' />
+              <span className='font-medium'>Location</span>
+            </div>
+            <div className='bg-gray-50 p-3 rounded-none'>
+              <p className='font-medium text-sm'>{location}</p>
+            </div>
+            <div className='mt-3'>
+              <GoogleMap location={location} height='200px' />
+            </div>
+          </div>
+        )}
+
         <DialogFooter>
           <button
             className='bg-black text-white px-4 py-2 rounded-none hover:bg-gray-900 transition'

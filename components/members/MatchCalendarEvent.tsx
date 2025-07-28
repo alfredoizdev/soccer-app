@@ -12,6 +12,10 @@ export type MatchEvent = {
     id: string
     team1: string
     team2: string
+    team1Avatar?: string
+    team2Avatar?: string
+    location?: string | null
+    address?: string
     status?: 'active' | 'inactive'
   }
 }

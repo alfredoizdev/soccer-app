@@ -4,6 +4,7 @@ import LiveMatchHeader from '@/components/members/LiveMatchHeader'
 import LiveMatchScoreCard from '@/components/members/LiveMatchScoreCard'
 import LiveMatchTimeline from '@/components/members/LiveMatchTimeline'
 import TeamsInfo from '@/components/members/TeamsInfo'
+import LiveMatchVideoStream from '@/components/members/LiveMatchVideoStream'
 import { useLiveMatchSocket } from '@/hooks/useLiveMatchSocket'
 
 interface Match {
@@ -54,10 +55,19 @@ export default function LiveMatchViewer({
   return (
     <div className='max-w-screen-xl mx-auto px-2 lg:px-4 py-4'>
       <LiveMatchHeader match={match} matchStatus={matchStatus} />
+
+      {/* Video Stream Section - Fixed at top */}
+      <div className='mb-6'>
+        <LiveMatchVideoStream
+          matchId={match.id}
+          matchTitle={`${match.team1} vs ${match.team2}`}
+        />
+      </div>
+
       <div className='flex flex-col lg:flex-row gap-6'>
-        {/* Timeline a la izquierda */}
-        <div className='w-full lg:w-2/3 flex-shrink-0 flex items-start justify-center'>
-          <div className='w-full'>
+        {/* Timeline a la izquierda con scroll independiente */}
+        <div className='w-full lg:w-2/3 flex-shrink-0'>
+          <div className='w-full max-h-[calc(100vh-450px)] overflow-y-auto pr-2'>
             <LiveMatchTimeline
               match={match}
               liveScore={liveScore}
@@ -66,11 +76,11 @@ export default function LiveMatchViewer({
           </div>
         </div>
         {/* Panel derecho: Score y Lineup uno debajo del otro */}
-        <div className='w-full lg:w-1/3 flex flex-col gap-4 max-h-[900px] lg:max-h-[calc(100vh-120px)]'>
+        <div className='w-full lg:w-1/3 flex flex-col gap-4 max-h-[calc(100vh-450px)] overflow-y-auto'>
           <div className='hidden lg:block'>
             <LiveMatchScoreCard match={match} liveScore={liveScore} />
           </div>
-          <div className='flex-1 flex flex-col gap-4 overflow-y-auto'>
+          <div className='flex-1 flex flex-col gap-4'>
             <TeamsInfo
               teamName={match.team1}
               teamAvatar={match.team1Avatar}

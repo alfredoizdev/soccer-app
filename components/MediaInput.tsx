@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { UseFormRegister, FieldValues, Path } from 'react-hook-form'
+import Image from 'next/image'
 
 interface MediaInputProps<T extends FieldValues = FieldValues> {
   name: Path<T>
@@ -178,9 +179,11 @@ function MediaInput<T extends FieldValues = FieldValues>({
       )}
       {isValidMediaUrl(preview) && mediaType === 'image' && (
         <div className='relative flex flex-col items-center mb-2'>
-          <img
+          <Image
             src={preview}
             alt='Preview'
+            width={128}
+            height={128}
             className='w-32 h-32 object-cover rounded'
           />
           <button

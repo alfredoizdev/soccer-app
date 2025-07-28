@@ -2,7 +2,7 @@
 
 import { dbPromise } from '@/database/drizzle'
 import { streamingSessionsTable } from '@/database/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { randomBytes } from 'crypto'
 
 // Server Actions para el cliente
@@ -67,6 +67,29 @@ export async function endStreamingSessionAction(formData: FormData) {
   } catch (error) {
     console.error('Error ending streaming session:', error)
     return { success: false, error: 'Failed to end streaming session' }
+  }
+}
+
+// Obtener sesión activa por matchId
+export async function getActiveSessionByMatchIdAction(matchId: string) {
+  try {
+    const db = await dbPromise
+
+    const [session] = await db
+      .select()
+      .from(streamingSessionsTable)
+      .where(
+        and(
+          eq(streamingSessionsTable.matchId, matchId),
+          eq(streamingSessionsTable.isActive, true)
+        )
+      )
+      .limit(1)
+
+    return { success: true, data: session, error: null }
+  } catch (error) {
+    console.error('Error getting active session by matchId:', error)
+    return { success: false, error: 'Failed to get active session' }
   }
 }
 
