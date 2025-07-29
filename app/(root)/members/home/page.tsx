@@ -3,8 +3,7 @@ import MainActionDashboard from '@/components/members/MeinActionDashboard'
 import MeinActionDashboardSkeleton from '@/components/members/MeinActionDashboardSkeleton'
 import TeamPlayersSection from '@/components/members/TeamPlayersSection'
 import TeamPlayersSectionSkeleton from '@/components/members/TeamPlayersSectionSkeleton'
-import SlideLatsMatchResults from '@/components/members/SlideLatsMatchResults'
-import SlideLatsMatchResultsSkeleton from '@/components/members/SlideLatsMatchResultsSkeleton'
+import RecentMatches from '@/components/members/RecentMatches'
 import LatestNews from '@/components/members/LatestNews'
 import LatestNewsSkeleton from '@/components/members/LatestNewsSkeleton'
 import { getAllMatchesWithTeams } from '@/lib/actions/matches.action'
@@ -27,9 +26,7 @@ export default async function Home() {
       </Suspense>
 
       <div className='container mx-auto w-full overflow-hidden py-4 px-2'>
-        <Suspense fallback={<SlideLatsMatchResultsSkeleton />}>
-          <SlideLatsMatchResults matches={matches} />
-        </Suspense>
+        <RecentMatches matches={matches} />
       </div>
 
       <div className='w-full mx-auto bg-gray-300/20 pb-[100px] pt-[100px] px-2'>
