@@ -115,11 +115,13 @@ export async function createMatchWithPlayers({
   team1Id,
   team2Id,
   location,
+  notes,
 }: {
   date: Date
   team1Id: string
   team2Id: string
   location?: string
+  notes?: string
 }) {
   const db = await dbPromise
   // 1. Crear el partido
@@ -130,6 +132,7 @@ export async function createMatchWithPlayers({
       team1Id,
       team2Id,
       location,
+      notes,
     })
     .returning()
 
@@ -198,6 +201,7 @@ export async function getAllMatchesWithTeams() {
       duration: match.duration,
       status: match.status,
       location: match.location,
+      notes: match.notes,
     }
   })
 
@@ -219,6 +223,7 @@ export type MatchWithTeams = {
   status: 'active' | 'inactive'
   isLive: boolean // Nuevo campo para indicar si está realmente en vivo
   location?: string // Ubicación del partido
+  notes?: string | null // Notas del partido
 }
 
 // Obtener solo matches activos

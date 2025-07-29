@@ -126,7 +126,7 @@ export default async function MatchHistoryPage({ params }: PageProps) {
   }
 
   return (
-    <div className='max-w-screen-xl mx-auto px-4 py-6'>
+    <div className='max-w-screen-xl mx-auto px-4 py-6 mt-10'>
       {/* Header con botón de regreso */}
       <div className='mb-6'>
         <Link href='/members/matches/history'>

@@ -249,7 +249,7 @@ export default function MatchTimelinePage({
   })
 
   return (
-    <div className='w-full mx-auto p-1 sm:p-4 fade-in duration-300'>
+    <div className='w-full mx-auto p-1 sm:p-4 fade-in duration-300 mt-[30px] sm:mt-[0px]'>
       {/* Header con botón de regreso */}
       <div className='mb-4 sm:mb-6 flex justify-between items-center w-full mx-auto'>
         <Link

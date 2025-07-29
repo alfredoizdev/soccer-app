@@ -3,6 +3,8 @@ import { Button } from '../ui/button'
 import { DateTimePicker } from '../ui/date-time-picker'
 import TeamField from '@/app/(admin)/admin/matches/new/TeamField'
 import LocationAutocomplete from './LocationAutocomplete'
+import MentionTextarea from '../ui/mention-input'
+
 import { useForm, Controller } from 'react-hook-form'
 import { createMatchWithPlayers } from '@/lib/actions/matches.action'
 import { toast } from 'sonner'
@@ -17,6 +19,7 @@ type MatchFormValues = {
   team2: string
   date: Date | undefined
   location: string
+  notes: string
 }
 
 export default function MatchForm({ teams }: Props) {
@@ -32,6 +35,7 @@ export default function MatchForm({ teams }: Props) {
       team2: '',
       date: new Date(),
       location: '',
+      notes: '',
     },
   })
 
@@ -58,6 +62,7 @@ export default function MatchForm({ teams }: Props) {
         team1Id: data.team1,
         team2Id: data.team2,
         location: data.location,
+        notes: data.notes,
       })
       toast.success('Match created successfully!')
       router.push('/admin/matches')
@@ -145,6 +150,22 @@ export default function MatchForm({ teams }: Props) {
           {errors.location && (
             <span className='text-red-500'>{errors.location.message}</span>
           )}
+        </div>
+        <div>
+          <label className='block mb-1 font-medium'>Notes</label>
+          <Controller
+            name='notes'
+            control={control}
+            render={({ field }) => (
+              <MentionTextarea
+                value={field.value}
+                onChange={field.onChange}
+                placeholder='Add notes about the match. Type @ to mention users or players...'
+                className='w-full'
+                rows={4}
+              />
+            )}
+          />
         </div>
         <Button type='submit' className='w-full rounded-none'>
           Create Match

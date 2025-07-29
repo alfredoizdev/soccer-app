@@ -43,6 +43,13 @@
       "when": 1753737386900,
       "tag": "0005_dapper_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1753815551615,
+      "tag": "0006_wealthy_thing",
+      "breakpoints": true
     }
   ]
 }

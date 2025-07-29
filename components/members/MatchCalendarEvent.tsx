@@ -17,6 +17,7 @@ export type MatchEvent = {
     location?: string | null
     address?: string
     status?: 'active' | 'inactive'
+    notes?: string | null
   }
 }
 

@@ -11,7 +11,7 @@ import { MatchEvent } from './MatchCalendarEvent'
 import { formatTime, formatShortDate } from '@/lib/utils/formatDate'
 import { abbreviateTeam } from '@/lib/utils/abbreviateTeam'
 import { Avatar } from '@/components/ui/avatar'
-import { MapPin, Calendar, Clock } from 'lucide-react'
+import { Calendar, Clock, FileText } from 'lucide-react'
 import GoogleMap from './GoogleMap'
 import Image from 'next/image'
 
@@ -93,15 +93,23 @@ export default function MatchCalendarEventModal({
         {/* Location */}
         {location && (
           <div className='mb-4'>
-            <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
-              <MapPin className='w-4 h-4' />
-              <span className='font-medium'>Location</span>
-            </div>
-            <div className='bg-gray-50 p-3 rounded-none'>
-              <p className='font-medium text-sm'>{location}</p>
-            </div>
             <div className='mt-3'>
               <GoogleMap location={location} height='200px' />
+            </div>
+          </div>
+        )}
+
+        {/* Notes */}
+        {event.resource?.notes && (
+          <div className='mb-4'>
+            <div className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
+              <FileText className='w-4 h-4' />
+              <span className='font-medium'>Notes</span>
+            </div>
+            <div className='bg-gray-50 p-3 rounded-none'>
+              <p className='text-base whitespace-pre-wrap'>
+                {event.resource.notes}
+              </p>
             </div>
           </div>
         )}
