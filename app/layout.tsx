@@ -24,9 +24,16 @@ export default function GlobalLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang='en'>
+    <html lang='en' style={{ overflowX: 'hidden' }}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col scroll-smooth`}
+        style={{
+          overflowX: 'hidden',
+          width: '100%',
+          maxWidth: '100vw',
+          margin: 0,
+          padding: 0,
+        }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
         {children}
         <Toaster richColors position='bottom-right' />

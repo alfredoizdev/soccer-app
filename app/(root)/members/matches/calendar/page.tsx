@@ -1,4 +1,4 @@
-import MatchCalendar from '@/components/members/MatchCalendar'
+import MatchCalendarResponsive from '@/components/members/MatchCalendarResponsive'
 import { getAllMatchesWithTeams } from '@/lib/actions/matches.action'
 
 export default async function MembersMatchesCalendarPage() {
@@ -17,12 +17,12 @@ export default async function MembersMatchesCalendarPage() {
   }))
 
   return (
-    <div className='w-full mx-auto py-8 px-2'>
+    <div className='w-full mx-auto py-8 px-4'>
       <h1 className='text-2xl font-bold mb-6 text-center md:text-left px-2'>
         Matches Calendar
       </h1>
 
-      <MatchCalendar events={events} />
+      <MatchCalendarResponsive events={events} />
     </div>
   )
 }
