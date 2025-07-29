@@ -83,7 +83,10 @@ const PlayerStatsAdmin: React.FC<PlayerStatsAdminProps> = ({
       )}
       <div className='grid grid-cols-2 md:grid-cols-3 gap-4 mb-4'>
         {statItems.map((item) => (
-          <Card key={item.label} className='p-4 text-center rounded-none'>
+          <Card
+            key={item.label}
+            className='p-4 text-center rounded-none border-0'
+          >
             <div className='text-xs text-gray-500'>{item.label}</div>
             <div className='text-xl font-bold'>{item.value}</div>
           </Card>

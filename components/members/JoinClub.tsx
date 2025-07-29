@@ -62,7 +62,7 @@ export default function JoinClub({
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 w-full'>
           {/* Información del equipo */}
-          <Card className='lg:col-span-1'>
+          <Card className='lg:col-span-1 rounded-none border-none'>
             <CardHeader className='text-center'>
               <div className='flex justify-center mb-4'>
                 <Image
@@ -70,7 +70,7 @@ export default function JoinClub({
                   width={80}
                   height={80}
                   alt={currentClub.name}
-                  className='w-20 h-20 rounded-full object-cover border'
+                  className='w-20 h-20 rounded-full object-cover'
                 />
               </div>
               <CardTitle className='text-xl'>{currentClub.name}</CardTitle>
@@ -114,7 +114,7 @@ export default function JoinClub({
           </Card>
 
           {/* Estadísticas del equipo */}
-          <Card className='lg:col-span-2'>
+          <Card className='lg:col-span-2 rounded-none border-none'>
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
                 <Trophy className='w-5 h-5' />
@@ -198,7 +198,7 @@ export default function JoinClub({
                           width={64}
                           height={64}
                           alt={player.name}
-                          className='w-16 h-16 rounded-full object-cover border'
+                          className='w-16 h-16 rounded-full object-cover'
                           src={player.avatar || '/no-profile.webp'}
                         />
                         <AvatarFallback>
@@ -207,7 +207,7 @@ export default function JoinClub({
                         </AvatarFallback>
                       </Avatar>
                       {player.jerseyNumber && (
-                        <div className='absolute -top-1 -right-1 bg-gray-800 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold'>
+                        <div className='absolute -top-1 -right-1 bg-gray-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold'>
                           #{player.jerseyNumber}
                         </div>
                       )}
@@ -217,12 +217,12 @@ export default function JoinClub({
                     </h4>
                     <div className='flex gap-2 mb-3'>
                       {player.position && (
-                        <Badge variant='outline'>{player.position}</Badge>
+                        <Badge variant='secondary'>{player.position}</Badge>
                       )}
                     </div>
                     <Link href={`/members/players/${player.id}`}>
                       <Button
-                        variant='outline'
+                        variant='secondary'
                         size='sm'
                         className='rounded-none'
                       >
@@ -273,7 +273,7 @@ export default function JoinClub({
               width={64}
               height={64}
               alt={club.name}
-              className='w-16 h-16 rounded-full object-cover mb-3 border'
+              className='w-16 h-16 rounded-full object-cover mb-3'
             />
 
             <h3 className='text-lg font-semibold mb-1'>{club.name}</h3>

@@ -101,7 +101,7 @@ export default async function TeamPlayersSection() {
             href={`/members/players/${player.id}`}
             className='block group'
           >
-            <Card className='h-full transition-all duration-300 hover:shadow-lg hover:border-gray-800/50 rounded-none shadow-sm'>
+            <Card className='h-full transition-all duration-300 hover:shadow-lg rounded-none shadow-sm border-0'>
               <CardContent className='p-4 flex flex-col items-center text-center'>
                 <div className='relative mb-3'>
                   <Image
@@ -109,7 +109,7 @@ export default async function TeamPlayersSection() {
                     alt={`${player.name} ${player.lastName}`}
                     width={80}
                     height={80}
-                    className='w-16 h-16 rounded-full object-cover border-2 border-gray-200 group-hover:border-gray-800 transition-colors'
+                    className='w-16 h-16 rounded-full object-cover transition-colors'
                   />
                   {player.jerseyNumber && (
                     <div className='absolute -top-1 -right-1 bg-gray-800 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold'>

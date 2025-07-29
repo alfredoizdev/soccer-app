@@ -65,7 +65,6 @@ export default function MatchCalendar({ events }: MatchCalendarProps) {
               backgroundColor: isActive ? '#dcfce7' : '#fef3c7', // Verde pastel para activo, amarillo pastel para inactivo
               color: isActive ? '#166534' : '#92400e', // Verde oscuro para texto activo, naranja oscuro para inactivo
               borderRadius: 0,
-              border: isActive ? '1px solid #bbf7d0' : '1px solid #fde68a', // Bordes del mismo color
             },
           }
         }}

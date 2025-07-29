@@ -1,14 +1,12 @@
 .rbc-toolbar {
   background: #f9fafb;
   border-radius: 0;
-  border: 1px solid #e5e7eb;
   margin-bottom: 1rem;
   padding: 0.5rem 1rem;
   z-index: 10;
 }
 .rbc-btn-group button {
   background: #fff;
-  border: 1px solid #d1d5db;
   color: #111827;
   font-weight: 500;
   border-radius: 0.375rem;

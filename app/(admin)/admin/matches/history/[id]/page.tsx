@@ -99,7 +99,7 @@ export default async function MatchDetailPage({
       </div>
 
       {/* Score Card mejorado */}
-      <Card className='mb-6 sm:mb-8 border-2 border-gray-200 shadow-sm'>
+      <Card className='mb-6 sm:mb-8  shadow-sm'>
         <CardHeader className='text-center pb-3 sm:pb-4'>
           <CardTitle className='text-lg sm:text-xl text-gray-700'>
             Final Score

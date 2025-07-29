@@ -12,7 +12,7 @@ function PostCard({ post }: PostCardProps) {
   return (
     <div className='flex flex-col w-full max-w-sm rounded-none overflow-hidden bg-white shadow-sm'>
       {/* Header con avatar y nombre de usuario */}
-      <div className='flex items-center gap-2 p-3 border-b border-gray-100 bg-gray-50'>
+      <div className='flex items-center gap-2 p-3  bg-gray-50'>
         <Avatar>
           {post.userAvatar ? (
             <AvatarImage

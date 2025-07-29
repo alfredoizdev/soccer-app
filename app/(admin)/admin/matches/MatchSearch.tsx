@@ -77,7 +77,7 @@ export default function MatchSearch({ matches }: Props) {
                     alt={match.team1}
                     width={48}
                     height={48}
-                    className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                    className='rounded-full object-cover  mx-auto mb-2'
                   />
                   <div className='font-semibold text-sm'>{match.team1}</div>
                 </div>
@@ -95,7 +95,7 @@ export default function MatchSearch({ matches }: Props) {
                     alt={match.team2}
                     width={48}
                     height={48}
-                    className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                    className='rounded-full object-cover  mx-auto mb-2'
                   />
                   <div className='font-semibold text-sm'>{match.team2}</div>
                 </div>
