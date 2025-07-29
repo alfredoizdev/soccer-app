@@ -9,8 +9,7 @@ import {
   getPlayerMatchesWithStats,
   PlayerMatchWithStats,
 } from '@/lib/actions/matches.action'
-import PlayerMatchesDrawer from '@/components/members/PlayerMatchesDrawer'
-import PlayerMatchCard from '@/components/members/PlayerMatchCard'
+
 import PlayerProgressIndicators from '@/components/members/PlayerProgressIndicators'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -75,25 +74,6 @@ export default async function PlayerDetailPage({
     (a, b) =>
       new Date(b.match.date).getTime() - new Date(a.match.date).getTime()
   )
-  const lastMatch = sortedMatches[0]
-
-  // Obtener datos reales de los equipos para el último partido
-  let team1 = { name: '', avatar: '/no-profile.webp' }
-  let team2 = { name: '', avatar: '/no-profile.webp' }
-  if (lastMatch) {
-    const [team1Res, team2Res] = await Promise.all([
-      getOrganizationAction(lastMatch.match.team1Id),
-      getOrganizationAction(lastMatch.match.team2Id),
-    ])
-    team1 = {
-      name: team1Res?.data?.name || '',
-      avatar: team1Res?.data?.avatar || '/no-profile.webp',
-    }
-    team2 = {
-      name: team2Res?.data?.name || '',
-      avatar: team2Res?.data?.avatar || '/no-profile.webp',
-    }
-  }
 
   // Calcular porcentajes para los indicadores de progreso
   // Conversion Rate: Goles por partido (promedio de goles en 90 minutos)
@@ -121,7 +101,7 @@ export default async function PlayerDetailPage({
   }
 
   return (
-    <div className='max-w-6xl mx-auto p-6'>
+    <div className='w-full mx-auto p-6'>
       {/* Header con foto prominente y información básica */}
       <div className='bg-white rounded-none shadow-lg p-8 mb-8'>
         <div className='flex flex-col lg:flex-row gap-8 items-start'>
@@ -145,7 +125,7 @@ export default async function PlayerDetailPage({
           <div className='flex-1 space-y-6'>
             <div>
               <h1 className='text-4xl font-bold text-gray-900 mb-2'>
-                #{player.jerseyNumber} {player.name} {player.lastName}
+                {player.name} {player.lastName}
               </h1>
               <div className='text-lg text-gray-600 font-medium'>
                 {getPositionDisplay(player.position)}
@@ -317,37 +297,6 @@ export default async function PlayerDetailPage({
           </CardContent>
         </Card>
       )}
-
-      {/* Último partido */}
-      <Card className='mt-8 shadow-lg rounded-none'>
-        <CardContent className='p-6'>
-          <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-xl font-bold text-gray-900'>Last Match</h3>
-            {sortedMatches.length > 0 && (
-              <PlayerMatchesDrawer
-                matches={sortedMatches}
-                trigger={
-                  <Button variant='outline' size='sm' className='rounded-none'>
-                    See all matches
-                  </Button>
-                }
-              />
-            )}
-          </div>
-          {lastMatch ? (
-            <PlayerMatchCard
-              team1={{ ...team1, goals: lastMatch.match.team1Goals }}
-              team2={{ ...team2, goals: lastMatch.match.team2Goals }}
-              stats={lastMatch.stats}
-              date={lastMatch.match.date}
-            />
-          ) : (
-            <div className='text-gray-500 text-center py-8'>
-              No matches found.
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

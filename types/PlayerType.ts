@@ -13,5 +13,5 @@ export type PlayerType = {
   totalAssists?: number
   totalPassesCompleted?: number
   jerseyNumber?: number | null // Número dorsal del jugador
-  position: string
+  position?: string | null
 }

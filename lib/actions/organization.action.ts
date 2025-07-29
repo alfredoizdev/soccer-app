@@ -5,6 +5,9 @@ import { cloudinaryHandles } from '@/lib/utils/cloudinaryUpload'
 import { OrganizationType } from '@/types/UserType'
 import { eq, desc } from 'drizzle-orm'
 import { usersTable } from '@/database/schema'
+import { or } from 'drizzle-orm'
+import { matchesTable } from '@/database/schema'
+import { playersTable } from '@/database/schema'
 
 export const getOrganizationsAction = async () => {
   try {
@@ -274,5 +277,67 @@ export const getOrganizationByUserId = async (
   } catch (error) {
     console.error('Error fetching organization by user:', error)
     return { data: null, error: 'Failed to fetch organization by user' }
+  }
+}
+
+export const getOrganizationStatsAction = async (organizationId: string) => {
+  try {
+    const db = await dbPromise
+
+    // Obtener todos los partidos donde participa este equipo
+    const matches = await db
+      .select()
+      .from(matchesTable)
+      .where(
+        or(
+          eq(matchesTable.team1Id, organizationId),
+          eq(matchesTable.team2Id, organizationId)
+        )
+      )
+
+    // Calcular estadísticas
+    let goalsScored = 0
+    let goalsConceded = 0
+    let wins = 0
+    let losses = 0
+    let draws = 0
+
+    matches.forEach((match) => {
+      if (match.team1Id === organizationId) {
+        goalsScored += match.team1Goals || 0
+        goalsConceded += match.team2Goals || 0
+        if ((match.team1Goals || 0) > (match.team2Goals || 0)) wins++
+        else if ((match.team1Goals || 0) < (match.team2Goals || 0)) losses++
+        else draws++
+      } else {
+        goalsScored += match.team2Goals || 0
+        goalsConceded += match.team1Goals || 0
+        if ((match.team2Goals || 0) > (match.team1Goals || 0)) wins++
+        else if ((match.team2Goals || 0) < (match.team1Goals || 0)) losses++
+        else draws++
+      }
+    })
+
+    // Obtener jugadores del equipo
+    const players = await db
+      .select()
+      .from(playersTable)
+      .where(eq(playersTable.organizationId, organizationId))
+
+    return {
+      data: {
+        goalsScored,
+        goalsConceded,
+        wins,
+        losses,
+        draws,
+        totalMatches: matches.length,
+        players: players.length,
+      },
+      error: null,
+    }
+  } catch (error) {
+    console.error('Error fetching organization stats:', error)
+    return { data: null, error: 'Failed to fetch organization stats' }
   }
 }
