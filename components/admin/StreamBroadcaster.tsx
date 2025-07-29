@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-import { useWebRTC } from '@/hooks/useWebRTC'
 import {
   createStreamingSessionAction,
   endStreamingSessionAction,
@@ -32,8 +30,11 @@ export default function StreamBroadcaster({
   const [viewerCount, setViewerCount] = useState(0)
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [isVideoEnabled, setIsVideoEnabled] = useState(true)
+  const [isConnected, setIsConnected] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
+  const localStreamRef = useRef<MediaStream | null>(null)
 
   // Obtener usuario actual usando server action
   const [user, setUser] = useState<{
@@ -56,24 +57,36 @@ export default function StreamBroadcaster({
     getUser()
   }, [])
 
-  const { localStream, isConnected, startStream, stopStream, error } =
-    useWebRTC({
-      sessionId: sessionId || '',
-      userId: user?.id || '',
-      isBroadcaster: true,
-    })
-
   // Mostrar stream local en el video element
   useEffect(() => {
-    if (videoRef.current && localStream) {
-      videoRef.current.srcObject = localStream
+    if (videoRef.current && localStreamRef.current) {
+      videoRef.current.srcObject = localStreamRef.current
     }
-  }, [localStream])
+  }, [localStreamRef.current])
 
   // Escuchar cambios en el número de espectadores
   useEffect(() => {
     const handleViewerJoined = () => {
       setViewerCount((prev) => prev + 1)
+
+      // Enviar oferta WebRTC al nuevo viewer
+      if (peerConnectionRef.current && localStreamRef.current) {
+        console.log('Viewer joined, sending WebRTC offer...')
+        peerConnectionRef.current
+          .createOffer()
+          .then((offer) => {
+            return peerConnectionRef.current!.setLocalDescription(offer)
+          })
+          .then(() => {
+            socket.emit('webrtc:offer', {
+              offer: peerConnectionRef.current!.localDescription,
+              from: user?.id,
+              to: 'viewer',
+              sessionId,
+            })
+          })
+          .catch(console.error)
+      }
     }
 
     const handleViewerLeft = () => {
@@ -86,16 +99,47 @@ export default function StreamBroadcaster({
       }
     }
 
+    // WebRTC event listeners
+    const handleWebRTCAnswer = (data: {
+      answer: RTCSessionDescriptionInit
+      from: string
+      to: string
+    }) => {
+      console.log('Received WebRTC answer:', data)
+      if (peerConnectionRef.current && data.from !== user?.id) {
+        peerConnectionRef.current
+          .setRemoteDescription(new RTCSessionDescription(data.answer))
+          .catch(console.error)
+      }
+    }
+
+    const handleWebRTCIceCandidate = (data: {
+      candidate: RTCIceCandidateInit
+      from: string
+      to: string
+    }) => {
+      console.log('Received ICE candidate:', data)
+      if (peerConnectionRef.current && data.from !== user?.id) {
+        peerConnectionRef.current
+          .addIceCandidate(new RTCIceCandidate(data.candidate))
+          .catch(console.error)
+      }
+    }
+
     socket.on('streaming:viewer_joined', handleViewerJoined)
     socket.on('streaming:viewer_left', handleViewerLeft)
     socket.on('streaming:stop_by_match', handleStopByMatch)
+    socket.on('webrtc:answer', handleWebRTCAnswer)
+    socket.on('webrtc:ice_candidate', handleWebRTCIceCandidate)
 
     return () => {
       socket.off('streaming:viewer_joined', handleViewerJoined)
       socket.off('streaming:viewer_left', handleViewerLeft)
       socket.off('streaming:stop_by_match', handleStopByMatch)
+      socket.off('webrtc:answer', handleWebRTCAnswer)
+      socket.off('webrtc:ice_candidate', handleWebRTCIceCandidate)
     }
-  }, [socket, matchId, isStreaming, sessionId])
+  }, [socket, matchId, isStreaming, sessionId, user?.id])
 
   const handleStartStream = async () => {
     if (!user) {
@@ -122,7 +166,7 @@ export default function StreamBroadcaster({
         const newSessionId = result.data.id
         setSessionId(newSessionId)
 
-        // Iniciar transmisión WebRTC con el sessionId correcto
+        // Iniciar transmisión WebRTC
         await startStream(newSessionId)
         setIsStreaming(true)
 
@@ -133,6 +177,61 @@ export default function StreamBroadcaster({
     } catch (err) {
       console.error('Error starting stream:', err)
       toast.error('Failed to start stream')
+    }
+  }
+
+  const startStream = async (sessionId: string) => {
+    try {
+      // Obtener acceso a cámara y micrófono
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      })
+
+      localStreamRef.current = stream
+
+      // Crear conexión WebRTC
+      const peerConnection = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ],
+      })
+
+      peerConnectionRef.current = peerConnection
+
+      // Agregar tracks locales
+      stream.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, stream)
+      })
+
+      // Manejar cambios de conexión
+      peerConnection.onconnectionstatechange = () => {
+        console.log('Connection state:', peerConnection.connectionState)
+        setIsConnected(peerConnection.connectionState === 'connected')
+      }
+
+      // Manejar ICE candidates
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log('Sending ICE candidate from broadcaster...')
+          socket.emit('webrtc:ice_candidate', {
+            candidate: event.candidate,
+            from: user?.id,
+            to: 'viewer',
+            sessionId,
+          })
+        }
+      }
+
+      // Iniciar broadcasting
+      socket.emit('streaming:start', {
+        sessionId,
+        userId: user?.id,
+      })
+    } catch (err) {
+      console.error('Error starting stream:', err)
+      throw err
     }
   }
 
@@ -166,9 +265,33 @@ export default function StreamBroadcaster({
     }
   }
 
+  const stopStream = () => {
+    // Detener tracks locales
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop())
+      localStreamRef.current = null
+    }
+
+    // Cerrar conexión WebRTC
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close()
+      peerConnectionRef.current = null
+    }
+
+    // Detener broadcasting
+    if (sessionId) {
+      socket.emit('streaming:stop', {
+        sessionId,
+        userId: user?.id,
+      })
+    }
+
+    setIsConnected(false)
+  }
+
   const toggleAudio = () => {
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0]
+    if (localStreamRef.current) {
+      const audioTrack = localStreamRef.current.getAudioTracks()[0]
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled
         setIsAudioEnabled(audioTrack.enabled)
@@ -177,24 +300,13 @@ export default function StreamBroadcaster({
   }
 
   const toggleVideo = () => {
-    if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0]
+    if (localStreamRef.current) {
+      const videoTrack = localStreamRef.current.getVideoTracks()[0]
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled
         setIsVideoEnabled(videoTrack.enabled)
       }
     }
-  }
-
-  if (error) {
-    return (
-      <Card className='p-6'>
-        <div className='text-center'>
-          <p className='text-red-500 mb-4'>{error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
-      </Card>
-    )
   }
 
   return (

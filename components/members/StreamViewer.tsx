@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { useWebRTC } from '@/hooks/useWebRTC'
 import { userAuth } from '@/lib/actions/auth.action'
 import { toast } from 'sonner'
 import { Play, Square, Volume2, VolumeX, Users } from 'lucide-react'
@@ -23,9 +22,10 @@ export default function StreamViewer({
   const [isWatching, setIsWatching] = useState(false)
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [viewerCount, setViewerCount] = useState(0)
-  const [isWaitingForStream, setIsWaitingForStream] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
 
   // Obtener usuario actual
   const [user, setUser] = useState<{
@@ -41,23 +41,6 @@ export default function StreamViewer({
     }
     getUser()
   }, [])
-
-  const { remoteStreams, isConnected, joinStream, leaveStream, error } =
-    useWebRTC({
-      sessionId,
-      userId: user?.id || '',
-      isBroadcaster: false,
-    })
-
-  // Mostrar stream remoto en el video element
-  useEffect(() => {
-    if (videoRef.current && remoteStreams.size > 0) {
-      // Tomar el primer stream remoto disponible
-      const firstStream = Array.from(remoteStreams.values())[0]
-      videoRef.current.srcObject = firstStream
-      setIsWaitingForStream(false)
-    }
-  }, [remoteStreams])
 
   // Escuchar cambios en el número de espectadores
   useEffect(() => {
@@ -99,20 +82,60 @@ export default function StreamViewer({
     }
 
     try {
-      setIsWaitingForStream(true)
-      await joinStream()
       setIsWatching(true)
+
+      // Crear conexión WebRTC
+      const peerConnection = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ],
+      })
+
+      peerConnectionRef.current = peerConnection
+
+      // Manejar tracks remotos
+      peerConnection.ontrack = (event) => {
+        console.log('Received remote track:', event.streams[0])
+        if (videoRef.current && event.streams[0]) {
+          videoRef.current.srcObject = event.streams[0]
+          videoRef.current.play().catch(console.error)
+        }
+      }
+
+      // Manejar cambios de conexión
+      peerConnection.onconnectionstatechange = () => {
+        console.log('Connection state:', peerConnection.connectionState)
+        setIsConnected(peerConnection.connectionState === 'connected')
+      }
+
+      // Unirse al stream
+      socket.emit('streaming:join', {
+        sessionId,
+        userId: user.id,
+      })
+
       toast.success('Joined stream successfully')
     } catch (err) {
       console.error('Error joining stream:', err)
       toast.error('Failed to join stream')
-      setIsWaitingForStream(false)
+      setIsWatching(false)
     }
   }
 
   const handleLeaveStream = () => {
-    leaveStream()
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close()
+      peerConnectionRef.current = null
+    }
+
+    socket.emit('streaming:leave', {
+      sessionId,
+      userId: user?.id,
+    })
+
     setIsWatching(false)
+    setIsConnected(false)
     toast.info('Left stream')
   }
 
@@ -121,22 +144,6 @@ export default function StreamViewer({
       videoRef.current.muted = !videoRef.current.muted
       setIsAudioEnabled(!videoRef.current.muted)
     }
-  }
-
-  if (error) {
-    return (
-      <Card className='p-6 rounded-none'>
-        <div className='text-center'>
-          <p className='text-red-500 mb-4'>{error}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            className='rounded-none'
-          >
-            Retry
-          </Button>
-        </div>
-      </Card>
-    )
   }
 
   return (
@@ -192,15 +199,6 @@ export default function StreamViewer({
                   console.error('Video error:', e)
                 }}
               />
-
-              {isWaitingForStream && (
-                <div className='absolute inset-0 flex items-center justify-center bg-black bg-opacity-50'>
-                  <div className='text-white text-center'>
-                    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2'></div>
-                    <p>Waiting for stream...</p>
-                  </div>
-                </div>
-              )}
 
               {/* Overlay controls */}
               <div className='absolute bottom-4 left-4 flex gap-2'>

@@ -19,7 +19,26 @@ export async function createStreamingSessionAction(formData: FormData) {
   try {
     const db = await dbPromise
 
-    // Generar una clave de stream única
+    // Buscar si ya existe una sesión activa para este match
+    console.log('Checking for existing active session for matchId:', matchId)
+    const [existingSession] = await db
+      .select()
+      .from(streamingSessionsTable)
+      .where(
+        and(
+          eq(streamingSessionsTable.matchId, matchId), // Buscar por matchId
+          eq(streamingSessionsTable.isActive, true)
+        )
+      )
+      .limit(1)
+
+    if (existingSession) {
+      console.log('Found existing session, reusing:', existingSession.id)
+      return { success: true, data: existingSession, error: null }
+    }
+
+    // Si no existe, crear una nueva sesión
+    console.log('No existing session found, creating new one')
     const streamKey = randomBytes(16).toString('hex')
 
     const [session] = await db
@@ -33,6 +52,7 @@ export async function createStreamingSessionAction(formData: FormData) {
       })
       .returning()
 
+    console.log('Created new streaming session with matchId:', session.id)
     return { success: true, data: session, error: null }
   } catch (error) {
     console.error('Error creating streaming session:', error)
@@ -76,12 +96,13 @@ export async function getActiveSessionByMatchIdAction(matchId: string) {
     console.log('Searching for active session for matchId:', matchId)
     const db = await dbPromise
 
+    // Buscar por matchId
     const [session] = await db
       .select()
       .from(streamingSessionsTable)
       .where(
         and(
-          eq(streamingSessionsTable.matchId, matchId),
+          eq(streamingSessionsTable.matchId, matchId), // Buscar por matchId
           eq(streamingSessionsTable.isActive, true)
         )
       )

@@ -3,9 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { useWebRTC } from '@/hooks/useWebRTC'
-import { userAuth } from '@/lib/actions/auth.action'
 import { getActiveSessionByMatchIdAction } from '@/lib/actions/streaming-server.action'
+import { userAuth } from '@/lib/actions/auth.action'
 import { toast } from 'sonner'
 import { Play, Square, Volume2, VolumeX, Users } from 'lucide-react'
 import { socket } from '@/app/socket'
@@ -22,10 +21,11 @@ export default function LiveMatchVideoStream({
   const [isWatching, setIsWatching] = useState(false)
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [viewerCount, setViewerCount] = useState(0)
-  const [isWaitingForStream, setIsWaitingForStream] = useState(false)
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isConnected, setIsConnected] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
 
   // Obtener usuario actual
   const [user, setUser] = useState<{
@@ -48,13 +48,13 @@ export default function LiveMatchVideoStream({
       try {
         const result = await getActiveSessionByMatchIdAction(matchId)
         if (result.success && result.data) {
-          setActiveSessionId(result.data.id)
+          setSessionId(result.data.id)
         } else {
-          setActiveSessionId(null)
+          setSessionId(null)
         }
       } catch (error) {
         console.error('Error checking active streams:', error)
-        setActiveSessionId(null)
+        setSessionId(null)
       }
     }
 
@@ -63,46 +63,6 @@ export default function LiveMatchVideoStream({
     const interval = setInterval(checkActiveStream, 30000)
     return () => clearInterval(interval)
   }, [matchId])
-
-  const { remoteStreams, isConnected, joinStream, leaveStream, error } =
-    useWebRTC({
-      sessionId: activeSessionId || '',
-      userId: user?.id || '',
-      isBroadcaster: false,
-    })
-
-  // Debug logging
-  useEffect(() => {
-    console.log('=== LiveMatchVideoStream Debug ===')
-    console.log('Match ID:', matchId)
-    console.log('Active session ID changed:', activeSessionId)
-    console.log('User ID:', user?.id)
-    console.log('Is connected:', isConnected)
-    console.log('Remote streams count:', remoteStreams.size)
-    console.log('Is waiting for stream:', isWaitingForStream)
-    console.log('Is watching:', isWatching)
-    console.log('================================')
-  }, [
-    activeSessionId,
-    user?.id,
-    isConnected,
-    remoteStreams.size,
-    isWaitingForStream,
-    isWatching,
-    matchId,
-  ])
-
-  // Mostrar stream remoto en el video element
-  useEffect(() => {
-    console.log('Remote streams changed:', remoteStreams.size, 'streams')
-    if (videoRef.current && remoteStreams.size > 0) {
-      // Tomar el primer stream remoto disponible
-      const firstStream = Array.from(remoteStreams.values())[0]
-      console.log('Setting video srcObject with stream:', firstStream)
-      videoRef.current.srcObject = firstStream
-      setIsWaitingForStream(false)
-    }
-  }, [remoteStreams])
 
   // Escuchar cambios en el número de espectadores
   useEffect(() => {
@@ -121,51 +81,160 @@ export default function LiveMatchVideoStream({
     const handleStreamingStopped = () => {
       setIsWatching(false)
       setViewerCount(0)
-      setActiveSessionId(null)
       toast.info('Stream has ended')
+    }
+
+    // WebRTC event listeners
+    const handleWebRTCOffer = (data: {
+      offer: RTCSessionDescriptionInit
+      from: string
+      to: string
+    }) => {
+      console.log('Received WebRTC offer:', data)
+      if (peerConnectionRef.current && data.from !== user?.id) {
+        peerConnectionRef.current
+          .setRemoteDescription(new RTCSessionDescription(data.offer))
+          .then(() => {
+            return peerConnectionRef.current!.createAnswer()
+          })
+          .then((answer) => {
+            return peerConnectionRef.current!.setLocalDescription(answer)
+          })
+          .then(() => {
+            socket.emit('webrtc:answer', {
+              answer: peerConnectionRef.current!.localDescription,
+              from: user?.id,
+              to: data.from,
+              sessionId,
+            })
+          })
+          .catch(console.error)
+      }
+    }
+
+    const handleWebRTCAnswer = (data: {
+      answer: RTCSessionDescriptionInit
+      from: string
+      to: string
+    }) => {
+      console.log('Received WebRTC answer:', data)
+      if (peerConnectionRef.current && data.from !== user?.id) {
+        peerConnectionRef.current
+          .setRemoteDescription(new RTCSessionDescription(data.answer))
+          .catch(console.error)
+      }
+    }
+
+    const handleWebRTCIceCandidate = (data: {
+      candidate: RTCIceCandidateInit
+      from: string
+      to: string
+    }) => {
+      console.log('Received ICE candidate:', data)
+      if (peerConnectionRef.current && data.from !== user?.id) {
+        peerConnectionRef.current
+          .addIceCandidate(new RTCIceCandidate(data.candidate))
+          .catch(console.error)
+      }
     }
 
     socket.on('streaming:viewer_joined', handleViewerJoined)
     socket.on('streaming:viewer_left', handleViewerLeft)
     socket.on('streaming:started', handleStreamingStarted)
     socket.on('streaming:stopped', handleStreamingStopped)
+    socket.on('webrtc:offer', handleWebRTCOffer)
+    socket.on('webrtc:answer', handleWebRTCAnswer)
+    socket.on('webrtc:ice_candidate', handleWebRTCIceCandidate)
 
     return () => {
       socket.off('streaming:viewer_joined', handleViewerJoined)
       socket.off('streaming:viewer_left', handleViewerLeft)
       socket.off('streaming:started', handleStreamingStarted)
       socket.off('streaming:stopped', handleStreamingStopped)
+      socket.off('webrtc:offer', handleWebRTCOffer)
+      socket.off('webrtc:answer', handleWebRTCAnswer)
+      socket.off('webrtc:ice_candidate', handleWebRTCIceCandidate)
     }
-  }, [])
+  }, [socket, user?.id, sessionId])
 
   const handleJoinStream = async () => {
-    if (!user) {
+    if (!user || !sessionId) {
       toast.error('You must be logged in to watch streams')
       return
     }
 
-    if (!activeSessionId) {
-      toast.error('No active stream available for this match')
-      return
-    }
-
     try {
-      setIsWaitingForStream(true)
-      console.log('Joining stream with sessionId:', activeSessionId)
-      await joinStream()
-      console.log('Join stream completed, waiting for remote streams...')
+      setIsWatching(true)
+
+      console.log('Starting WebRTC connection...')
+
+      // Crear conexión WebRTC
+      const peerConnection = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ],
+      })
+
+      peerConnectionRef.current = peerConnection
+
+      // Manejar tracks remotos
+      peerConnection.ontrack = (event) => {
+        console.log('Received remote track:', event.streams[0])
+        if (videoRef.current && event.streams[0]) {
+          console.log('Setting video srcObject...')
+          videoRef.current.srcObject = event.streams[0]
+          videoRef.current.play().catch(console.error)
+        }
+      }
+
+      // Manejar cambios de conexión
+      peerConnection.onconnectionstatechange = () => {
+        console.log('Connection state:', peerConnection.connectionState)
+        setIsConnected(peerConnection.connectionState === 'connected')
+      }
+
+      // Manejar ICE candidates
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log('Sending ICE candidate...')
+          socket.emit('webrtc:ice_candidate', {
+            candidate: event.candidate,
+            from: user.id,
+            to: 'broadcaster',
+            sessionId,
+          })
+        }
+      }
+
+      // Unirse al stream
+      console.log('Joining stream with sessionId:', sessionId)
+      socket.emit('streaming:join', {
+        sessionId,
+        userId: user.id,
+      })
+
       toast.success('Joined stream successfully')
-    } catch (error) {
-      console.error('Error joining stream:', error)
+    } catch (err) {
+      console.error('Error joining stream:', err)
       toast.error('Failed to join stream')
-      setIsWaitingForStream(false)
+      setIsWatching(false)
     }
   }
 
   const handleLeaveStream = () => {
-    leaveStream()
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close()
+      peerConnectionRef.current = null
+    }
+
+    socket.emit('streaming:leave', {
+      sessionId,
+      userId: user?.id,
+    })
+
     setIsWatching(false)
-    setIsWaitingForStream(false)
+    setIsConnected(false)
     toast.info('Left stream')
   }
 
@@ -176,34 +245,32 @@ export default function LiveMatchVideoStream({
     }
   }
 
-  if (error) {
+  // Si no hay sesión activa, mostrar mensaje
+  if (!sessionId) {
     return (
-      <Card className='p-4 rounded-none'>
-        <div className='text-center'>
-          <p className='text-red-500 mb-4'>{error}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            className='rounded-none'
-          >
-            Retry
-          </Button>
+      <Card className='p-6 rounded-none'>
+        <div className='text-center space-y-4'>
+          <div className='w-full h-64 bg-gray-900 rounded-none flex items-center justify-center'>
+            <div className='text-center text-gray-400'>
+              <Play className='w-16 h-16 mx-auto mb-4' />
+              <p>No active stream for this match</p>
+            </div>
+          </div>
         </div>
       </Card>
     )
   }
 
   return (
-    <Card className='p-4 rounded-none'>
+    <Card className='p-6 rounded-none'>
       <div className='flex items-center justify-between mb-4'>
         <div>
-          <h3 className='text-lg font-semibold'>
+          <h2 className='text-xl font-bold'>
             Live Stream - {matchTitle || 'Match'}
-          </h3>
-          {activeSessionId && (
-            <p className='text-sm text-gray-600'>
-              Session: {activeSessionId.slice(0, 8)}...
-            </p>
-          )}
+          </h2>
+          <p className='text-sm text-gray-600'>
+            Session: {sessionId.slice(0, 8)}...
+          </p>
         </div>
         <div className='flex items-center gap-2'>
           <Users className='w-4 h-4' />
@@ -211,20 +278,11 @@ export default function LiveMatchVideoStream({
         </div>
       </div>
 
-      {!activeSessionId ? (
+      {!isWatching ? (
         <div className='text-center space-y-4'>
-          <div className='w-full h-48 bg-gray-900 rounded-none flex items-center justify-center'>
+          <div className='w-full h-64 bg-gray-900 rounded-none flex items-center justify-center'>
             <div className='text-center text-gray-400'>
-              <Play className='w-12 h-12 mx-auto mb-4' />
-              <p>No active stream for this match</p>
-            </div>
-          </div>
-        </div>
-      ) : !isWatching ? (
-        <div className='text-center space-y-4'>
-          <div className='w-full h-48 bg-gray-900 rounded-none flex items-center justify-center'>
-            <div className='text-center text-gray-400'>
-              <Play className='w-12 h-12 mx-auto mb-4' />
+              <Play className='w-16 h-16 mx-auto mb-4' />
               <p>Stream available - Click to join</p>
             </div>
           </div>
@@ -245,28 +303,11 @@ export default function LiveMatchVideoStream({
               ref={videoRef}
               autoPlay
               playsInline
-              className='w-full h-48 bg-black rounded-none object-cover'
-              onLoadedMetadata={() => {
-                if (videoRef.current) {
-                  videoRef.current.play().catch(console.error)
-                }
-              }}
-              onError={(e) => {
-                console.error('Video error:', e)
-              }}
+              className='w-full h-64 bg-black rounded-none object-cover'
             />
 
-            {isWaitingForStream && (
-              <div className='absolute inset-0 flex items-center justify-center bg-black bg-opacity-50'>
-                <div className='text-white text-center'>
-                  <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto mb-2'></div>
-                  <p>Waiting for stream...</p>
-                </div>
-              </div>
-            )}
-
             {/* Overlay controls */}
-            <div className='absolute bottom-2 left-2 flex gap-2'>
+            <div className='absolute bottom-4 left-4 flex gap-2'>
               <Button
                 size='sm'
                 variant={isAudioEnabled ? 'default' : 'destructive'}
@@ -274,17 +315,17 @@ export default function LiveMatchVideoStream({
                 onClick={toggleAudio}
               >
                 {isAudioEnabled ? (
-                  <Volume2 className='w-3 h-3' />
+                  <Volume2 className='w-4 h-4' />
                 ) : (
-                  <VolumeX className='w-3 h-3' />
+                  <VolumeX className='w-4 h-4' />
                 )}
               </Button>
             </div>
 
             {/* Status indicator */}
-            <div className='absolute top-2 right-2'>
-              <div className='flex items-center gap-1 bg-red-500 text-white px-2 py-1 rounded-none text-xs'>
-                <div className='w-1.5 h-1.5 bg-white rounded-full animate-pulse'></div>
+            <div className='absolute top-4 right-4'>
+              <div className='flex items-center gap-2 bg-red-500 text-white px-2 py-1 rounded-none text-sm'>
+                <div className='w-2 h-2 bg-white rounded-full animate-pulse'></div>
                 LIVE
               </div>
             </div>
@@ -294,18 +335,20 @@ export default function LiveMatchVideoStream({
             <Button
               onClick={handleLeaveStream}
               variant='outline'
-              size='sm'
               className='flex-1 rounded-none'
             >
-              <Square className='w-3 h-3 mr-1' />
+              <Square className='w-4 h-4 mr-2' />
               Leave Stream
             </Button>
           </div>
 
-          <div className='text-xs text-gray-600'>
+          <div className='text-sm text-gray-600'>
             <p>
               <strong>Status:</strong>{' '}
               {isConnected ? 'Connected' : 'Connecting...'}
+            </p>
+            <p>
+              <strong>Session ID:</strong> {sessionId}
             </p>
           </div>
         </div>
