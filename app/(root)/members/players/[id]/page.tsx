@@ -88,7 +88,9 @@ export default async function PlayerDetailPage({
   ) // 0.8 pases por minuto como base
 
   // Obtener posición del jugador
-  const getPositionDisplay = (position: string) => {
+  const getPositionDisplay = (position: string | null | undefined) => {
+    if (!position) return 'N/A'
+
     const positions: { [key: string]: string } = {
       goalkeeper: 'GOALKEEPER',
       defender: 'DEFENDER',

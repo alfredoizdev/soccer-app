@@ -324,6 +324,12 @@ export const getOrganizationStatsAction = async (organizationId: string) => {
       .from(playersTable)
       .where(eq(playersTable.organizationId, organizationId))
 
+    // Calcular métricas adicionales
+    const totalMatches = matches.length
+    const winRate = totalMatches > 0 ? (wins / totalMatches) * 100 : 0
+    const drawRate = totalMatches > 0 ? (draws / totalMatches) * 100 : 0
+    const lossRate = totalMatches > 0 ? (losses / totalMatches) * 100 : 0
+
     return {
       data: {
         goalsScored,
@@ -331,8 +337,11 @@ export const getOrganizationStatsAction = async (organizationId: string) => {
         wins,
         losses,
         draws,
-        totalMatches: matches.length,
+        totalMatches,
         players: players.length,
+        winRate,
+        drawRate,
+        lossRate,
       },
       error: null,
     }

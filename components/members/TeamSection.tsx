@@ -1,3 +1,4 @@
+'use client'
 import { OrganizationType } from '@/types/UserType'
 import { PlayerType } from '@/types/PlayerType'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

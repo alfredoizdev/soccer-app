@@ -128,7 +128,7 @@ export default function DataTablePlayer({
             avatar: selectedPlayer.avatar ?? undefined,
             userId: selectedPlayer.userId,
             organizationId: selectedPlayer.organizationId ?? undefined,
-            position: selectedPlayer.position,
+            position: selectedPlayer.position || '',
             jerseyNumber: selectedPlayer.jerseyNumber?.toString() ?? undefined,
             user: selectedPlayer.user
               ? {
