@@ -5,19 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import {
-  Video,
-  VideoOff,
-  Clock,
-  User,
-  Users,
-  Square,
-  ExternalLink,
-} from 'lucide-react'
+import { Video, VideoOff, Clock, User, Users, Square } from 'lucide-react'
 import { endStreamingSessionAction } from '@/lib/actions/streaming-server.action'
 import { socket } from '@/app/socket'
 import { formatDistanceToNow } from 'date-fns'
-import Link from 'next/link'
 
 interface Stream {
   id: string
@@ -62,6 +53,10 @@ export default function ActiveStreamsClient({
         // También emitir el evento de stop_by_match para asegurar que se detenga
         const stream = activeStreams.find((s) => s.id === streamId)
         if (stream) {
+          console.log(
+            'Emitting streaming:stop_by_match for matchId:',
+            stream.matchId
+          )
           socket.emit('streaming:stop_by_match', {
             matchId: stream.matchId,
           })
@@ -224,35 +219,12 @@ export default function ActiveStreamsClient({
                   variant='destructive'
                   size='sm'
                   disabled={stoppingStreams.has(stream.id)}
-                  className='flex-1'
+                  className='w-full'
                 >
                   <VideoOff className='w-4 h-4 mr-2' />
                   {stoppingStreams.has(stream.id)
                     ? 'Stopping...'
                     : 'Stop Stream'}
-                </Button>
-
-                <Link href={`/admin/matches/stream/${stream.matchId}`}>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='flex items-center gap-2'
-                  >
-                    <ExternalLink className='w-4 h-4' />
-                    Go to Stream
-                  </Button>
-                </Link>
-
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => {
-                    // Copiar el stream key al clipboard
-                    navigator.clipboard.writeText(stream.streamKey)
-                    toast.success('Stream key copied to clipboard')
-                  }}
-                >
-                  Copy Key
                 </Button>
               </div>
             </CardContent>

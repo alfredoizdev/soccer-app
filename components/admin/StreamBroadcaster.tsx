@@ -73,6 +73,45 @@ export default function StreamBroadcaster({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localStreamRef.current])
 
+  const stopStream = useCallback(() => {
+    console.log('stopStream called - stopping all tracks and connections')
+
+    // Detener tracks locales
+    if (localStreamRef.current) {
+      console.log('Stopping local stream tracks')
+      localStreamRef.current.getTracks().forEach((track) => {
+        console.log('Stopping track:', track.kind)
+        track.stop()
+      })
+      localStreamRef.current = null
+    }
+
+    // Limpiar video element
+    if (videoRef.current) {
+      console.log('Clearing video element')
+      videoRef.current.srcObject = null
+    }
+
+    // Cerrar conexión WebRTC
+    if (peerConnectionRef.current) {
+      console.log('Closing WebRTC connection')
+      peerConnectionRef.current.close()
+      peerConnectionRef.current = null
+    }
+
+    // Detener broadcasting
+    if (sessionId) {
+      console.log('Emitting streaming:stop to server')
+      socket.emit('streaming:stop', {
+        sessionId,
+        userId: user?.id,
+      })
+    }
+
+    setIsConnected(false)
+    console.log('Stream stopped completely')
+  }, [sessionId, user?.id])
+
   const handleStopStream = useCallback(async () => {
     console.log('handleStopStream called')
     try {
@@ -105,36 +144,7 @@ export default function StreamBroadcaster({
       console.error('Error stopping stream:', err)
       toast.error('Failed to stop stream')
     }
-  }, [sessionId, clearActiveStream])
-
-  const stopStream = () => {
-    // Detener tracks locales
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop())
-      localStreamRef.current = null
-    }
-
-    // Limpiar video element
-    if (videoRef.current) {
-      videoRef.current.srcObject = null
-    }
-
-    // Cerrar conexión WebRTC
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close()
-      peerConnectionRef.current = null
-    }
-
-    // Detener broadcasting
-    if (sessionId) {
-      socket.emit('streaming:stop', {
-        sessionId,
-        userId: user?.id,
-      })
-    }
-
-    setIsConnected(false)
-  }
+  }, [sessionId, clearActiveStream, stopStream])
 
   // Unirse al room del match para escuchar eventos de finalización
   useEffect(() => {
@@ -186,7 +196,7 @@ export default function StreamBroadcaster({
       console.log('Match IDs match?', data.matchId === matchId)
 
       if (data.matchId === matchId && isStreaming && sessionId) {
-        console.log('Stopping stream due to match end')
+        console.log('Stopping stream due to external stop event')
         handleStopStream()
       } else {
         console.log('Not stopping stream - conditions not met')
@@ -249,6 +259,11 @@ export default function StreamBroadcaster({
 
   // Cleanup effect para detener el stream cuando el componente se desmonte
   useEffect(() => {
+    // Capturar las referencias actuales para usar en el cleanup
+    const currentLocalStream = localStreamRef.current
+    const currentVideoRef = videoRef.current
+    const currentPeerConnection = peerConnectionRef.current
+
     return () => {
       // Solo detener el stream si el usuario está navegando FUERA del admin
       // No detener si está navegando dentro del admin (matches, players, etc.)
@@ -261,19 +276,19 @@ export default function StreamBroadcaster({
         )
 
         // Detener transmisión WebRTC
-        if (localStreamRef.current) {
-          localStreamRef.current.getTracks().forEach((track) => track.stop())
+        if (currentLocalStream) {
+          currentLocalStream.getTracks().forEach((track) => track.stop())
           localStreamRef.current = null
         }
 
         // Limpiar video element
-        if (videoRef.current) {
-          videoRef.current.srcObject = null
+        if (currentVideoRef) {
+          currentVideoRef.srcObject = null
         }
 
         // Cerrar conexión WebRTC
-        if (peerConnectionRef.current) {
-          peerConnectionRef.current.close()
+        if (currentPeerConnection) {
+          currentPeerConnection.close()
           peerConnectionRef.current = null
         }
 
@@ -330,9 +345,7 @@ export default function StreamBroadcaster({
 
         // Mostrar mensaje de confirmación (opcional)
         event.preventDefault()
-        event.returnValue =
-          'You have an active stream. Are you sure you want to leave?'
-        return event.returnValue
+        return 'You have an active stream. Are you sure you want to leave?'
       }
     }
 
