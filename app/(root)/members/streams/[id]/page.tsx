@@ -21,17 +21,13 @@ export default async function StreamViewerPage({
     notFound()
   }
 
-  // Verificar que la sesión esté activa
-  if (!session.isActive) {
-    notFound()
-  }
-
   return (
     <div className='container mx-auto py-8'>
       <StreamViewer
         sessionId={session.id}
         streamTitle={session.title || undefined}
         broadcasterName={`Broadcaster ${session.broadcasterId.slice(0, 8)}...`}
+        initialIsActive={session.isActive}
       />
     </div>
   )

@@ -2,6 +2,7 @@
 
 import LiveMatchHeader from '@/components/members/LiveMatchHeader'
 import LiveMatchScoreCard from '@/components/members/LiveMatchScoreCard'
+import LiveMatchScoreCardCompact from '@/components/members/LiveMatchScoreCardCompact'
 import LiveMatchTimeline from '@/components/members/LiveMatchTimeline'
 import TeamsInfo from '@/components/members/TeamsInfo'
 import LiveMatchVideoStream from '@/components/members/LiveMatchVideoStream'
@@ -45,16 +46,32 @@ export default function LiveMatchViewer({
   playersTeam1,
   playersTeam2,
 }: LiveMatchViewerProps) {
-  const { liveScore, matchStatus, livePlayersTeam1, livePlayersTeam2 } =
-    useLiveMatchSocket({
-      match,
-      playersTeam1,
-      playersTeam2,
-    })
+  const {
+    liveScore,
+    matchStatus,
+    livePlayersTeam1,
+    livePlayersTeam2,
+    currentMinute,
+  } = useLiveMatchSocket({
+    match,
+    playersTeam1,
+    playersTeam2,
+  })
 
   return (
     <div className='max-w-screen-xl mx-auto px-2 lg:px-4 py-4'>
+      {/* Score Card arriba del video stream */}
+
       <LiveMatchHeader match={match} matchStatus={matchStatus} />
+
+      <div className='mb-4'>
+        <LiveMatchScoreCard
+          match={match}
+          liveScore={liveScore}
+          matchStatus={matchStatus}
+          currentMinute={currentMinute}
+        />
+      </div>
 
       {/* Video Stream Section - Fixed at top */}
       <div className='mb-6'>
@@ -68,17 +85,13 @@ export default function LiveMatchViewer({
         {/* Timeline a la izquierda con scroll independiente */}
         <div className='w-full lg:w-2/3 flex-shrink-0'>
           <div className='w-full max-h-[calc(100vh-450px)] overflow-y-auto pr-2'>
-            <LiveMatchTimeline
-              match={match}
-              liveScore={liveScore}
-              matchStatus={matchStatus}
-            />
+            <LiveMatchTimeline match={match} matchStatus={matchStatus} />
           </div>
         </div>
         {/* Panel derecho: Score y Lineup uno debajo del otro */}
-        <div className='w-full lg:w-1/3 flex flex-col gap-4 max-h-[calc(100vh-450px)] overflow-y-auto'>
+        <div className='w-full lg:w-1/3 flex flex-col gap-4'>
           <div className='hidden lg:block'>
-            <LiveMatchScoreCard match={match} liveScore={liveScore} />
+            <LiveMatchScoreCardCompact match={match} liveScore={liveScore} />
           </div>
           <div className='flex-1 flex flex-col gap-4'>
             <TeamsInfo

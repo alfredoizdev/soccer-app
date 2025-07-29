@@ -32,6 +32,15 @@ export default function MatchCalendar({ events }: MatchCalendarProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<MatchEvent | null>(null)
   const [view, setView] = useState<CalendarView>('month')
+  const [date, setDate] = useState(new Date())
+
+  const handleNavigate = (newDate: Date) => {
+    setDate(newDate)
+  }
+
+  const handleViewChange = (newView: CalendarView) => {
+    setView(newView)
+  }
 
   return (
     <div className='h-[1000px] bg-white rounded-none shadow p-4 flex flex-col'>
@@ -44,7 +53,9 @@ export default function MatchCalendar({ events }: MatchCalendarProps) {
         popup
         views={VIEWS}
         view={view}
-        onView={(v) => setView(v as CalendarView)}
+        date={date}
+        onView={handleViewChange}
+        onNavigate={handleNavigate}
         eventPropGetter={(event) => {
           const status = event.resource?.status
           const isActive = status === 'active'

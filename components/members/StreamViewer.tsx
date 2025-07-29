@@ -12,17 +12,20 @@ interface StreamViewerProps {
   sessionId: string
   streamTitle?: string
   broadcasterName?: string
+  initialIsActive: boolean
 }
 
 export default function StreamViewer({
   sessionId,
   streamTitle,
   broadcasterName,
+  initialIsActive,
 }: StreamViewerProps) {
   const [isWatching, setIsWatching] = useState(false)
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [viewerCount, setViewerCount] = useState(0)
   const [isConnected, setIsConnected] = useState(false)
+  const [isStreamActive, setIsStreamActive] = useState(initialIsActive)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
@@ -42,7 +45,7 @@ export default function StreamViewer({
     getUser()
   }, [])
 
-  // Escuchar cambios en el número de espectadores
+  // Escuchar eventos de streaming
   useEffect(() => {
     const handleViewerJoined = () => {
       setViewerCount((prev) => prev + 1)
@@ -52,28 +55,98 @@ export default function StreamViewer({
       setViewerCount((prev) => Math.max(0, prev - 1))
     }
 
-    const handleStreamingStarted = () => {
-      setIsWatching(true)
+    const handleStreamingStarted = (data: { sessionId: string }) => {
+      if (data.sessionId === sessionId) {
+        setIsStreamActive(true)
+        toast.success('Stream has started!')
+      }
     }
 
-    const handleStreamingStopped = () => {
-      setIsWatching(false)
-      setViewerCount(0)
-      toast.info('Stream has ended')
+    const handleStreamingStopped = (data: { sessionId: string }) => {
+      if (data.sessionId === sessionId) {
+        setIsStreamActive(false)
+        setIsWatching(false)
+        setViewerCount(0)
+        toast.info('Stream has ended')
+      }
     }
+
+    // WebRTC event listeners
+    const handleWebRTCOffer = (data: {
+      offer: RTCSessionDescriptionInit
+      from: string
+      to: string
+    }) => {
+      if (peerConnectionRef.current && data.from !== user?.id) {
+        peerConnectionRef.current
+          .setRemoteDescription(new RTCSessionDescription(data.offer))
+          .then(() => {
+            return peerConnectionRef.current!.createAnswer()
+          })
+          .then((answer) => {
+            return peerConnectionRef.current!.setLocalDescription(answer)
+          })
+          .then(() => {
+            socket.emit('webrtc:answer', {
+              answer: peerConnectionRef.current!.localDescription,
+              from: user?.id,
+              to: data.from,
+              sessionId,
+            })
+          })
+          .catch(console.error)
+      }
+    }
+
+    const handleWebRTCAnswer = (data: {
+      answer: RTCSessionDescriptionInit
+      from: string
+      to: string
+    }) => {
+      if (peerConnectionRef.current && data.from !== user?.id) {
+        peerConnectionRef.current
+          .setRemoteDescription(new RTCSessionDescription(data.answer))
+          .catch(console.error)
+      }
+    }
+
+    const handleWebRTCIceCandidate = (data: {
+      candidate: RTCIceCandidateInit
+      from: string
+      to: string
+    }) => {
+      if (peerConnectionRef.current && data.from !== user?.id) {
+        peerConnectionRef.current
+          .addIceCandidate(new RTCIceCandidate(data.candidate))
+          .catch(console.error)
+      }
+    }
+
+    // Unirse al room de streaming inmediatamente para escuchar eventos
+    socket.emit('streaming:join', {
+      sessionId,
+      userId: user?.id,
+    })
 
     socket.on('streaming:viewer_joined', handleViewerJoined)
     socket.on('streaming:viewer_left', handleViewerLeft)
     socket.on('streaming:started', handleStreamingStarted)
     socket.on('streaming:stopped', handleStreamingStopped)
+    socket.on('webrtc:offer', handleWebRTCOffer)
+    socket.on('webrtc:answer', handleWebRTCAnswer)
+    socket.on('webrtc:ice_candidate', handleWebRTCIceCandidate)
 
     return () => {
       socket.off('streaming:viewer_joined', handleViewerJoined)
       socket.off('streaming:viewer_left', handleViewerLeft)
       socket.off('streaming:started', handleStreamingStarted)
       socket.off('streaming:stopped', handleStreamingStopped)
+      socket.off('webrtc:offer', handleWebRTCOffer)
+      socket.off('webrtc:answer', handleWebRTCAnswer)
+      socket.off('webrtc:ice_candidate', handleWebRTCIceCandidate)
     }
-  }, [socket])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, user?.id, sessionId])
 
   const handleJoinStream = async () => {
     if (!user) {
@@ -96,16 +169,24 @@ export default function StreamViewer({
 
       // Manejar tracks remotos
       peerConnection.ontrack = (event) => {
-        console.log('Received remote track:', event.streams[0])
         if (videoRef.current && event.streams[0]) {
           videoRef.current.srcObject = event.streams[0]
-          videoRef.current.play().catch(console.error)
+          // Usar un timeout para evitar conflictos de reproducción
+          setTimeout(() => {
+            if (videoRef.current && videoRef.current.srcObject) {
+              videoRef.current.play().catch((error) => {
+                // Ignorar errores de AbortError ya que son normales durante la carga
+                if (error.name !== 'AbortError') {
+                  console.error('Error playing video:', error)
+                }
+              })
+            }
+          }, 100)
         }
       }
 
       // Manejar cambios de conexión
       peerConnection.onconnectionstatechange = () => {
-        console.log('Connection state:', peerConnection.connectionState)
         setIsConnected(peerConnection.connectionState === 'connected')
       }
 
@@ -164,12 +245,32 @@ export default function StreamViewer({
           </div>
         </div>
 
-        {!isWatching ? (
+        {!isStreamActive ? (
           <div className='text-center space-y-4'>
             <div className='w-full h-64 bg-gray-900 rounded-none flex items-center justify-center'>
               <div className='text-center text-gray-400'>
                 <Play className='w-16 h-16 mx-auto mb-4' />
-                <p>Stream not started</p>
+                <p>No active stream for this match</p>
+                <p className='text-sm mt-2'>
+                  Waiting for broadcaster to start...
+                </p>
+              </div>
+            </div>
+
+            <div className='text-sm text-gray-500'>
+              <p>
+                This stream will automatically start when the broadcaster begins
+                streaming.
+              </p>
+            </div>
+          </div>
+        ) : !isWatching ? (
+          <div className='text-center space-y-4'>
+            <div className='w-full h-64 bg-gray-900 rounded-none flex items-center justify-center'>
+              <div className='text-center text-gray-400'>
+                <Play className='w-16 h-16 mx-auto mb-4' />
+                <p>Stream is active!</p>
+                <p className='text-sm mt-2'>Click to join the stream</p>
               </div>
             </div>
 
@@ -192,7 +293,11 @@ export default function StreamViewer({
                 className='w-full h-64 bg-black rounded-none object-cover'
                 onLoadedMetadata={() => {
                   if (videoRef.current) {
-                    videoRef.current.play().catch(console.error)
+                    videoRef.current.play().catch((error) => {
+                      if (error.name !== 'AbortError') {
+                        console.error('Error playing video:', error)
+                      }
+                    })
                   }
                 }}
                 onError={(e) => {

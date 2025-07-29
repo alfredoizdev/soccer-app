@@ -43,7 +43,6 @@ export function useVideoStream({ sessionId, user }: UseVideoStreamProps) {
       from: string
       to: string
     }) => {
-      console.log('Received WebRTC offer:', data)
       if (peerConnectionRef.current && data.from !== user?.id) {
         peerConnectionRef.current
           .setRemoteDescription(new RTCSessionDescription(data.offer))
@@ -70,7 +69,6 @@ export function useVideoStream({ sessionId, user }: UseVideoStreamProps) {
       from: string
       to: string
     }) => {
-      console.log('Received WebRTC answer:', data)
       if (peerConnectionRef.current && data.from !== user?.id) {
         peerConnectionRef.current
           .setRemoteDescription(new RTCSessionDescription(data.answer))
@@ -83,7 +81,6 @@ export function useVideoStream({ sessionId, user }: UseVideoStreamProps) {
       from: string
       to: string
     }) => {
-      console.log('Received ICE candidate:', data)
       if (peerConnectionRef.current && data.from !== user?.id) {
         peerConnectionRef.current
           .addIceCandidate(new RTCIceCandidate(data.candidate))
@@ -119,8 +116,6 @@ export function useVideoStream({ sessionId, user }: UseVideoStreamProps) {
     try {
       setIsWatching(true)
 
-      console.log('Starting WebRTC connection...')
-
       // Crear conexión WebRTC
       const peerConnection = new RTCPeerConnection({
         iceServers: [
@@ -133,24 +128,30 @@ export function useVideoStream({ sessionId, user }: UseVideoStreamProps) {
 
       // Manejar tracks remotos
       peerConnection.ontrack = (event) => {
-        console.log('Received remote track:', event.streams[0])
         if (videoRef.current && event.streams[0]) {
-          console.log('Setting video srcObject...')
           videoRef.current.srcObject = event.streams[0]
-          videoRef.current.play().catch(console.error)
+          // Usar un timeout para evitar conflictos de reproducción
+          setTimeout(() => {
+            if (videoRef.current && videoRef.current.srcObject) {
+              videoRef.current.play().catch((error) => {
+                // Ignorar errores de AbortError ya que son normales durante la carga
+                if (error.name !== 'AbortError') {
+                  console.error('Error playing video:', error)
+                }
+              })
+            }
+          }, 100)
         }
       }
 
       // Manejar cambios de conexión
       peerConnection.onconnectionstatechange = () => {
-        console.log('Connection state:', peerConnection.connectionState)
         setIsConnected(peerConnection.connectionState === 'connected')
       }
 
       // Manejar ICE candidates
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log('Sending ICE candidate...')
           socket.emit('webrtc:ice_candidate', {
             candidate: event.candidate,
             from: user.id,
@@ -161,7 +162,6 @@ export function useVideoStream({ sessionId, user }: UseVideoStreamProps) {
       }
 
       // Unirse al stream
-      console.log('Joining stream with sessionId:', sessionId)
       socket.emit('streaming:join', {
         sessionId,
         userId: user.id,

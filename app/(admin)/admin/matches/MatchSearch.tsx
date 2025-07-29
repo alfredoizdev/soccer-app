@@ -3,6 +3,8 @@ import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Video, Settings } from 'lucide-react'
 
 interface MatchListItem {
   id: string
@@ -53,61 +55,75 @@ export default function MatchSearch({ matches }: Props) {
           </div>
         ) : (
           filtered.map((match) => (
-            <Link
+            <div
               key={match.id}
-              href={`/admin/matches/live/${match.id}`}
-              className='block'
+              className='p-4 bg-white rounded-lg shadow hover:shadow-md transition-all border border-gray-200'
             >
-              <div className='p-4 bg-white rounded-lg shadow hover:shadow-md transition-all border border-gray-200'>
-                <div className='flex items-center justify-between mb-3'>
-                  <Badge variant='secondary' className='text-xs'>
-                    Pending
-                  </Badge>
-                  <span className='text-xs text-gray-500'>
-                    {match.date instanceof Date
-                      ? match.date.toLocaleDateString()
-                      : new Date(match.date).toLocaleDateString()}
-                  </span>
+              <div className='flex items-center justify-between mb-3'>
+                <Badge variant='secondary' className='text-xs'>
+                  Pending
+                </Badge>
+                <span className='text-xs text-gray-500'>
+                  {match.date instanceof Date
+                    ? match.date.toLocaleDateString()
+                    : new Date(match.date).toLocaleDateString()}
+                </span>
+              </div>
+
+              <div className='flex items-center justify-center gap-6 mb-4'>
+                <div className='text-center'>
+                  <Image
+                    src={match.team1Avatar || '/no-club.jpg'}
+                    alt={match.team1}
+                    width={48}
+                    height={48}
+                    className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                  />
+                  <div className='font-semibold text-sm'>{match.team1}</div>
                 </div>
 
-                <div className='flex items-center justify-center gap-6 mb-3'>
-                  <div className='text-center'>
-                    <Image
-                      src={match.team1Avatar || '/no-club.jpg'}
-                      alt={match.team1}
-                      width={48}
-                      height={48}
-                      className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
-                    />
-                    <div className='font-semibold text-sm'>{match.team1}</div>
-                  </div>
-
-                  <div className='text-center'>
-                    <div className='text-2xl font-bold text-gray-400'>VS</div>
-                    <div className='text-xs text-gray-500 mt-1'>
-                      Ready to start
-                    </div>
-                  </div>
-
-                  <div className='text-center'>
-                    <Image
-                      src={match.team2Avatar || '/no-club.jpg'}
-                      alt={match.team2}
-                      width={48}
-                      height={48}
-                      className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
-                    />
-                    <div className='font-semibold text-sm'>{match.team2}</div>
+                <div className='text-center'>
+                  <div className='text-2xl font-bold text-gray-400'>VS</div>
+                  <div className='text-xs text-gray-500 mt-1'>
+                    Ready to start
                   </div>
                 </div>
 
                 <div className='text-center'>
-                  <span className='text-xs text-blue-600 font-medium'>
-                    Click to start live match →
-                  </span>
+                  <Image
+                    src={match.team2Avatar || '/no-club.jpg'}
+                    alt={match.team2}
+                    width={48}
+                    height={48}
+                    className='rounded-full object-cover border-2 border-gray-200 mx-auto mb-2'
+                  />
+                  <div className='font-semibold text-sm'>{match.team2}</div>
                 </div>
               </div>
-            </Link>
+
+              <div className='flex gap-2 justify-center'>
+                <Link href={`/admin/matches/live/${match.id}`}>
+                  <Button
+                    variant='default'
+                    size='sm'
+                    className='flex items-center gap-2'
+                  >
+                    <Settings className='w-4 h-4' />
+                    Match Actions
+                  </Button>
+                </Link>
+                <Link href={`/admin/matches/stream/${match.id}`}>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='flex items-center gap-2'
+                  >
+                    <Video className='w-4 h-4' />
+                    Live Stream
+                  </Button>
+                </Link>
+              </div>
+            </div>
           ))
         )}
       </div>

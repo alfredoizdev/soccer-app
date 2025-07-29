@@ -13,6 +13,7 @@ import { userAuth } from '@/lib/actions/auth.action'
 import { toast } from 'sonner'
 import { Video, VideoOff, Mic, MicOff, Settings, Users } from 'lucide-react'
 import { socket } from '@/app/socket'
+import { useGlobalStore } from '@/lib/stores/globalStore'
 
 interface StreamBroadcasterProps {
   matchId: string
@@ -43,6 +44,13 @@ export default function StreamBroadcaster({
     email: string
   } | null>(null)
 
+  // Global store para el stream
+  const {
+    setActiveStream,
+    clearActiveStream,
+    isActive: globalStreamActive,
+  } = useGlobalStore()
+
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -62,6 +70,7 @@ export default function StreamBroadcaster({
     if (videoRef.current && localStreamRef.current) {
       videoRef.current.srcObject = localStreamRef.current
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localStreamRef.current])
 
   // Escuchar cambios en el número de espectadores
@@ -71,7 +80,6 @@ export default function StreamBroadcaster({
 
       // Enviar oferta WebRTC al nuevo viewer
       if (peerConnectionRef.current && localStreamRef.current) {
-        console.log('Viewer joined, sending WebRTC offer...')
         peerConnectionRef.current
           .createOffer()
           .then((offer) => {
@@ -105,7 +113,6 @@ export default function StreamBroadcaster({
       from: string
       to: string
     }) => {
-      console.log('Received WebRTC answer:', data)
       if (peerConnectionRef.current && data.from !== user?.id) {
         peerConnectionRef.current
           .setRemoteDescription(new RTCSessionDescription(data.answer))
@@ -118,7 +125,6 @@ export default function StreamBroadcaster({
       from: string
       to: string
     }) => {
-      console.log('Received ICE candidate:', data)
       if (peerConnectionRef.current && data.from !== user?.id) {
         peerConnectionRef.current
           .addIceCandidate(new RTCIceCandidate(data.candidate))
@@ -139,7 +145,94 @@ export default function StreamBroadcaster({
       socket.off('webrtc:answer', handleWebRTCAnswer)
       socket.off('webrtc:ice_candidate', handleWebRTCIceCandidate)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, matchId, isStreaming, sessionId, user?.id])
+
+  // Cleanup effect para detener el stream cuando el componente se desmonte
+  useEffect(() => {
+    return () => {
+      // Solo detener el stream si el usuario está navegando FUERA del admin
+      // No detener si está navegando dentro del admin (matches, players, etc.)
+      const isNavigatingWithinAdmin =
+        window.location.pathname.startsWith('/admin')
+
+      if (isStreaming && sessionId && !isNavigatingWithinAdmin) {
+        console.log(
+          'Cleaning up stream on component unmount - navigating outside admin'
+        )
+
+        // Detener transmisión WebRTC
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach((track) => track.stop())
+          localStreamRef.current = null
+        }
+
+        // Cerrar conexión WebRTC
+        if (peerConnectionRef.current) {
+          peerConnectionRef.current.close()
+          peerConnectionRef.current = null
+        }
+
+        // Detener broadcasting en el socket
+        if (sessionId) {
+          socket.emit('streaming:stop', {
+            sessionId,
+            userId: user?.id,
+          })
+        }
+
+        // Finalizar sesión de streaming en la base de datos
+        if (sessionId) {
+          const formData = new FormData()
+          formData.append('sessionId', sessionId)
+          endStreamingSessionAction(formData).catch((error) => {
+            console.error('Error ending streaming session on cleanup:', error)
+          })
+        }
+      } else if (isStreaming && sessionId && isNavigatingWithinAdmin) {
+        console.log('Stream continues running - navigating within admin area')
+      }
+    }
+  }, [isStreaming, sessionId, user?.id])
+
+  // Manejar beforeunload para cuando el usuario cierre la pestaña o navegue fuera
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isStreaming && sessionId) {
+        console.log('Cleaning up stream on page unload')
+
+        // Detener transmisión WebRTC
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach((track) => track.stop())
+        }
+
+        // Cerrar conexión WebRTC
+        if (peerConnectionRef.current) {
+          peerConnectionRef.current.close()
+        }
+
+        // Detener broadcasting en el socket
+        if (sessionId) {
+          socket.emit('streaming:stop', {
+            sessionId,
+            userId: user?.id,
+          })
+        }
+
+        // Mostrar mensaje de confirmación (opcional)
+        event.preventDefault()
+        event.returnValue =
+          'You have an active stream. Are you sure you want to leave?'
+        return event.returnValue
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isStreaming, sessionId, user?.id])
 
   const handleStartStream = async () => {
     if (!user) {
@@ -169,6 +262,13 @@ export default function StreamBroadcaster({
         // Iniciar transmisión WebRTC
         await startStream(newSessionId)
         setIsStreaming(true)
+
+        // Actualizar store global
+        setActiveStream({
+          sessionId: newSessionId,
+          matchId,
+          matchTitle: title.trim(),
+        })
 
         toast.success('Stream started successfully')
       } else {
@@ -207,14 +307,12 @@ export default function StreamBroadcaster({
 
       // Manejar cambios de conexión
       peerConnection.onconnectionstatechange = () => {
-        console.log('Connection state:', peerConnection.connectionState)
         setIsConnected(peerConnection.connectionState === 'connected')
       }
 
       // Manejar ICE candidates
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log('Sending ICE candidate from broadcaster...')
           socket.emit('webrtc:ice_candidate', {
             candidate: event.candidate,
             from: user?.id,
@@ -257,6 +355,9 @@ export default function StreamBroadcaster({
       setIsStreaming(false)
       setSessionId(null)
       setViewerCount(0)
+
+      // Limpiar store global
+      clearActiveStream()
 
       toast.success('Stream stopped successfully')
     } catch (err) {
@@ -317,6 +418,12 @@ export default function StreamBroadcaster({
           <div className='flex items-center gap-2'>
             <Users className='w-5 h-5' />
             <span className='text-sm'>{viewerCount} viewers</span>
+            {globalStreamActive && (
+              <div className='flex items-center gap-1 text-green-500'>
+                <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+                <span className='text-xs'>Active</span>
+              </div>
+            )}
           </div>
         </div>
 

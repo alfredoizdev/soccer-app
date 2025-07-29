@@ -7,7 +7,6 @@ import { Info } from 'lucide-react'
 import { useLiveMatchStore } from '@/lib/stores/liveMatchStore'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import StreamBroadcaster from '@/components/admin/StreamBroadcaster'
 
 import { socket } from '@/app/socket'
 
@@ -726,14 +725,6 @@ export default function LiveMatchPageClient({
             )
           })
         )}
-      </div>
-
-      {/* Streaming Section */}
-      <div className='mt-8'>
-        <StreamBroadcaster
-          matchId={match.id}
-          matchTitle={`${match.team1} vs ${match.team2}`}
-        />
       </div>
     </div>
   )

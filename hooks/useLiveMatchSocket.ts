@@ -50,6 +50,7 @@ export function useLiveMatchSocket({
   >('not-started')
   const [livePlayersTeam1, setLivePlayersTeam1] = useState(playersTeam1)
   const [livePlayersTeam2, setLivePlayersTeam2] = useState(playersTeam2)
+  const [currentMinute, setCurrentMinute] = useState(0)
 
   useEffect(() => {
     // Si el partido ya está en estado 'live' (por ejemplo, si hay un campo status en match)
@@ -380,11 +381,23 @@ export function useLiveMatchSocket({
     }
   }, [isConnected, matchStatus, liveScore.team1Goals, liveScore.team2Goals])
 
+  // Incrementar el minuto cada minuto cuando el partido esté en vivo
+  useEffect(() => {
+    if (matchStatus !== 'live') return
+
+    const interval = setInterval(() => {
+      setCurrentMinute((prev) => prev + 1)
+    }, 60000) // 1 minuto
+
+    return () => clearInterval(interval)
+  }, [matchStatus])
+
   return {
     isConnected,
     liveScore,
     matchStatus,
     livePlayersTeam1,
     livePlayersTeam2,
+    currentMinute,
   }
 }
