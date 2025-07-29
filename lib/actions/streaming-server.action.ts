@@ -116,6 +116,27 @@ export async function getActiveSessionByMatchIdAction(matchId: string) {
   }
 }
 
+// Obtener todos los streams activos
+export async function getActiveStreamsAction() {
+  try {
+    const db = await dbPromise
+
+    console.log('Getting all active streams')
+
+    const streams = await db
+      .select()
+      .from(streamingSessionsTable)
+      .where(eq(streamingSessionsTable.isActive, true))
+
+    console.log(`Found ${streams.length} active streams`)
+
+    return { success: true, data: streams, error: null }
+  } catch (error) {
+    console.error('Error getting active streams:', error)
+    return { success: false, error: 'Failed to get active streams' }
+  }
+}
+
 // Limpiar manualmente todas las sesiones activas (para debugging)
 export async function cleanupAllActiveSessionsAction() {
   try {

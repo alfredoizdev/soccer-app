@@ -24,6 +24,7 @@ const icons = {
   ShieldUser,
   Volleyball,
   FileText,
+  Video,
 }
 
 const Sidebar = () => {

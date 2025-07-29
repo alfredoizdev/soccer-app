@@ -71,6 +71,27 @@ export default function StreamViewer({
       }
     }
 
+    const handleStopByMatch = (data: { matchId: string }) => {
+      console.log('StreamViewer received streaming:stop_by_match event:', data)
+      // Detener el stream cuando se termina el partido
+      setIsStreamActive(false)
+      setIsWatching(false)
+      setViewerCount(0)
+
+      // Detener la conexión WebRTC si está activa
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close()
+        peerConnectionRef.current = null
+      }
+
+      // Limpiar el video
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+      }
+
+      toast.info('Stream ended due to match completion')
+    }
+
     // WebRTC event listeners
     const handleWebRTCOffer = (data: {
       offer: RTCSessionDescriptionInit
@@ -132,6 +153,7 @@ export default function StreamViewer({
     socket.on('streaming:viewer_left', handleViewerLeft)
     socket.on('streaming:started', handleStreamingStarted)
     socket.on('streaming:stopped', handleStreamingStopped)
+    socket.on('streaming:stop_by_match', handleStopByMatch)
     socket.on('webrtc:offer', handleWebRTCOffer)
     socket.on('webrtc:answer', handleWebRTCAnswer)
     socket.on('webrtc:ice_candidate', handleWebRTCIceCandidate)
@@ -141,6 +163,7 @@ export default function StreamViewer({
       socket.off('streaming:viewer_left', handleViewerLeft)
       socket.off('streaming:started', handleStreamingStarted)
       socket.off('streaming:stopped', handleStreamingStopped)
+      socket.off('streaming:stop_by_match', handleStopByMatch)
       socket.off('webrtc:offer', handleWebRTCOffer)
       socket.off('webrtc:answer', handleWebRTCAnswer)
       socket.off('webrtc:ice_candidate', handleWebRTCIceCandidate)

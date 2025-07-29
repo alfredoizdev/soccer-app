@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -73,6 +73,78 @@ export default function StreamBroadcaster({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localStreamRef.current])
 
+  const handleStopStream = useCallback(async () => {
+    console.log('handleStopStream called')
+    try {
+      // Detener transmisión WebRTC
+      stopStream()
+
+      // Finalizar sesión de streaming
+      if (sessionId) {
+        const formData = new FormData()
+        formData.append('sessionId', sessionId)
+
+        const result = await endStreamingSessionAction(formData)
+
+        if (!result.success) {
+          console.error('Failed to end streaming session:', result.error)
+          toast.error('Failed to end streaming session')
+          return
+        }
+      }
+
+      setIsStreaming(false)
+      setSessionId(null)
+      setViewerCount(0)
+
+      // Limpiar store global
+      clearActiveStream()
+
+      toast.success('Stream stopped successfully')
+    } catch (err) {
+      console.error('Error stopping stream:', err)
+      toast.error('Failed to stop stream')
+    }
+  }, [sessionId, clearActiveStream])
+
+  const stopStream = () => {
+    // Detener tracks locales
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop())
+      localStreamRef.current = null
+    }
+
+    // Limpiar video element
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+
+    // Cerrar conexión WebRTC
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close()
+      peerConnectionRef.current = null
+    }
+
+    // Detener broadcasting
+    if (sessionId) {
+      socket.emit('streaming:stop', {
+        sessionId,
+        userId: user?.id,
+      })
+    }
+
+    setIsConnected(false)
+  }
+
+  // Unirse al room del match para escuchar eventos de finalización
+  useEffect(() => {
+    socket.emit('join:match', { matchId })
+
+    return () => {
+      socket.emit('leave:match', { matchId })
+    }
+  }, [matchId])
+
   // Escuchar cambios en el número de espectadores
   useEffect(() => {
     const handleViewerJoined = () => {
@@ -102,7 +174,32 @@ export default function StreamBroadcaster({
     }
 
     const handleStopByMatch = (data: { matchId: string }) => {
+      console.log('Received streaming:stop_by_match event:', data)
+      console.log(
+        'Current matchId:',
+        matchId,
+        'isStreaming:',
+        isStreaming,
+        'sessionId:',
+        sessionId
+      )
+      console.log('Match IDs match?', data.matchId === matchId)
+
       if (data.matchId === matchId && isStreaming && sessionId) {
+        console.log('Stopping stream due to match end')
+        handleStopStream()
+      } else {
+        console.log('Not stopping stream - conditions not met')
+        console.log('Match ID match:', data.matchId === matchId)
+        console.log('Is streaming:', isStreaming)
+        console.log('Has sessionId:', !!sessionId)
+      }
+    }
+
+    const handleStreamingStopped = (data: { sessionId: string }) => {
+      console.log('Received streaming:stopped event:', data)
+      if (data.sessionId === sessionId && isStreaming) {
+        console.log('Stopping stream due to external stop event')
         handleStopStream()
       }
     }
@@ -135,6 +232,7 @@ export default function StreamBroadcaster({
     socket.on('streaming:viewer_joined', handleViewerJoined)
     socket.on('streaming:viewer_left', handleViewerLeft)
     socket.on('streaming:stop_by_match', handleStopByMatch)
+    socket.on('streaming:stopped', handleStreamingStopped)
     socket.on('webrtc:answer', handleWebRTCAnswer)
     socket.on('webrtc:ice_candidate', handleWebRTCIceCandidate)
 
@@ -142,11 +240,12 @@ export default function StreamBroadcaster({
       socket.off('streaming:viewer_joined', handleViewerJoined)
       socket.off('streaming:viewer_left', handleViewerLeft)
       socket.off('streaming:stop_by_match', handleStopByMatch)
+      socket.off('streaming:stopped', handleStreamingStopped)
       socket.off('webrtc:answer', handleWebRTCAnswer)
       socket.off('webrtc:ice_candidate', handleWebRTCIceCandidate)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, matchId, isStreaming, sessionId, user?.id])
+  }, [socket, matchId, isStreaming, sessionId, user?.id, handleStopStream])
 
   // Cleanup effect para detener el stream cuando el componente se desmonte
   useEffect(() => {
@@ -165,6 +264,11 @@ export default function StreamBroadcaster({
         if (localStreamRef.current) {
           localStreamRef.current.getTracks().forEach((track) => track.stop())
           localStreamRef.current = null
+        }
+
+        // Limpiar video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = null
         }
 
         // Cerrar conexión WebRTC
@@ -204,6 +308,11 @@ export default function StreamBroadcaster({
         // Detener transmisión WebRTC
         if (localStreamRef.current) {
           localStreamRef.current.getTracks().forEach((track) => track.stop())
+        }
+
+        // Limpiar video element
+        if (videoRef.current) {
+          videoRef.current.srcObject = null
         }
 
         // Cerrar conexión WebRTC
@@ -331,63 +440,6 @@ export default function StreamBroadcaster({
       console.error('Error starting stream:', err)
       throw err
     }
-  }
-
-  const handleStopStream = async () => {
-    try {
-      // Detener transmisión WebRTC
-      stopStream()
-
-      // Finalizar sesión de streaming
-      if (sessionId) {
-        const formData = new FormData()
-        formData.append('sessionId', sessionId)
-
-        const result = await endStreamingSessionAction(formData)
-
-        if (!result.success) {
-          console.error('Failed to end streaming session:', result.error)
-          toast.error('Failed to end streaming session')
-          return
-        }
-      }
-
-      setIsStreaming(false)
-      setSessionId(null)
-      setViewerCount(0)
-
-      // Limpiar store global
-      clearActiveStream()
-
-      toast.success('Stream stopped successfully')
-    } catch (err) {
-      console.error('Error stopping stream:', err)
-      toast.error('Failed to stop stream')
-    }
-  }
-
-  const stopStream = () => {
-    // Detener tracks locales
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop())
-      localStreamRef.current = null
-    }
-
-    // Cerrar conexión WebRTC
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close()
-      peerConnectionRef.current = null
-    }
-
-    // Detener broadcasting
-    if (sessionId) {
-      socket.emit('streaming:stop', {
-        sessionId,
-        userId: user?.id,
-      })
-    }
-
-    setIsConnected(false)
   }
 
   const toggleAudio = () => {

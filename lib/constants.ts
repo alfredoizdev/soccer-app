@@ -52,6 +52,12 @@ export const MENUS_DASHBOARD = [
     href: '/admin/posts',
     icon: 'FileText',
   },
+  {
+    value: 'streams',
+    label: 'Streams',
+    href: '/admin/streams',
+    icon: 'Video',
+  },
 ]
 
 export const RANGE_AGE = Array.from({ length: 41 }, (_, i) => i + 5)

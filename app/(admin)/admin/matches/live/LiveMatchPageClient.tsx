@@ -205,10 +205,27 @@ export default function LiveMatchPageClient({
   }
 
   const handleHalfTime = () => {
+    console.log('handleHalfTime called, isHalfTime:', isHalfTime)
+    console.log('Current timer:', timer, 'minutes:', Math.floor(timer / 60))
+
     if (isHalfTime) {
+      console.log('Resuming match')
       resumeMatch()
+      const eventData = {
+        matchId: match.id,
+        minute: Math.floor(timer / 60),
+      }
+      console.log('Emitting match:resume:', eventData)
+      socket.emit('match:resume', eventData)
     } else {
+      console.log('Pausing match for half time')
       pauseMatch()
+      const eventData = {
+        matchId: match.id,
+        minute: Math.floor(timer / 60),
+      }
+      console.log('Emitting match:half_time:', eventData)
+      socket.emit('match:half_time', eventData)
     }
   }
 
@@ -221,6 +238,7 @@ export default function LiveMatchPageClient({
       socket.emit('match:end', { matchId: match.id })
 
       // Emitir evento para finalizar cualquier stream activo para este match
+      console.log('Emitting streaming:stop_by_match for matchId:', match.id)
       socket.emit('streaming:stop_by_match', { matchId: match.id })
 
       await saveToDatabase()

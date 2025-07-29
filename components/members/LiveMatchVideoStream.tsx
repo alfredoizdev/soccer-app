@@ -62,7 +62,6 @@ export default function LiveMatchVideoStream({
   // Usar el hook personalizado
   const {
     isWatching,
-    isConnected,
     viewerCount,
     isAudioEnabled,
     videoRef,
@@ -153,11 +152,6 @@ export default function LiveMatchVideoStream({
               Leave Stream
             </Button>
           )}
-        </div>
-
-        <div className='mt-2 text-sm text-muted-foreground'>
-          <p>Status: {isConnected ? 'Connected' : 'Connecting...'}</p>
-          <p>Session ID: {sessionId}</p>
         </div>
       </div>
     </Card>

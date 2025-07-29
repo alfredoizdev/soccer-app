@@ -7,6 +7,10 @@ import LiveMatchTimeline from '@/components/members/LiveMatchTimeline'
 import TeamsInfo from '@/components/members/TeamsInfo'
 import LiveMatchVideoStream from '@/components/members/LiveMatchVideoStream'
 import { useLiveMatchSocket } from '@/hooks/useLiveMatchSocket'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Calendar, Trophy } from 'lucide-react'
+import Link from 'next/link'
 
 interface Match {
   id: string
@@ -57,6 +61,54 @@ export default function LiveMatchViewer({
     playersTeam1,
     playersTeam2,
   })
+
+  // Si el partido terminó, mostrar la card de fin de partido
+  if (matchStatus === 'ended') {
+    return (
+      <div className='max-w-screen-xl mx-auto px-2 lg:px-4 py-4'>
+        <Card className='w-full max-w-2xl mx-auto'>
+          <CardHeader className='text-center'>
+            <div className='flex justify-center mb-4'>
+              <Trophy className='w-16 h-16 text-yellow-500' />
+            </div>
+            <CardTitle className='text-2xl font-bold text-gray-800'>
+              Match Ended
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='text-center space-y-4'>
+            <div className='mb-6'>
+              <h3 className='text-xl font-semibold text-gray-700 mb-2'>
+                {match.team1} vs {match.team2}
+              </h3>
+              <div className='text-3xl font-bold text-gray-800'>
+                {liveScore.team1Goals} - {liveScore.team2Goals}
+              </div>
+            </div>
+
+            <p className='text-gray-600 mb-6'>
+              This match has ended. View detailed statistics, player
+              performance, and match timeline in the match history.
+            </p>
+
+            <div className='flex flex-col sm:flex-row gap-3 justify-center'>
+              <Link href={`/members/matches/history/${match.id}/timeline`}>
+                <Button className='flex items-center gap-2'>
+                  <Calendar className='w-4 h-4' />
+                  View Match History
+                </Button>
+              </Link>
+              <Link href='/members/matches/history'>
+                <Button variant='outline' className='flex items-center gap-2'>
+                  <Trophy className='w-4 h-4' />
+                  All Matches
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className='max-w-screen-xl mx-auto px-2 lg:px-4 py-4'>

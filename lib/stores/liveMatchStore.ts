@@ -220,13 +220,14 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
       // Pausar partido (Half Time)
       pauseMatch: () => {
         const { timer } = get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         set({ isHalfTime: true, isRunning: false })
 
         // Agregar evento de Half Time
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: 'half_time',
           teamId: get().team1Id, // Usar team1Id como valor por defecto
           teamName: 'Match Event',
@@ -239,13 +240,14 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
       // Reanudar partido
       resumeMatch: () => {
         const { timer } = get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         set({ isHalfTime: false, isRunning: true, hasUsedHalfTime: true })
 
         // Agregar evento de Resume
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: 'resume_match',
           teamId: get().team1Id, // Usar team1Id como valor por defecto
           teamName: 'Match Event',
@@ -292,7 +294,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         playerName: string
       ) => {
         const { timer, playerStats } = get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         // Verificar que el jugador existe en playerStats
         if (!playerStats[playerId]) {
@@ -316,6 +318,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         // Agregar evento
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: 'goal',
           playerId,
           teamId,
@@ -346,7 +349,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
       ) => {
         const { timer, team1Goals, team2Goals, playersTeam1, playersTeam2 } =
           get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         // Actualizar marcador del equipo
         const newTeam1Goals = team === 'team1' ? team1Goals + 1 : team1Goals
@@ -360,6 +363,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         // Agregar evento del gol
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: 'goal',
           teamId,
           teamName,
@@ -387,11 +391,13 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
             // Agregar evento de goal_allowed
             get().addEvent({
               minute: currentMinute,
+              timestamp: Date.now(),
               eventType: 'goal_allowed',
               playerId: goalkeeper.id,
               teamId: team === 'team1' ? get().team2Id : get().team1Id,
               teamName: team === 'team1' ? 'Team 2' : 'Team 1',
               playerName: `${goalkeeper.name} ${goalkeeper.lastName}`,
+              playerAvatar: goalkeeper.avatar || undefined,
               description: `${goalkeeper.name} ${goalkeeper.lastName} allowed a goal`,
             })
           }
@@ -415,7 +421,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         playerName: string
       ) => {
         const { timer, playerStats } = get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         // Verificar que el jugador existe en playerStats
         if (!playerStats[playerId]) {
@@ -439,6 +445,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         // Agregar evento
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: 'assist',
           playerId,
           teamId,
@@ -459,7 +466,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         playerName: string
       ) => {
         const { timer, playerStats } = get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         // Verificar que el jugador existe en playerStats
         if (!playerStats[playerId]) {
@@ -484,6 +491,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         // Agregar evento
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: 'pass',
           playerId,
           teamId,
@@ -504,7 +512,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         playerName: string
       ) => {
         const { timer, playerStats } = get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         // Verificar que el jugador existe en playerStats
         if (!playerStats[playerId]) {
@@ -528,6 +536,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         // Agregar evento
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: 'goal_saved',
           playerId,
           teamId,
@@ -548,7 +557,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         playerName: string
       ) => {
         const { timer, playerStats } = get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         // Verificar que el jugador existe en playerStats
         if (!playerStats[playerId]) {
@@ -572,6 +581,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         // Agregar evento
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: 'goal_allowed',
           playerId,
           teamId,
@@ -615,7 +625,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         playerName: string
       ) => {
         const { timer, playerStats } = get()
-        const currentMinute = Math.max(1, Math.floor(timer / 60))
+        const currentMinute = Math.floor(timer / 60)
 
         // Verificar que el jugador existe en playerStats
         if (!playerStats[playerId]) {
@@ -642,6 +652,7 @@ export const useLiveMatchStore = create<LiveMatchStore>()(
         // Agregar evento
         get().addEvent({
           minute: currentMinute,
+          timestamp: Date.now(),
           eventType: newIsPlaying ? 'player_in' : 'player_out',
           playerId,
           teamId,

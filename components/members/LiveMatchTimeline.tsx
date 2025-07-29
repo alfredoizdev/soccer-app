@@ -229,6 +229,61 @@ export default function LiveMatchTimeline({
 }: LiveMatchTimelineProps) {
   const [events, setEvents] = useState<MatchEvent[]>([])
   const [currentMinute, setCurrentMinute] = useState(0)
+  const [playersData, setPlayersData] = useState<
+    Record<string, { name: string; avatar?: string }>
+  >({})
+  const [matchStartTime, setMatchStartTime] = useState<number | null>(null)
+
+  // Función para formatear el tiempo correctamente
+  const formatEventTime = (minute: number) => {
+    return `${minute}'`
+  }
+
+  // Función para obtener el avatar del jugador
+  const getPlayerAvatar = (playerId?: string, playerAvatar?: string) => {
+    if (playerAvatar) return playerAvatar
+
+    // Si no hay avatar específico, usar el avatar por defecto
+    return '/no-profile.webp'
+  }
+
+  // Función para obtener datos de jugador
+  const getPlayerData = (playerId?: string) => {
+    if (!playerId) return null
+    return playersData[playerId] || null
+  }
+
+  // Cargar datos de jugadores al montar el componente
+  useEffect(() => {
+    const loadPlayersData = async () => {
+      try {
+        const response = await fetch(`/api/players/match/${match.id}`)
+        if (response.ok) {
+          const data = await response.json()
+          const playersMap: Record<string, { name: string; avatar?: string }> =
+            {}
+          data.players.forEach(
+            (player: {
+              id: string
+              name: string
+              lastName: string
+              avatar?: string
+            }) => {
+              playersMap[player.id] = {
+                name: `${player.name} ${player.lastName}`,
+                avatar: player.avatar,
+              }
+            }
+          )
+          setPlayersData(playersMap)
+        }
+      } catch (error) {
+        console.error('Error loading players data:', error)
+      }
+    }
+
+    loadPlayersData()
+  }, [match.id])
 
   useEffect(() => {
     // Unirse al canal del partido
@@ -244,6 +299,12 @@ export default function LiveMatchTimeline({
     }) => {
       if (data.matchId !== match.id) return
 
+      // Establecer el tiempo de inicio del partido solo si es el primer evento
+      if (matchStartTime === null) {
+        setMatchStartTime(Date.now())
+      }
+
+      const playerData = getPlayerData(data.playerId)
       const newEvent: MatchEvent = {
         id: `goal-${Date.now()}`,
         minute: data.minute || currentMinute,
@@ -251,6 +312,7 @@ export default function LiveMatchTimeline({
         eventType: 'goal',
         playerId: data.playerId,
         playerName: data.playerName,
+        playerAvatar: playerData?.avatar,
         teamName:
           data.teamName ||
           (data.teamId === match.team1Id ? match.team1 : match.team2),
@@ -272,6 +334,12 @@ export default function LiveMatchTimeline({
     }) => {
       if (data.matchId !== match.id) return
 
+      // Establecer el tiempo de inicio del partido solo si es el primer evento
+      if (matchStartTime === null) {
+        setMatchStartTime(Date.now())
+      }
+
+      const playerData = getPlayerData(data.playerId)
       const newEvent: MatchEvent = {
         id: `assist-${Date.now()}`,
         minute: data.minute || currentMinute,
@@ -279,6 +347,7 @@ export default function LiveMatchTimeline({
         eventType: 'assist',
         playerId: data.playerId,
         playerName: data.playerName,
+        playerAvatar: playerData?.avatar,
         teamName: data.teamId === match.team1Id ? match.team1 : match.team2,
         teamAvatar:
           data.teamId === match.team1Id ? match.team1Avatar : match.team2Avatar,
@@ -298,6 +367,12 @@ export default function LiveMatchTimeline({
     }) => {
       if (data.matchId !== match.id) return
 
+      // Establecer el tiempo de inicio del partido solo si es el primer evento
+      if (matchStartTime === null) {
+        setMatchStartTime(Date.now())
+      }
+
+      const playerData = getPlayerData(data.playerId)
       const newEvent: MatchEvent = {
         id: `save-${Date.now()}`,
         minute: data.minute || currentMinute,
@@ -305,6 +380,7 @@ export default function LiveMatchTimeline({
         eventType: 'goal_saved',
         playerId: data.playerId,
         playerName: data.playerName,
+        playerAvatar: playerData?.avatar,
         teamName: data.teamId === match.team1Id ? match.team1 : match.team2,
         teamAvatar:
           data.teamId === match.team1Id ? match.team1Avatar : match.team2Avatar,
@@ -324,6 +400,12 @@ export default function LiveMatchTimeline({
     }) => {
       if (data.matchId !== match.id) return
 
+      // Establecer el tiempo de inicio del partido solo si es el primer evento
+      if (matchStartTime === null) {
+        setMatchStartTime(Date.now())
+      }
+
+      const playerData = getPlayerData(data.playerId)
       const newEvent: MatchEvent = {
         id: `allowed-${Date.now()}`,
         minute: data.minute || currentMinute,
@@ -331,6 +413,7 @@ export default function LiveMatchTimeline({
         eventType: 'goal_allowed',
         playerId: data.playerId,
         playerName: data.playerName,
+        playerAvatar: playerData?.avatar,
         teamName: data.teamId === match.team1Id ? match.team1 : match.team2,
         teamAvatar:
           data.teamId === match.team1Id ? match.team1Avatar : match.team2Avatar,
@@ -351,12 +434,18 @@ export default function LiveMatchTimeline({
     }) => {
       if (data.matchId !== match.id) return
 
+      // Establecer el tiempo de inicio del partido solo si es el primer evento
+      if (matchStartTime === null) {
+        setMatchStartTime(Date.now())
+      }
+
       const eventType = data.eventType === 'in' ? 'player_in' : 'player_out'
       const description =
         data.eventType === 'in'
           ? `${data.playerName} entered the field`
           : `${data.playerName} left the field`
 
+      const playerData = getPlayerData(data.playerId)
       const newEvent: MatchEvent = {
         id: `toggle-${Date.now()}`,
         minute: data.minute || currentMinute,
@@ -364,6 +453,7 @@ export default function LiveMatchTimeline({
         eventType: eventType as MatchEvent['eventType'],
         playerId: data.playerId,
         playerName: data.playerName,
+        playerAvatar: playerData?.avatar,
         teamName: data.teamId === match.team1Id ? match.team1 : match.team2,
         teamAvatar:
           data.teamId === match.team1Id ? match.team1Avatar : match.team2Avatar,
@@ -383,6 +473,12 @@ export default function LiveMatchTimeline({
     }) => {
       if (data.matchId !== match.id) return
 
+      // Establecer el tiempo de inicio del partido solo si es el primer evento
+      if (matchStartTime === null) {
+        setMatchStartTime(Date.now())
+      }
+
+      const playerData = getPlayerData(data.playerId)
       const newEvent: MatchEvent = {
         id: `pass-${Date.now()}`,
         minute: data.minute || currentMinute,
@@ -390,6 +486,7 @@ export default function LiveMatchTimeline({
         eventType: 'pass',
         playerId: data.playerId,
         playerName: data.playerName,
+        playerAvatar: playerData?.avatar,
         teamName: data.teamId === match.team1Id ? match.team1 : match.team2,
         teamAvatar:
           data.teamId === match.team1Id ? match.team1Avatar : match.team2Avatar,
@@ -404,7 +501,20 @@ export default function LiveMatchTimeline({
       matchId: string
       minute?: number
     }) => {
-      if (data.matchId !== match.id) return
+      console.log('Received match:half_time event:', data)
+      console.log('Current match.id:', match.id)
+
+      if (data.matchId !== match.id) {
+        console.log('Match ID mismatch, ignoring event')
+        return
+      }
+
+      console.log('Processing half_time event')
+
+      // Establecer el tiempo de inicio del partido solo si es el primer evento
+      if (matchStartTime === null) {
+        setMatchStartTime(Date.now())
+      }
 
       const newEvent: MatchEvent = {
         id: `half_time-${Date.now()}`,
@@ -415,11 +525,25 @@ export default function LiveMatchTimeline({
         description: 'Half time break.',
       }
 
+      console.log('Creating half_time event:', newEvent)
       setEvents((prev) => [...prev, newEvent])
     }
 
     const handleMatchResume = (data: { matchId: string; minute?: number }) => {
-      if (data.matchId !== match.id) return
+      console.log('Received match:resume event:', data)
+      console.log('Current match.id:', match.id)
+
+      if (data.matchId !== match.id) {
+        console.log('Match ID mismatch, ignoring event')
+        return
+      }
+
+      console.log('Processing resume event')
+
+      // Establecer el tiempo de inicio del partido solo si es el primer evento
+      if (matchStartTime === null) {
+        setMatchStartTime(Date.now())
+      }
 
       const newEvent: MatchEvent = {
         id: `resume-${Date.now()}`,
@@ -430,6 +554,7 @@ export default function LiveMatchTimeline({
         description: 'Match resumed after break.',
       }
 
+      console.log('Creating resume event:', newEvent)
       setEvents((prev) => [...prev, newEvent])
     }
 
@@ -462,6 +587,7 @@ export default function LiveMatchTimeline({
       socket.off('match:resume', handleMatchResume)
       clearInterval(timeInterval)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     match.id,
     match.team1Id,
@@ -474,16 +600,16 @@ export default function LiveMatchTimeline({
     currentMinute,
   ])
 
-  // Ordenar eventos por minuto y timestamp para orden lógico
+  // Ordenar eventos por minuto y timestamp para mostrar más recientes arriba
   const sortedEvents = [...events].sort((a, b) => {
-    // Primero por minuto (ascendente)
+    // Primero por minuto (descendente)
     if (a.minute !== b.minute) {
-      return a.minute - b.minute
+      return b.minute - a.minute
     }
-    // Si mismo minuto, por timestamp (ascendente) para mantener orden cronológico
+    // Si mismo minuto, por timestamp (descendente) para mantener orden cronológico inverso
     const timestampA = a.timestamp || 0
     const timestampB = b.timestamp || 0
-    return timestampA - timestampB
+    return timestampB - timestampA
   })
 
   return (
@@ -509,7 +635,7 @@ export default function LiveMatchTimeline({
               {/* Events */}
               <div className='space-y-6'>
                 {sortedEvents.map((event, index) => {
-                  const isLatestEvent = index === sortedEvents.length - 1
+                  const isLatestEvent = index === 0
                   return (
                     <div
                       key={event.id}
@@ -530,7 +656,9 @@ export default function LiveMatchTimeline({
 
                       {/* Marcador de tiempo */}
                       <div className='absolute left-2 top-0 transform -translate-y-1/2 text-md font-bold text-gray-500'>
-                        {event.minute}&apos;
+                        <span className='mr-4'>
+                          {formatEventTime(event.minute)}
+                        </span>
                       </div>
 
                       {/* Tarjeta del evento */}
@@ -583,10 +711,10 @@ export default function LiveMatchTimeline({
                                   <div className='flex items-center space-x-2 mb-2'>
                                     <Avatar className='w-6 h-6'>
                                       <AvatarImage
-                                        src={
-                                          event.playerAvatar ||
-                                          '/no-profile.webp'
-                                        }
+                                        src={getPlayerAvatar(
+                                          event.playerId,
+                                          event.playerAvatar
+                                        )}
                                         alt={event.playerName}
                                         onError={(e) => {
                                           e.currentTarget.src =

@@ -41,16 +41,53 @@ export function useLiveMatchSocket({
   playersTeam2,
 }: UseLiveMatchSocketProps) {
   const [isConnected, setIsConnected] = useState(false)
-  const [liveScore, setLiveScore] = useState({
-    team1Goals: match.team1Goals || 0,
-    team2Goals: match.team2Goals || 0,
-  })
+
+  // Función para obtener el score desde localStorage o usar el inicial
+  const getInitialScore = () => {
+    if (typeof window === 'undefined') {
+      return {
+        team1Goals: match.team1Goals || 0,
+        team2Goals: match.team2Goals || 0,
+      }
+    }
+
+    const savedScore = localStorage.getItem(`match-score-${match.id}`)
+    if (savedScore) {
+      return JSON.parse(savedScore)
+    }
+
+    return {
+      team1Goals: match.team1Goals || 0,
+      team2Goals: match.team2Goals || 0,
+    }
+  }
+
+  const [liveScore, setLiveScore] = useState(getInitialScore)
   const [matchStatus, setMatchStatus] = useState<
     'not-started' | 'live' | 'ended'
   >('not-started')
   const [livePlayersTeam1, setLivePlayersTeam1] = useState(playersTeam1)
   const [livePlayersTeam2, setLivePlayersTeam2] = useState(playersTeam2)
   const [currentMinute, setCurrentMinute] = useState(0)
+
+  // Función para actualizar el score y guardarlo en localStorage
+  const updateScore = (
+    updater: (prev: { team1Goals: number; team2Goals: number }) => {
+      team1Goals: number
+      team2Goals: number
+    }
+  ) => {
+    setLiveScore((prev: { team1Goals: number; team2Goals: number }) => {
+      const newScore = updater(prev)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(
+          `match-score-${match.id}`,
+          JSON.stringify(newScore)
+        )
+      }
+      return newScore
+    })
+  }
 
   useEffect(() => {
     // Si el partido ya está en estado 'live' (por ejemplo, si hay un campo status en match)
@@ -127,7 +164,7 @@ export function useLiveMatchSocket({
 
       // Actualizar el score en tiempo real
       if (data.teamId === match.team1Id) {
-        setLiveScore((prev) => ({ ...prev, team1Goals: prev.team1Goals + 1 }))
+        updateScore((prev) => ({ ...prev, team1Goals: prev.team1Goals + 1 }))
 
         // Actualizar estadísticas del jugador que marcó el gol
         if (data.playerId) {
@@ -140,7 +177,7 @@ export function useLiveMatchSocket({
           )
         }
       } else if (data.teamId === match.team2Id) {
-        setLiveScore((prev) => ({ ...prev, team2Goals: prev.team2Goals + 1 }))
+        updateScore((prev) => ({ ...prev, team2Goals: prev.team2Goals + 1 }))
 
         // Actualizar estadísticas del jugador que marcó el gol
         if (data.playerId) {
@@ -242,7 +279,7 @@ export function useLiveMatchSocket({
           )
         )
         // Workaround: Si el marcador NO subió por 'match:goal', súbelo aquí
-        setLiveScore((prev) => {
+        updateScore((prev) => {
           // Si el marcador ya subió, no hacer nada
           if (prev.team2Goals > match.team2Goals) return prev
           return { ...prev, team2Goals: prev.team2Goals + 1 }
@@ -255,7 +292,7 @@ export function useLiveMatchSocket({
               : player
           )
         )
-        setLiveScore((prev) => {
+        updateScore((prev) => {
           if (prev.team1Goals > match.team1Goals) return prev
           return { ...prev, team1Goals: prev.team1Goals + 1 }
         })

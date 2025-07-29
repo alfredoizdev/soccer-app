@@ -64,6 +64,20 @@ app.prepare().then(() => {
       io.to(`match:${data.matchId}`).emit('match:player_toggle', data)
     })
 
+    socket.on('match:half_time', (data) => {
+      console.log('Server received match:half_time:', data)
+      socket.join(`match:${data.matchId}`)
+      console.log('Emitting match:half_time to room:', `match:${data.matchId}`)
+      io.to(`match:${data.matchId}`).emit('match:half_time', data)
+    })
+
+    socket.on('match:resume', (data) => {
+      console.log('Server received match:resume:', data)
+      socket.join(`match:${data.matchId}`)
+      console.log('Emitting match:resume to room:', `match:${data.matchId}`)
+      io.to(`match:${data.matchId}`).emit('match:resume', data)
+    })
+
     socket.on('match:end', (data) => {
       io.to(`match:${data.matchId}`).emit('match:end', data)
       socket.leave(`match:${data.matchId}`)
@@ -141,10 +155,15 @@ app.prepare().then(() => {
     })
 
     socket.on('streaming:stop_by_match', (data) => {
+      console.log('Received streaming:stop_by_match event:', data)
       // Buscar todas las sesiones activas para este match y terminarlas
       io.emit('streaming:stop_by_match', {
         matchId: data.matchId,
       })
+      console.log(
+        'Emitted streaming:stop_by_match to all clients with matchId:',
+        data.matchId
+      )
     })
 
     socket.on('disconnect', () => {
