@@ -24,7 +24,7 @@ export default function TeamProgressIndicators({
                 d='M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831'
               />
               <path
-                className='text-green-600'
+                className='text-green-400'
                 stroke='currentColor'
                 strokeWidth='3'
                 strokeDasharray={`${winRate}, 100`}
@@ -54,7 +54,7 @@ export default function TeamProgressIndicators({
                 d='M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831'
               />
               <path
-                className='text-yellow-600'
+                className='text-yellow-400'
                 stroke='currentColor'
                 strokeWidth='3'
                 strokeDasharray={`${drawRate}, 100`}
@@ -84,7 +84,7 @@ export default function TeamProgressIndicators({
                 d='M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831'
               />
               <path
-                className='text-red-600'
+                className='text-red-400'
                 stroke='currentColor'
                 strokeWidth='3'
                 strokeDasharray={`${lossRate}, 100`}

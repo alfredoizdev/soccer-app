@@ -80,15 +80,15 @@ export default function JoinClub({
               {/* Resumen de resultados */}
               <div className='flex justify-center gap-4 mb-4 text-sm'>
                 <div className='flex items-center gap-1'>
-                  <span className='font-bold text-green-600'>W</span>
+                  <span className='font-bold text-green-400'>W</span>
                   <span>- {teamStats.wins}</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                  <span className='font-bold text-red-600'>L</span>
+                  <span className='font-bold text-red-400'>L</span>
                   <span>- {teamStats.losses}</span>
                 </div>
                 <div className='flex items-center gap-1'>
-                  <span className='font-bold text-yellow-600'>D</span>
+                  <span className='font-bold text-yellow-400'>D</span>
                   <span>- {teamStats.draws}</span>
                 </div>
               </div>
@@ -174,13 +174,6 @@ export default function JoinClub({
               <Users className='w-6 h-6' />
               Team Players ({teamPlayers?.length || 0})
             </h3>
-            <Link
-              href='/members/players/add'
-              className='text-white p-2 bg-gray-900 rounded-null'
-            >
-              Add Player
-              <span aria-hidden>→</span>
-            </Link>
           </div>
 
           {!teamPlayers || teamPlayers.length === 0 ? (
@@ -202,6 +195,10 @@ export default function JoinClub({
                     <div className='relative mb-3'>
                       <Avatar className='w-16 h-16'>
                         <AvatarImage
+                          width={64}
+                          height={64}
+                          alt={player.name}
+                          className='w-16 h-16 rounded-full object-cover border'
                           src={player.avatar || '/no-profile.webp'}
                         />
                         <AvatarFallback>
