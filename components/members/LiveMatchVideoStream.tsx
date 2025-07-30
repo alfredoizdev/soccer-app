@@ -8,6 +8,8 @@ import { useVideoStream } from '@/hooks/useVideoStream'
 import { userAuth } from '@/lib/actions/auth.action'
 import { getActiveSessionByMatchIdAction } from '@/lib/actions/streaming-server.action'
 import { Video, Mic, MicOff, Users, Square } from 'lucide-react'
+import { toast } from 'sonner'
+import { socket } from '@/app/socket'
 
 interface LiveMatchVideoStreamProps {
   matchId: string
@@ -48,9 +50,12 @@ export default function LiveMatchVideoStream({
 
         if (result.success && result.data) {
           setSessionId(result.data.id)
+        } else {
+          setSessionId('')
         }
       } catch (error) {
         console.error('Error getting active session:', error)
+        setSessionId('')
       }
     }
 
@@ -58,6 +63,30 @@ export default function LiveMatchVideoStream({
       getActiveSession()
     }
   }, [matchId])
+
+  // Escuchar eventos de streaming para actualizar el estado
+  useEffect(() => {
+    const handleStreamingStopped = (data: { sessionId: string }) => {
+      if (data.sessionId === sessionId) {
+        setSessionId('')
+        toast.info('Stream has ended')
+      }
+    }
+
+    const handleStreamingStarted = (data: { sessionId: string }) => {
+      if (data.sessionId !== sessionId) {
+        setSessionId(data.sessionId)
+      }
+    }
+
+    socket.on('streaming:stopped', handleStreamingStopped)
+    socket.on('streaming:started', handleStreamingStarted)
+
+    return () => {
+      socket.off('streaming:stopped', handleStreamingStopped)
+      socket.off('streaming:started', handleStreamingStarted)
+    }
+  }, [sessionId])
 
   // Usar el hook personalizado
   const {
@@ -83,8 +112,8 @@ export default function LiveMatchVideoStream({
   }
 
   return (
-    <Card className='rounded-none'>
-      <div className='p-4'>
+    <Card className='rounded-none w-full'>
+      <div className='p-4 w-full'>
         <div className='flex items-center justify-between mb-4'>
           <div>
             <h3 className='text-lg font-semibold'>
@@ -100,10 +129,10 @@ export default function LiveMatchVideoStream({
           </div>
         </div>
 
-        <div className='relative'>
+        <div className='relative w-full'>
           <video
             ref={videoRef}
-            className='w-full h-64 bg-black rounded-none'
+            className='w-full h-96 md:h-[500px] lg:h-[600px] bg-black rounded-none object-cover'
             autoPlay
             playsInline
             muted

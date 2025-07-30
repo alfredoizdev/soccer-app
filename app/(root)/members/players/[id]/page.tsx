@@ -106,7 +106,7 @@ export default async function PlayerDetailPage({
     <div className='w-full mx-auto p-6'>
       {/* Header con foto prominente y información básica */}
       <div className='bg-white rounded-none shadow-lg p-8 mb-8'>
-        <div className='flex flex-col lg:flex-row gap-8 items-start'>
+        <div className='flex flex-col lg:flex-row gap-8 items-center'>
           {/* Foto prominente del jugador */}
           <div className='flex-shrink-0'>
             <div className='relative'>

@@ -476,8 +476,8 @@ export default function StreamBroadcaster({
   }
 
   return (
-    <div className='space-y-6'>
-      <Card className='p-6'>
+    <div className='space-y-6 w-full'>
+      <Card className='p-6 w-full'>
         <div className='flex items-center justify-between mb-4'>
           <h2 className='text-2xl font-bold'>Live Stream</h2>
           <div className='flex items-center gap-2'>
@@ -533,13 +533,13 @@ export default function StreamBroadcaster({
           </div>
         ) : (
           <div className='space-y-4'>
-            <div className='relative'>
+            <div className='relative w-full'>
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className='w-full h-64 bg-black rounded-lg object-cover'
+                className='w-full h-96 md:h-[500px] lg:h-[600px] bg-black rounded-lg object-cover'
               />
 
               {/* Overlay controls */}
