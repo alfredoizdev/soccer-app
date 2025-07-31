@@ -1,10 +1,9 @@
 'use client'
 import React, { useState, useMemo } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Video, Settings } from 'lucide-react'
+import { Video, ExternalLink, Settings } from 'lucide-react'
 
 interface MatchListItem {
   id: string
@@ -34,6 +33,20 @@ export default function MatchSearch({ matches }: Props) {
         m.team2.toLowerCase().includes(query.toLowerCase())
     )
   }, [matches, query])
+
+  const handleOpenStream = (matchId: string) => {
+    // Abrir el stream fullscreen en una nueva ventana/pestaña
+    window.open(
+      `/admin/matches/stream/${matchId}/fullscreen`,
+      '_blank',
+      'width=1400,height=900'
+    )
+  }
+
+  const handleMatchActions = (matchId: string) => {
+    // Navegar a la página de acciones del match
+    window.location.href = `/admin/matches/live/${matchId}`
+  }
 
   return (
     <div className='w-full mx-auto'>
@@ -102,26 +115,25 @@ export default function MatchSearch({ matches }: Props) {
               </div>
 
               <div className='flex gap-2 justify-center'>
-                <Link href={`/admin/matches/live/${match.id}`}>
-                  <Button
-                    variant='default'
-                    size='sm'
-                    className='flex items-center gap-2'
-                  >
-                    <Settings className='w-4 h-4' />
-                    Match Actions
-                  </Button>
-                </Link>
-                <Link href={`/admin/matches/stream/${match.id}`}>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='flex items-center gap-2'
-                  >
-                    <Video className='w-4 h-4' />
-                    Live Stream
-                  </Button>
-                </Link>
+                <Button
+                  onClick={() => handleMatchActions(match.id)}
+                  variant='outline'
+                  size='sm'
+                  className='flex items-center gap-2'
+                >
+                  <Settings className='w-4 h-4' />
+                  Actions
+                </Button>
+                <Button
+                  onClick={() => handleOpenStream(match.id)}
+                  variant='default'
+                  size='sm'
+                  className='flex items-center gap-2'
+                >
+                  <Video className='w-4 h-4' />
+                  <ExternalLink className='w-4 h-4' />
+                  Open Stream
+                </Button>
               </div>
             </div>
           ))

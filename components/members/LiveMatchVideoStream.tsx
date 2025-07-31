@@ -3,11 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { useVideoStream } from '@/hooks/useVideoStream'
-import { userAuth } from '@/lib/actions/auth.action'
 import { getActiveSessionByMatchIdAction } from '@/lib/actions/streaming-server.action'
-import { Video, Mic, MicOff, Users, Square } from 'lucide-react'
+import { Video } from 'lucide-react'
 import { toast } from 'sonner'
 import { socket } from '@/app/socket'
 
@@ -18,39 +15,21 @@ interface LiveMatchVideoStreamProps {
 
 export default function LiveMatchVideoStream({
   matchId,
-  matchTitle,
 }: LiveMatchVideoStreamProps) {
   const [sessionId, setSessionId] = useState<string>('')
-  const [user, setUser] = useState<{
-    id: string
-    name: string
-    email: string
-  } | null>(null)
-
-  // Obtener usuario actual
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const userData = await userAuth()
-        if (userData) {
-          setUser(userData)
-        }
-      } catch (error) {
-        console.error('Error getting user:', error)
-      }
-    }
-    getUser()
-  }, [])
 
   // Obtener sesión activa para este match
   useEffect(() => {
     const getActiveSession = async () => {
       try {
+        console.log('Checking for active session for matchId:', matchId)
         const result = await getActiveSessionByMatchIdAction(matchId)
 
         if (result.success && result.data) {
+          console.log('Found active session:', result.data.id)
           setSessionId(result.data.id)
         } else {
+          console.log('No active session found for matchId:', matchId)
           setSessionId('')
         }
       } catch (error) {
@@ -61,12 +40,16 @@ export default function LiveMatchVideoStream({
 
     if (matchId) {
       getActiveSession()
+      // Polling cada 5 segundos para verificar si hay un stream activo
+      const interval = setInterval(getActiveSession, 5000)
+      return () => clearInterval(interval)
     }
   }, [matchId])
 
   // Escuchar eventos de streaming para actualizar el estado
   useEffect(() => {
     const handleStreamingStopped = (data: { sessionId: string }) => {
+      console.log('Streaming stopped event:', data)
       if (data.sessionId === sessionId) {
         setSessionId('')
         toast.info('Stream has ended')
@@ -74,9 +57,31 @@ export default function LiveMatchVideoStream({
     }
 
     const handleStreamingStarted = (data: { sessionId: string }) => {
-      if (data.sessionId !== sessionId) {
-        setSessionId(data.sessionId)
+      console.log('Streaming started event:', data)
+      // Cuando se inicia un stream, verificar si hay un stream activo para este match
+      const checkForActiveStream = async () => {
+        try {
+          console.log(
+            'Checking for active session after streaming started for matchId:',
+            matchId
+          )
+          const result = await getActiveSessionByMatchIdAction(matchId)
+          if (result.success && result.data) {
+            console.log(
+              'Found active session after streaming started:',
+              result.data.id
+            )
+            setSessionId(result.data.id)
+            toast.success('Stream has started!')
+          }
+        } catch (error) {
+          console.error(
+            'Error checking for active session after streaming started:',
+            error
+          )
+        }
       }
+      checkForActiveStream()
     }
 
     socket.on('streaming:stopped', handleStreamingStopped)
@@ -86,26 +91,48 @@ export default function LiveMatchVideoStream({
       socket.off('streaming:stopped', handleStreamingStopped)
       socket.off('streaming:started', handleStreamingStarted)
     }
-  }, [sessionId])
-
-  // Usar el hook personalizado
-  const {
-    isWatching,
-    viewerCount,
-    isAudioEnabled,
-    videoRef,
-    handleJoinStream,
-    handleLeaveStream,
-    toggleAudio,
-  } = useVideoStream({ sessionId, user })
+  }, [sessionId, matchId])
 
   if (!sessionId) {
     return (
       <Card className='p-6 rounded-none'>
         <div className='text-center'>
-          <p className='text-muted-foreground'>
+          <p className='text-muted-foreground mb-4'>
             No active stream for this match
           </p>
+          <Button
+            onClick={async () => {
+              try {
+                console.log(
+                  'Manual check for active session for matchId:',
+                  matchId
+                )
+                const result = await getActiveSessionByMatchIdAction(matchId)
+                if (result.success && result.data) {
+                  console.log(
+                    'Found active session on manual check:',
+                    result.data.id
+                  )
+                  setSessionId(result.data.id)
+                  toast.success('Stream found!')
+                } else {
+                  console.log(
+                    'No active session found on manual check for matchId:',
+                    matchId
+                  )
+                  toast.info('No active stream found')
+                }
+              } catch (error) {
+                console.error('Error checking for active session:', error)
+                toast.error('Error checking for stream')
+              }
+            }}
+            variant='destructive'
+            className='rounded-none'
+          >
+            <Video className='h-4 w-4 mr-2' />
+            Check for Stream
+          </Button>
         </div>
       </Card>
     )
@@ -116,71 +143,36 @@ export default function LiveMatchVideoStream({
       <div className='p-4 w-full'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='text-lg font-semibold'>
-              Live Stream - {matchTitle || 'Match'}
-            </h3>
-            <p className='text-sm text-muted-foreground'>
-              Session: {sessionId.substring(0, 8)}...
-            </p>
+            <h3 className='text-lg font-semibold'>Live Stream</h3>
           </div>
           <div className='flex items-center gap-2'>
-            <Users className='h-4 w-4' />
-            <span className='text-sm'>{viewerCount} viewers</span>
+            {/* Botón para abrir fullscreen */}
+            <a
+              href={`/members/streams/${sessionId}/fullscreen`}
+              target='_blank'
+              rel='noopener noreferrer'
+              title='Open fullscreen stream'
+              className='ml-2 p-1 rounded hover:bg-muted transition-colors'
+            >
+              <Video className='h-5 w-5' />
+            </a>
           </div>
         </div>
 
-        <div className='relative w-full'>
-          <video
-            ref={videoRef}
-            className='w-full h-96 md:h-[500px] lg:h-[600px] bg-black rounded-none object-cover'
-            autoPlay
-            playsInline
-            muted
-          />
-
-          {/* Live badge */}
-          <div className='absolute top-2 right-2'>
-            <Badge variant='destructive' className='flex items-center gap-1'>
-              <div className='w-2 h-2 bg-white rounded-full animate-pulse' />
-              LIVE
-            </Badge>
-          </div>
-
-          {/* Audio toggle */}
-          <Button
-            variant='secondary'
-            size='sm'
-            className='absolute bottom-2 left-2'
-            onClick={toggleAudio}
+        <div className='text-center'>
+          <p className='text-muted-foreground mb-4'>
+            Stream is active! Click the button above to watch in fullscreen.
+          </p>
+          <a
+            href={`/members/streams/${sessionId}/fullscreen`}
+            target='_blank'
+            rel='noopener noreferrer'
           >
-            {isAudioEnabled ? (
-              <Mic className='h-4 w-4' />
-            ) : (
-              <MicOff className='h-4 w-4' />
-            )}
-          </Button>
-        </div>
-
-        <div className='mt-4'>
-          {!isWatching ? (
-            <Button
-              onClick={handleJoinStream}
-              className='w-full rounded-none'
-              disabled={!user}
-            >
+            <Button className='w-full rounded-none'>
               <Video className='h-4 w-4 mr-2' />
-              Join Stream
+              Watch Stream
             </Button>
-          ) : (
-            <Button
-              onClick={handleLeaveStream}
-              variant='outline'
-              className='w-full rounded-none'
-            >
-              <Square className='h-4 w-4 mr-2' />
-              Leave Stream
-            </Button>
-          )}
+          </a>
         </div>
       </div>
     </Card>

@@ -12,11 +12,17 @@ export async function runAutoMatchTest(config: AutoMatchTestConfig) {
 
   // 1. Crear partido
   console.log('📝 Creando partido...')
-  const { match, players } = await createMatchWithPlayers({
+  const result = await createMatchWithPlayers({
     date: new Date(),
     team1Id: config.team1Id,
     team2Id: config.team2Id,
   })
+
+  if (!result.success || !result.data) {
+    throw new Error('Failed to create match')
+  }
+
+  const { match, players } = result.data
 
   console.log(`✅ Partido creado: ${match.id}`)
   console.log(`👥 Jugadores registrados: ${players.length}`)

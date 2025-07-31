@@ -90,11 +90,11 @@ export default function LiveMatchViewer({
               performance, and match timeline in the match history.
             </p>
 
-            <div className='flex flex-col sm:flex-row gap-3 justify-center'>
+            <div className='flex flex-row gap-3 justify-center'>
               <Link href={`/members/matches/history/${match.id}/timeline`}>
                 <Button className='flex items-center gap-2'>
                   <Calendar className='w-4 h-4' />
-                  View Match History
+                  History
                 </Button>
               </Link>
               <Link href='/members/matches/history'>

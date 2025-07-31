@@ -23,7 +23,8 @@
     "db:setup": "./scripts/setup-db.sh",
     "db:start": "docker compose up -d",
     "db:stop": "docker compose down",
-    "db:reset": "docker compose down -v && docker compose up -d"
+    "db:reset": "docker compose down -v && docker compose up -d",
+    "find:deps": "node scripts/find-dependencies.js"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",

@@ -163,7 +163,14 @@ export async function createMatchWithPlayers({
       }))
     )
   }
-  return { match, players: allPlayers }
+  return {
+    success: true,
+    data: {
+      id: match.id,
+      match,
+      players: allPlayers,
+    },
+  }
 }
 
 // Devuelve todos los partidos con los nombres y avatares de los equipos

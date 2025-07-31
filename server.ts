@@ -93,10 +93,17 @@ app.prepare().then(() => {
 
     // WebRTC Events
     socket.on('streaming:join', (data) => {
+      console.log('User joining stream:', data)
       socket.join(`streaming:${data.sessionId}`)
+      console.log('User joined room:', `streaming:${data.sessionId}`)
+      console.log(
+        'Emitted streaming:viewer_joined to room:',
+        `streaming:${data.sessionId}`
+      )
       io.to(`streaming:${data.sessionId}`).emit('streaming:viewer_joined', {
-        viewerId: data.viewerId,
+        viewerId: data.userId || data.viewerId,
         sessionId: data.sessionId,
+        connectionId: data.connectionId,
       })
     })
 
@@ -113,6 +120,7 @@ app.prepare().then(() => {
         offer: data.offer,
         from: data.from,
         to: data.to,
+        matchId: data.matchId,
       })
     })
 
@@ -121,6 +129,7 @@ app.prepare().then(() => {
         answer: data.answer,
         from: data.from,
         to: data.to,
+        matchId: data.matchId,
       })
     })
 
@@ -129,10 +138,12 @@ app.prepare().then(() => {
         candidate: data.candidate,
         from: data.from,
         to: data.to,
+        matchId: data.matchId,
       })
     })
 
     socket.on('streaming:start', (data) => {
+      console.log('Broadcaster starting stream:', data)
       socket.join(`streaming:${data.sessionId}`)
       io.to(`streaming:${data.sessionId}`).emit('streaming:started', {
         sessionId: data.sessionId,
@@ -167,7 +178,23 @@ app.prepare().then(() => {
     })
 
     socket.on('disconnect', () => {
-      // User disconnected
+      console.log('User disconnected:', socket.id)
+      // Limpiar todas las rooms del usuario desconectado
+      socket.rooms.forEach((room) => {
+        if (room.startsWith('streaming:')) {
+          console.log('User left streaming room:', room)
+          socket.leave(room)
+          // Notificar a otros usuarios que este viewer se fue
+          io.to(room).emit('streaming:viewer_left', {
+            viewerId: socket.id,
+            sessionId: room.replace('streaming:', ''),
+          })
+        }
+        if (room.startsWith('match:')) {
+          console.log('User left match room:', room)
+          socket.leave(room)
+        }
+      })
     })
   })
 

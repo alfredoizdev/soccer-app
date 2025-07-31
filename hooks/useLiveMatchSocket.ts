@@ -44,6 +44,14 @@ export function useLiveMatchSocket({
 
   // Función para obtener el score desde localStorage o usar el inicial
   const getInitialScore = () => {
+    // Si match es null o undefined, retornar valores por defecto
+    if (!match) {
+      return {
+        team1Goals: 0,
+        team2Goals: 0,
+      }
+    }
+
     if (typeof window === 'undefined') {
       return {
         team1Goals: match.team1Goals || 0,
@@ -79,7 +87,7 @@ export function useLiveMatchSocket({
   ) => {
     setLiveScore((prev: { team1Goals: number; team2Goals: number }) => {
       const newScore = updater(prev)
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && match) {
         localStorage.setItem(
           `match-score-${match.id}`,
           JSON.stringify(newScore)
@@ -90,6 +98,9 @@ export function useLiveMatchSocket({
   }
 
   useEffect(() => {
+    // Si match es null, no hacer nada
+    if (!match) return
+
     // Si el partido ya está en estado 'live' (por ejemplo, si hay un campo status en match)
     // o si hay goles, marcar como live
     if (
@@ -100,7 +111,7 @@ export function useLiveMatchSocket({
     ) {
       setMatchStatus('live')
     }
-  }, [match.status, match.team1Goals, match.team2Goals, matchStatus])
+  }, [match?.status, match?.team1Goals, match?.team2Goals, matchStatus])
 
   // Inicializar jugadores con estado 'up' por defecto
   useEffect(() => {
@@ -137,6 +148,9 @@ export function useLiveMatchSocket({
   }, [])
 
   useEffect(() => {
+    // Si match es null, no hacer nada
+    if (!match) return
+
     // Forzar conexión si no está conectado
     if (!socket.connected) {
       socket.connect()
@@ -157,8 +171,8 @@ export function useLiveMatchSocket({
       playerId?: string
       playerName?: string
     }) => {
-      // Verificar que el evento es para este partido
-      if (data.matchId !== match.id) {
+      // Verificar que match existe y que el evento es para este partido
+      if (!match || data.matchId !== match.id) {
         return
       }
 
@@ -198,8 +212,8 @@ export function useLiveMatchSocket({
       playerId: string
       playerName: string
     }) => {
-      // Verificar que el evento es para este partido
-      if (data.matchId !== match.id) {
+      // Verificar que match existe y que el evento es para este partido
+      if (!match || data.matchId !== match.id) {
         return
       }
 
@@ -233,8 +247,8 @@ export function useLiveMatchSocket({
       playerId: string
       playerName: string
     }) => {
-      // Verificar que el evento es para este partido
-      if (data.matchId !== match.id) {
+      // Verificar que match existe y que el evento es para este partido
+      if (!match || data.matchId !== match.id) {
         return
       }
 
@@ -264,8 +278,10 @@ export function useLiveMatchSocket({
       playerId: string
       playerName: string
     }) => {
-      // Verificar que el evento es para este partido
-      if (data.matchId !== match.id) {
+      console.log('useLiveMatchSocket: Received goal_allowed event:', data)
+      // Verificar que match existe y que el evento es para este partido
+      if (!match || data.matchId !== match.id) {
+        console.log('useLiveMatchSocket: Event not for this match')
         return
       }
 
@@ -281,7 +297,7 @@ export function useLiveMatchSocket({
         // Workaround: Si el marcador NO subió por 'match:goal', súbelo aquí
         updateScore((prev) => {
           // Si el marcador ya subió, no hacer nada
-          if (prev.team2Goals > match.team2Goals) return prev
+          if (prev.team2Goals > (match?.team2Goals || 0)) return prev
           return { ...prev, team2Goals: prev.team2Goals + 1 }
         })
       } else if (data.teamId === match.team2Id) {
@@ -293,7 +309,7 @@ export function useLiveMatchSocket({
           )
         )
         updateScore((prev) => {
-          if (prev.team1Goals > match.team1Goals) return prev
+          if (prev.team1Goals > (match?.team1Goals || 0)) return prev
           return { ...prev, team1Goals: prev.team1Goals + 1 }
         })
       }
@@ -306,8 +322,8 @@ export function useLiveMatchSocket({
       playerName: string
       eventType: string
     }) => {
-      // Verificar que el evento es para este partido
-      if (data.matchId !== match.id) {
+      // Verificar que match existe y que el evento es para este partido
+      if (!match || data.matchId !== match.id) {
         return
       }
 
@@ -361,8 +377,10 @@ export function useLiveMatchSocket({
     socket.on('connect_error', handleConnectError)
 
     return () => {
-      // Salir del canal del partido
-      socket.emit('leave:match', { matchId: match.id })
+      // Salir del canal del partido solo si match existe
+      if (match) {
+        socket.emit('leave:match', { matchId: match.id })
+      }
       socket.off('match:start', handleMatchStart)
       socket.off('match:goal', handleMatchGoal)
       socket.off('match:assist', handleMatchAssist)
@@ -376,7 +394,7 @@ export function useLiveMatchSocket({
       socket.off('connect_error', handleConnectError)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.id, match.team1Id, match.team2Id])
+  }, [match?.id, match?.team1Id, match?.team2Id])
 
   // Forzar estado 'live' si recibimos cualquier evento de partido relevante
   useEffect(() => {
@@ -418,13 +436,13 @@ export function useLiveMatchSocket({
     }
   }, [isConnected, matchStatus, liveScore.team1Goals, liveScore.team2Goals])
 
-  // Incrementar el minuto cada minuto cuando el partido esté en vivo
+  // Incrementar el minuto cada 10 segundos cuando el partido esté en vivo (para testing)
   useEffect(() => {
     if (matchStatus !== 'live') return
 
     const interval = setInterval(() => {
       setCurrentMinute((prev) => prev + 1)
-    }, 60000) // 1 minuto
+    }, 10000) // 10 segundos para testing (cambiar a 60000 para producción)
 
     return () => clearInterval(interval)
   }, [matchStatus])

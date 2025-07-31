@@ -11,7 +11,17 @@ import {
 } from '@/lib/actions/streaming-server.action'
 import { userAuth } from '@/lib/actions/auth.action'
 import { toast } from 'sonner'
-import { Video, VideoOff, Mic, MicOff, Settings, Users } from 'lucide-react'
+import {
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  Settings,
+  Users,
+  Play,
+  Square,
+  AlertCircle,
+} from 'lucide-react'
 import { socket } from '@/app/socket'
 import { useGlobalStore } from '@/lib/stores/globalStore'
 
@@ -24,6 +34,7 @@ export default function StreamBroadcaster({
   matchId,
   matchTitle,
 }: StreamBroadcasterProps) {
+  console.log('StreamBroadcaster: Component loaded with matchId:', matchId)
   const [isStreaming, setIsStreaming] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [title, setTitle] = useState(matchTitle || '')
@@ -32,6 +43,7 @@ export default function StreamBroadcaster({
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [isVideoEnabled, setIsVideoEnabled] = useState(true)
   const [isConnected, setIsConnected] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
@@ -115,6 +127,7 @@ export default function StreamBroadcaster({
   const handleStopStream = useCallback(async () => {
     console.log('handleStopStream called')
     try {
+      setIsLoading(true)
       // Detener transmisión WebRTC
       stopStream()
 
@@ -143,6 +156,8 @@ export default function StreamBroadcaster({
     } catch (err) {
       console.error('Error stopping stream:', err)
       toast.error('Failed to stop stream')
+    } finally {
+      setIsLoading(false)
     }
   }, [sessionId, clearActiveStream, stopStream])
 
@@ -158,28 +173,43 @@ export default function StreamBroadcaster({
   // Escuchar cambios en el número de espectadores
   useEffect(() => {
     const handleViewerJoined = () => {
+      console.log('Broadcaster: Received viewer_joined event')
+      console.log('Viewer joined, creating WebRTC offer')
       setViewerCount((prev) => prev + 1)
 
       // Enviar oferta WebRTC al nuevo viewer
       if (peerConnectionRef.current && localStreamRef.current) {
+        console.log('Creating WebRTC offer for new viewer')
         peerConnectionRef.current
           .createOffer()
           .then((offer) => {
+            console.log('Offer created, setting local description')
             return peerConnectionRef.current!.setLocalDescription(offer)
           })
           .then(() => {
+            console.log('Sending WebRTC offer to viewer')
             socket.emit('webrtc:offer', {
               offer: peerConnectionRef.current!.localDescription,
               from: user?.id,
               to: 'viewer',
               sessionId,
+              matchId,
             })
           })
-          .catch(console.error)
+          .catch((error) => {
+            console.error('Error creating WebRTC offer:', error)
+          })
+      } else {
+        console.log(
+          'Cannot create offer - peer connection or local stream not available'
+        )
+        console.log('Peer connection exists:', !!peerConnectionRef.current)
+        console.log('Local stream exists:', !!localStreamRef.current)
       }
     }
 
     const handleViewerLeft = () => {
+      console.log('Broadcaster: Received streaming:viewer_left event')
       setViewerCount((prev) => Math.max(0, prev - 1))
     }
 
@@ -219,6 +249,7 @@ export default function StreamBroadcaster({
       answer: RTCSessionDescriptionInit
       from: string
       to: string
+      matchId?: string
     }) => {
       if (peerConnectionRef.current && data.from !== user?.id) {
         peerConnectionRef.current
@@ -231,6 +262,7 @@ export default function StreamBroadcaster({
       candidate: RTCIceCandidateInit
       from: string
       to: string
+      matchId?: string
     }) => {
       if (peerConnectionRef.current && data.from !== user?.id) {
         peerConnectionRef.current
@@ -357,6 +389,7 @@ export default function StreamBroadcaster({
   }, [isStreaming, sessionId, user?.id])
 
   const handleStartStream = async () => {
+    console.log('handleStartStream: Button clicked')
     if (!user) {
       toast.error('You must be logged in to start streaming')
       return
@@ -368,6 +401,8 @@ export default function StreamBroadcaster({
     }
 
     try {
+      setIsLoading(true)
+      console.log('handleStartStream: Creating streaming session...')
       // Crear sesión de streaming usando server action
       const formData = new FormData()
       formData.append('matchId', matchId)
@@ -376,12 +411,15 @@ export default function StreamBroadcaster({
       formData.append('description', description.trim())
 
       const result = await createStreamingSessionAction(formData)
+      console.log('handleStartStream: Session creation result:', result)
 
       if (result.success && 'data' in result && result.data) {
         const newSessionId = result.data.id
+        console.log('handleStartStream: New sessionId:', newSessionId)
         setSessionId(newSessionId)
 
         // Iniciar transmisión WebRTC
+        console.log('handleStartStream: Starting WebRTC stream...')
         await startStream(newSessionId)
         setIsStreaming(true)
 
@@ -399,31 +437,60 @@ export default function StreamBroadcaster({
     } catch (err) {
       console.error('Error starting stream:', err)
       toast.error('Failed to start stream')
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const startStream = async (sessionId: string) => {
     try {
-      // Obtener acceso a cámara y micrófono
+      // Obtener acceso a cámara y micrófono con mejor calidad
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
+        video: {
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
+          frameRate: { ideal: 30, min: 24 },
+          aspectRatio: { ideal: 16 / 9 },
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       })
 
       localStreamRef.current = stream
 
-      // Crear conexión WebRTC
+      // Crear conexión WebRTC con mejor configuración
       const peerConnection = new RTCPeerConnection({
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
         ],
+        // Configuración para mejor calidad
+        iceCandidatePoolSize: 10,
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require',
       })
 
       peerConnectionRef.current = peerConnection
 
-      // Agregar tracks locales
+      // Agregar tracks locales con mejor configuración
       stream.getTracks().forEach((track) => {
+        if (track.kind === 'video') {
+          // Configurar mejor calidad para video
+          const videoTrack = track as MediaStreamTrack
+          const capabilities = videoTrack.getCapabilities()
+          if (capabilities && capabilities.width && capabilities.height) {
+            videoTrack
+              .applyConstraints({
+                width: { ideal: 1920, min: 1280 },
+                height: { ideal: 1080, min: 720 },
+                frameRate: { ideal: 30, min: 24 },
+              })
+              .catch(console.error)
+          }
+        }
         peerConnection.addTrack(track, stream)
       })
 
@@ -440,6 +507,7 @@ export default function StreamBroadcaster({
             from: user?.id,
             to: 'viewer',
             sessionId,
+            matchId,
           })
         }
       }
@@ -449,6 +517,17 @@ export default function StreamBroadcaster({
         sessionId,
         userId: user?.id,
       })
+
+      // Unirse a la sala de streaming para recibir eventos de viewers
+      socket.emit('streaming:join', {
+        sessionId,
+        userId: user?.id,
+      })
+      console.log('Broadcaster: Started stream with sessionId:', sessionId)
+      console.log(
+        'Broadcaster: Joined streaming room:',
+        `streaming:${sessionId}`
+      )
     } catch (err) {
       console.error('Error starting stream:', err)
       throw err
@@ -478,61 +557,91 @@ export default function StreamBroadcaster({
   return (
     <div className='space-y-6 w-full'>
       <Card className='p-6 w-full'>
-        <div className='flex items-center justify-between mb-4'>
+        <div className='flex items-center justify-between mb-6'>
           <h2 className='text-2xl font-bold'>Live Stream</h2>
-          <div className='flex items-center gap-2'>
-            <Users className='w-5 h-5' />
-            <span className='text-sm'>{viewerCount} viewers</span>
+          <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-2'>
+              <Users className='w-5 h-5' />
+              <span className='text-sm font-medium'>{viewerCount} viewers</span>
+            </div>
             {globalStreamActive && (
-              <div className='flex items-center gap-1 text-green-500'>
+              <div className='flex items-center gap-2 text-green-500'>
                 <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
-                <span className='text-xs'>Active</span>
+                <span className='text-sm font-medium'>Active</span>
               </div>
             )}
           </div>
         </div>
 
         {!isStreaming ? (
-          <div className='space-y-4'>
-            <div>
-              <Label htmlFor='title'>Stream Title</Label>
-              <Input
-                id='title'
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder='Enter stream title'
-                className='mt-1'
-              />
+          <div className='space-y-6'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div>
+                <Label htmlFor='title' className='text-sm font-medium'>
+                  Stream Title
+                </Label>
+                <Input
+                  id='title'
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder='Enter stream title'
+                  className='mt-2'
+                />
+              </div>
+
+              <div>
+                <Label htmlFor='description' className='text-sm font-medium'>
+                  Description
+                </Label>
+                <textarea
+                  id='description'
+                  value={description}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setDescription(e.target.value)
+                  }
+                  placeholder='Enter stream description'
+                  className='mt-2 w-full p-3 border border-gray-300 rounded-md resize-none'
+                  rows={3}
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor='description'>Description</Label>
-              <textarea
-                id='description'
-                value={description}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setDescription(e.target.value)
-                }
-                placeholder='Enter stream description'
-                className='mt-1 w-full p-2 border border-gray-300 rounded-md resize-none'
-                rows={3}
-              />
+            <div className='flex items-center gap-4 p-4 bg-blue-50 rounded-lg'>
+              <AlertCircle className='w-5 h-5 text-blue-500' />
+              <div className='text-sm text-blue-700'>
+                <p className='font-medium'>Stream Setup</p>
+                <p>
+                  Make sure your camera and microphone are ready before starting
+                  the stream.
+                </p>
+              </div>
             </div>
 
             <Button
               onClick={handleStartStream}
-              className='w-full'
-              disabled={!user}
+              className='w-full h-12 text-lg font-medium'
+              disabled={!user || isLoading}
             >
-              <Video className='w-4 h-4 mr-2' />
-              Start Stream
+              {isLoading ? (
+                <div className='flex items-center gap-2'>
+                  <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                  Starting Stream...
+                </div>
+              ) : (
+                <div className='flex items-center gap-2'>
+                  <Play className='w-5 h-5' />
+                  Start Stream
+                </div>
+              )}
             </Button>
             {!user && (
-              <p className='text-sm text-gray-500'>Loading user data...</p>
+              <p className='text-sm text-gray-500 text-center'>
+                Loading user data...
+              </p>
             )}
           </div>
         ) : (
-          <div className='space-y-4'>
+          <div className='space-y-6'>
             <div className='relative w-full'>
               <video
                 ref={videoRef}
@@ -548,6 +657,7 @@ export default function StreamBroadcaster({
                   size='sm'
                   variant={isAudioEnabled ? 'default' : 'destructive'}
                   onClick={toggleAudio}
+                  className='bg-black/50 hover:bg-black/70 text-white border-0'
                 >
                   {isAudioEnabled ? (
                     <Mic className='w-4 h-4' />
@@ -560,6 +670,7 @@ export default function StreamBroadcaster({
                   size='sm'
                   variant={isVideoEnabled ? 'default' : 'destructive'}
                   onClick={toggleVideo}
+                  className='bg-black/50 hover:bg-black/70 text-white border-0'
                 >
                   {isVideoEnabled ? (
                     <Video className='w-4 h-4' />
@@ -571,36 +682,53 @@ export default function StreamBroadcaster({
 
               {/* Status indicator */}
               <div className='absolute top-4 right-4'>
-                <div className='flex items-center gap-2 bg-red-500 text-white px-2 py-1 rounded text-sm'>
+                <div className='flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium'>
                   <div className='w-2 h-2 bg-white rounded-full animate-pulse'></div>
                   LIVE
                 </div>
               </div>
             </div>
 
-            <div className='flex gap-2'>
+            <div className='flex gap-4'>
               <Button
                 onClick={handleStopStream}
                 variant='destructive'
-                className='flex-1'
+                className='flex-1 h-12 text-lg font-medium'
+                disabled={isLoading}
               >
-                <VideoOff className='w-4 h-4 mr-2' />
-                Stop Stream
+                {isLoading ? (
+                  <div className='flex items-center gap-2'>
+                    <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                    Stopping...
+                  </div>
+                ) : (
+                  <div className='flex items-center gap-2'>
+                    <Square className='w-5 h-5' />
+                    Stop Stream
+                  </div>
+                )}
               </Button>
 
-              <Button variant='outline' size='sm'>
+              <Button variant='outline' size='sm' className='h-12'>
                 <Settings className='w-4 h-4' />
               </Button>
             </div>
 
-            <div className='text-sm text-gray-600'>
-              <p>
-                <strong>Status:</strong>{' '}
-                {isConnected ? 'Connected' : 'Connecting...'}
-              </p>
-              <p>
-                <strong>Session ID:</strong> {sessionId}
-              </p>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4 text-sm'>
+              <div className='p-3 bg-gray-50 rounded-lg'>
+                <p className='font-medium'>Status</p>
+                <p className='text-gray-600'>
+                  {isConnected ? 'Connected' : 'Connecting...'}
+                </p>
+              </div>
+              <div className='p-3 bg-gray-50 rounded-lg'>
+                <p className='font-medium'>Session ID</p>
+                <p className='text-gray-600 font-mono text-xs'>{sessionId}</p>
+              </div>
+              <div className='p-3 bg-gray-50 rounded-lg'>
+                <p className='font-medium'>Viewers</p>
+                <p className='text-gray-600'>{viewerCount} watching</p>
+              </div>
             </div>
           </div>
         )}

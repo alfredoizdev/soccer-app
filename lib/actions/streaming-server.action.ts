@@ -116,6 +116,26 @@ export async function getActiveSessionByMatchIdAction(matchId: string) {
   }
 }
 
+// Obtener sesión por sessionId
+export async function getSessionByIdAction(sessionId: string) {
+  try {
+    console.log('Getting session by sessionId:', sessionId)
+    const db = await dbPromise
+
+    const [session] = await db
+      .select()
+      .from(streamingSessionsTable)
+      .where(eq(streamingSessionsTable.id, sessionId))
+      .limit(1)
+
+    console.log('Found session:', session ? 'YES' : 'NO', session?.id || 'none')
+    return { success: true, data: session, error: null }
+  } catch (error) {
+    console.error('Error getting session by sessionId:', error)
+    return { success: false, error: 'Failed to get session' }
+  }
+}
+
 // Obtener todos los streams activos
 export async function getActiveStreamsAction() {
   try {

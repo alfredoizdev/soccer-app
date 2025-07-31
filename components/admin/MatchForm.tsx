@@ -57,15 +57,21 @@ export default function MatchForm({ teams }: Props) {
     }
 
     try {
-      await createMatchWithPlayers({
+      const result = await createMatchWithPlayers({
         date: data.date!,
         team1Id: data.team1,
         team2Id: data.team2,
         location: data.location,
         notes: data.notes,
       })
-      toast.success('Match created successfully!')
-      router.push('/admin/matches')
+
+      if (result.success && result.data) {
+        toast.success('Match created successfully!')
+        // Redirigir a la página de stream del match creado
+        router.push(`/admin/matches/stream/${result.data.id}`)
+      } else {
+        toast.error('Error creating match')
+      }
     } catch {
       toast.error('Error creating match')
     }

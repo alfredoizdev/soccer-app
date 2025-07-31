@@ -10,6 +10,7 @@ import { endStreamingSessionAction } from '@/lib/actions/streaming-server.action
 import { socket } from '@/app/socket'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import StreamBroadcaster from '@/components/admin/StreamBroadcaster'
 
 interface Stream {
   id: string
@@ -91,30 +92,37 @@ export default function MatchStreamsClient({
 
   if (!currentStream) {
     return (
-      <Card className='w-full'>
-        <CardContent className='p-8'>
-          <div className='text-center'>
-            <VideoOff className='w-16 h-16 mx-auto text-gray-400 mb-4' />
-            <h3 className='text-xl font-semibold text-gray-600 mb-2'>
-              No Active Stream
-            </h3>
-            <p className='text-gray-500 mb-4'>
-              There is no active stream for this match.
-            </p>
-            <div className='flex gap-2 justify-center'>
-              <Link href={`/admin/matches/live/${matchId}`}>
-                <Button variant='outline' className='flex items-center gap-2'>
-                  <Play className='w-4 h-4' />
-                  Go to Live Match
-                </Button>
-              </Link>
-              <Link href='/admin/streams'>
-                <Button variant='outline'>View All Streams</Button>
-              </Link>
+      <div className='space-y-6'>
+        <Card className='w-full'>
+          <CardContent className='p-8'>
+            <div className='text-center'>
+              <VideoOff className='w-16 h-16 mx-auto text-gray-400 mb-4' />
+              <h3 className='text-xl font-semibold text-gray-600 mb-2'>
+                No Active Stream
+              </h3>
+              <p className='text-gray-500 mb-4'>
+                There is no active stream for this match. Start streaming below.
+              </p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* StreamBroadcaster Component */}
+        <Card>
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2'>
+              <Video className='w-5 h-5' />
+              Start Streaming
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StreamBroadcaster
+              matchId={matchId}
+              matchTitle={`${match.team1} vs ${match.team2}`}
+            />
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 

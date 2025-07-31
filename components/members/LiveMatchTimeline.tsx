@@ -64,6 +64,7 @@ interface LiveMatchTimelineProps {
     team2Avatar: string
   }
   matchStatus: 'not-started' | 'live' | 'ended'
+  compact?: boolean
 }
 
 const getEventIcon = (eventType: MatchEvent['eventType']) => {
@@ -614,14 +615,9 @@ export default function LiveMatchTimeline({
 
   return (
     <div className='w-full mx-auto p-1 sm:p-4 fade-in duration-300'>
-      {/* Header con botón de regreso */}
+      {/* Header simplificado */}
       <div className='mb-4 sm:mb-6 flex justify-between items-center w-full mx-auto'>
-        <h2 className='text-2xl sm:text-3xl font-bold mb-2'>
-          Live Match Timeline
-        </h2>
-        <p className='text-sm sm:text-base text-gray-600'>
-          {matchStatus === 'live' ? 'Live Updates' : 'Match Timeline'}
-        </p>
+        <h2 className='text-lg sm:text-xl font-bold mb-2'>Timeline</h2>
       </div>
 
       {/* Timeline Section */}
